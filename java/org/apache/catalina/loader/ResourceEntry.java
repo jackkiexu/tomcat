@@ -61,14 +61,14 @@ public class ResourceEntry {
     public URL codeBase = null;
 
 
-    /**
+    /** (密钥清单)
      * Manifest (if the resource was loaded from a JAR).
      */
     public Manifest manifest = null;
 
 
     /**
-     * Certificates (if the resource was loaded from a JAR).
+     * Certificates(证书)(if the resource was loaded from a JAR).
      */
     public Certificate[] certificates = null;
 
