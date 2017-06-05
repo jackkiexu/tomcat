@@ -362,6 +362,8 @@ public class TestWebappClassLoaderWeaving extends TomcatBaseTest {
             throws Exception {
 
         Class<?> c = loader.findClass("org.apache.catalina.loader." + className);
+        loader.loadClass("org.apache.catalina.loader." + className);
+        loader.loadClass("org.apache.catalina.loader." + className);
         assertNotNull("The loaded class should not be null.", c);
 
         Method m = c.getMethod("doMethod");
