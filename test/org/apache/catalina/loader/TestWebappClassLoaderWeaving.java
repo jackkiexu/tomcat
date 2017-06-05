@@ -21,14 +21,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.security.ProtectionDomain;
+import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
+import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -39,8 +44,14 @@ import org.apache.catalina.Context;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
+import sun.misc.Launcher;
+import sun.misc.SharedSecrets;
+import sun.misc.URLClassPath;
+import sun.misc.Unsafe;
 
 public class TestWebappClassLoaderWeaving extends TomcatBaseTest {
+
+    public static final Logger logger = Logger.getLogger(TestWebappClassLoaderWeaving.class);
 
     private static final String PACKAGE_PREFIX = "org/apache/catalina/loader";
 
@@ -284,10 +295,53 @@ public class TestWebappClassLoaderWeaving extends TomcatBaseTest {
 
     }
 
+    static{
+
+        try {
+            // 通过反射的方式获取 Launcher 类
+            Field field = Launcher.class.getDeclaredField("launcher");
+            field.setAccessible(true);
+            Launcher classLoader  = (Launcher)field.get(null);
+            logger.info(classLoader);
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        try {
+
+            Properties p = System.getProperties();
+            // appClassLoader
+            String var1 = System.getProperty("java.class.path");
+            // extClassLoader
+            String var0 = System.getProperty("java.ext.dirs");
+            // bootstartClassLoader
+            String bootClassPath = System.getProperty("sun.boot.class.path");
+
+            // appClassLoader 加载类的路径
+            URLClassLoader appClassLoader = (URLClassLoader)TestWebappClassLoaderWeaving.class.getClassLoader();
+            URL[] urls1 = appClassLoader.getURLs();
+            logger.info(appClassLoader);
+
+            // extClassLoader 加载类的路径
+            URLClassLoader extClassLoader = (URLClassLoader)TestWebappClassLoaderWeaving.class.getClassLoader().getParent();
+            URL[] urls2 = extClassLoader.getURLs();
+            logger.info(extClassLoader);
+
+            // bootstrapClassLoader 加载类的路径
+            URL[] urls3 = sun.misc.Launcher.getBootstrapClassPath().getURLs();
+            logger.info(urls3);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private static void copyResource(String name, File file) throws Exception {
 
         InputStream is = TestWebappClassLoaderWeaving.class.getClassLoader()
                 .getResourceAsStream(name);
+        URL url = TestWebappClassLoaderWeaving.class.getClassLoader().getResource("");
+        URLClassPath urlClassPath = sun.misc.Launcher.getBootstrapClassPath();
         if (is == null) {
             throw new IOException("Resource " + name + " not found on classpath.");
         }

@@ -4,6 +4,10 @@
  * http://blog.csdn.net/c929833623lvcha/article/details/44677569
  * http://blog.csdn.net/column/details/tomcat7-internal.html
  *
+ * 讲 classLoader 的
+ * http://blog.csdn.net/irelandken/article/details/7048817
+ * https://liuzhengyang.github.io/2016/09/28/classloader/
+ *
  * 学习计划
  * 1. tomcat classLoader种类, 动态加载, 内存泄漏检测 (ClassLoaderLogManager, JreMemoryLeakPreventionListener, ThreadLocalLeakPreventionListener)
  *
