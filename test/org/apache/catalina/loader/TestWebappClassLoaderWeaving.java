@@ -26,6 +26,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.ProtectionDomain;
+import java.util.Arrays;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
@@ -330,7 +331,7 @@ public class TestWebappClassLoaderWeaving extends TomcatBaseTest {
 
             // bootstrapClassLoader 加载类的路径
             URL[] urls3 = sun.misc.Launcher.getBootstrapClassPath().getURLs();
-            logger.info(urls3);
+            logger.info(Arrays.asList(urls3));
         } catch (Exception e) {
             e.printStackTrace();
         }
