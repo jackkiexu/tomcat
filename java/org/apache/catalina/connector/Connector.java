@@ -74,7 +74,7 @@ public class Connector extends LifecycleMBeanBase  {
              * 4. 初始化这个类的子类
              */
             Class<?> clazz = Class.forName(protocolHandlerClassName);
-            p = (ProtocolHandler) clazz.newInstance();
+            p = (ProtocolHandler) clazz.newInstance();                                  // 这里的 newInstance()
         } catch (Exception e) {
             log.error(sm.getString(
                     "coyoteConnector.protocolHandlerInstantiationFailed"), e);
