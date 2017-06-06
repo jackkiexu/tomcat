@@ -98,7 +98,7 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
 
         tomcat = new TomcatWithFastSessionIDs();
 
-        String protocol = getProtocol();
+        String protocol = getProtocol();                                    // org.apache.coyote.http11.Http11NioProtocol
         Connector connector = new Connector(protocol);
         // Listen only on localhost
         connector.setAttribute("address",

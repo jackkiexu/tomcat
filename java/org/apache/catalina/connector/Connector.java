@@ -67,6 +67,12 @@ public class Connector extends LifecycleMBeanBase  {
         // Instantiate protocol handler
         ProtocolHandler p = null;
         try {
+            /**
+             * 1. 当 JVM 遇到 new, getstatic, putstatic或 invokestatic 时 当前程序调用方的 classloader 进行加载这个 class
+             * 2. 或访问这个类的静态变量, 或对静态变量赋值, 或静态方法
+             * 3. 对类进行反射调用
+             * 4. 初始化这个类的子类
+             */
             Class<?> clazz = Class.forName(protocolHandlerClassName);
             p = (ProtocolHandler) clazz.newInstance();
         } catch (Exception e) {

@@ -65,8 +65,13 @@ public class Http11NioProtocol extends AbstractHttp11JsseProtocol<NioChannel> {
         endpoint=new NioEndpoint();
         cHandler = new Http11ConnectionHandler(this);
         ((NioEndpoint) endpoint).setHandler(cHandler);
+        // socket 关闭时是否阻塞一段时间(因为底层的数据包可能还没有发送完)
         setSoLinger(Constants.DEFAULT_CONNECTION_LINGER);
+        // 这里是 ServerSocket 的 soTimeout 设置, 在ServerSocket.accept()调用时, 在没有client进行连接时, 会阻塞, 而超过了 soTimeout 时间会出现 SocketTimeoutException , 但是 ServerSocket 还是有效的
+        // ServerSocket 的参数设置 https://docs.oracle.com/javase/8/docs/api/java/net/ServerSocket.html#setSoTimeout-int-
+        // 与之对应的是 Socket 的参数设置 https://docs.oracle.com/javase/8/docs/api/java/net/Socket.html#setSoTimeout-int-
         setSoTimeout(Constants.DEFAULT_CONNECTION_TIMEOUT);
+        // 是否开启 Nagle's  算法 (Nagle 算法 将小数据包合并, 等达到一定大小时, 一并的进行发送, 从而减小数据包的头)
         setTcpNoDelay(Constants.DEFAULT_TCP_NO_DELAY);
     }
 
