@@ -23,6 +23,7 @@ import org.apache.catalina.LifecycleListener;
 import org.apache.catalina.LifecycleState;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
+import org.apache.log4j.Logger;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.res.StringManager;
 
@@ -33,6 +34,7 @@ import org.apache.tomcat.util.res.StringManager;
  * {@link Lifecycle#stop()}
  */
 public abstract class LifecycleBase implements Lifecycle {
+    public final Logger logger = Logger.getLogger(getClass());
 
     private static final Log log = LogFactory.getLog(LifecycleBase.class);
 
@@ -93,6 +95,7 @@ public abstract class LifecycleBase implements Lifecycle {
 
     @Override
     public final synchronized void init() throws LifecycleException {
+        logger.info(this);
         if (!state.equals(LifecycleState.NEW)) {
             invalidTransition(Lifecycle.BEFORE_INIT_EVENT);
         }

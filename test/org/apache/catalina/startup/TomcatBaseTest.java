@@ -95,7 +95,10 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
         if (!appBase.exists() && !appBase.mkdir()) {
             fail("Unable to create appBase for test");
         }
-
+        // 运行程序时 在Java命令行后面加上 "-verbose:class -XX:+TraceClassLoading" 来显示 class 的加载
+        // 这时发现在 new Tomcat() 时, ClassLoader 加载了 Host, Wrapper, Server, Service, Realm, Engine,Manager
+        // -> 从而说明 只要Class中有对应的 变量成员定义, 则在 classLoader.load(Class) 时通过 resolve 来加载数据
+        // (PS: 这时若 Tomcat 有父类, 则父类也会一级一级的从上至下进行加载, 父类的成员变量不进行 ClassLoader 加载)
         tomcat = new TomcatWithFastSessionIDs();
 
         String protocol = getProtocol();                                    // org.apache.coyote.http11.Http11NioProtocol
