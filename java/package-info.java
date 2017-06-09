@@ -8,6 +8,10 @@
  * http://blog.csdn.net/irelandken/article/details/7048817
  * https://liuzhengyang.github.io/2016/09/28/classloader/
  *
+ * 将 EndPoint 的资料
+ * http://zddava.iteye.com/category/53603
+ * https://my.oschina.net/u/862897/blog/129434
+ *
  * 学习计划
  * 1. tomcat classLoader种类, 动态加载, 内存泄漏检测 (ClassLoaderLogManager, JreMemoryLeakPreventionListener, ThreadLocalLeakPreventionListener)
  *

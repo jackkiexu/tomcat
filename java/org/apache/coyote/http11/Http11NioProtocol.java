@@ -43,6 +43,12 @@ import org.apache.tomcat.util.net.SocketWrapper;
  * Processor is single threaded and specific to stream-based protocols,
  * will not fit Jk protocols like JNI.
  *
+ * tomcat nio 线程模型
+ * https://yq.aliyun.com/articles/39093
+ * http://blog.csdn.net/yfkscu/article/details/38144029
+ *
+ *
+ *
  * @author Remy Maucherat
  * @author Costin Manolache
  */

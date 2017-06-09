@@ -692,7 +692,7 @@ public abstract class AbstractEndpoint<S> {
         }
         startInternal();
     }
-
+    // 开启 Acceptor 线程
     protected final void startAcceptorThreads() {
         int count = getAcceptorThreadCount();
         acceptors = new Acceptor[count];
