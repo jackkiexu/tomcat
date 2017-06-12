@@ -30,6 +30,9 @@ import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 
 /**
+ * 参考资料
+ * http://gearever.iteye.com/blog/1844203
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650075890&idx=1&sn=ae57162a5d557bbadcbc9fb0ea1d44e3&mpshare=1&scene=23&srcid=06125QjgxvOSnhUYwDe2fMWN#rd
  *
  * Thread safe non blocking selector pool
  * @version 1.0
@@ -59,8 +62,9 @@ public class NioSelectorPool {
     protected ConcurrentLinkedQueue<Selector> selectors =
             new ConcurrentLinkedQueue<>();
 
+    // 双重检查锁 http://www.infoq.com/cn/articles/double-checked-locking-with-delay-initialization
     protected Selector getSharedSelector() throws IOException {
-        if (SHARED && SHARED_SELECTOR == null) {
+        if (SHARED && SHARED_SELECTOR == null) {                // 这里可以看做是个 DCL(Double Check Lock), 我们可以看到 SHARED_SELECTOR 是被 volatile 修饰, 重而保证
             synchronized ( NioSelectorPool.class ) {
                 if ( SHARED_SELECTOR == null )  {
                     synchronized (Selector.class) {
@@ -76,6 +80,10 @@ public class NioSelectorPool {
         return  SHARED_SELECTOR;
     }
 
+    /**
+     * 在每一次新增 selector 的时候, 需要考虑看看啊池中目前有多少个, 如果没有超出的话, 可以新建 selector, 否则
+     * 只能使用池中现有的 selector
+     */
     @SuppressWarnings("resource") // s is closed in put()
     public Selector get() throws IOException{
         if ( SHARED ) {
@@ -170,7 +178,7 @@ public class NioSelectorPool {
     public int write(ByteBuffer buf, NioChannel socket, Selector selector,
                      long writeTimeout, boolean block) throws IOException {
         if ( SHARED && block ) {
-            return blockingSelector.write(buf,socket,writeTimeout);
+            return blockingSelector.write(buf,socket,writeTimeout);                            // 若 block 是 true
         }
         SelectionKey key = null;
         int written = 0;
@@ -180,19 +188,20 @@ public class NioSelectorPool {
         try {
             while ( (!timedout) && buf.hasRemaining() ) {
                 int cnt = 0;
-                if ( keycount > 0 ) { //only write if we were registered for a write
-                    cnt = socket.write(buf); //write the data
+                if ( keycount > 0 ) { //only write if we were registered for a write                // 写入成功
+                    cnt = socket.write(buf); //write the data                                       // 写入数据
                     if (cnt == -1) throw new EOFException();
 
                     written += cnt;
-                    if (cnt > 0) {
+                    if (cnt > 0) {                                                                  // 已经写入成功的数据, continue 再写数据
                         time = System.currentTimeMillis(); //reset our timeout timer
                         continue; //we successfully wrote, try again without a selector
                     }
                     if (cnt==0 && (!block)) break; //don't block
                 }
-                if ( selector != null ) {
-                    //register OP_WRITE to the selector
+                // 如果写数据返回值 cnt = 0, 通常是网络不稳定造成写数据失败
+                if ( selector != null ) {                                                          // 写入不成功
+                    //register OP_WRITE to the selector                                             // 将 OP_WRITE 事件注册到 selector 上
                     if (key==null) key = socket.getIOChannel().register(selector, SelectionKey.OP_WRITE);
                     else key.interestOps(SelectionKey.OP_WRITE);
                     if (writeTimeout==0) {

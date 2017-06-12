@@ -287,6 +287,7 @@ public class Http11NioProtocol extends AbstractHttp11JsseProtocol<NioChannel> {
             }
         }
 
+        // 这里创建的 Http11NioProcessor 是进行 HTTP1.1版本的信息处理
         @Override
         public Http11NioProcessor createProcessor() {
             Http11NioProcessor processor = new Http11NioProcessor(

@@ -916,7 +916,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         while (!error && keepAlive && !comet && !isAsync() &&
                 httpUpgradeHandler == null && !endpoint.isPaused()) {
 
-            // Parsing the request header
+            // Parsing the request header                                           // 解析 HTTP 请求的头
             try {
                 setRequestLineReadTimeout();
 
@@ -1008,7 +1008,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
                 keepAlive = false;
             }
 
-            // Process the request in the adapter
+            // Process the request in the adapter                                   将消息
             if (!error) {
                 try {
                     rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);

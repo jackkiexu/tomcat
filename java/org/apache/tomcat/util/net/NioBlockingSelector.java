@@ -16,6 +16,11 @@
  */
 package org.apache.tomcat.util.net;
 
+/**
+ * 参考资料
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650075890&idx=1&sn=ae57162a5d557bbadcbc9fb0ea1d44e3&mpshare=1&scene=23&srcid=06125QjgxvOSnhUYwDe2fMWN#rd
+ */
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -373,7 +378,7 @@ public class NioBlockingSelector {
                                 countDown(attachment.getReadLatch());
                             }
                             if (sk.isWritable()) {
-                                countDown(attachment.getWriteLatch());
+                                countDown(attachment.getWriteLatch());              // 唤醒主线程中的 await
                             }
                         }catch (CancelledKeyException ckx) {
                             sk.cancel();

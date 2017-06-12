@@ -73,7 +73,7 @@ public class Connector extends LifecycleMBeanBase  {
              * 3. 对类进行反射调用
              * 4. 初始化这个类的子类
              */
-            Class<?> clazz = Class.forName(protocolHandlerClassName);
+            Class<?> clazz = Class.forName(protocolHandlerClassName);               // 通过这种方式初始化 class时将会触发 static 所指定的类/方法运行
             p = (ProtocolHandler) clazz.newInstance();                                  // 这里的 newInstance()
         } catch (Exception e) {
             log.error(sm.getString(

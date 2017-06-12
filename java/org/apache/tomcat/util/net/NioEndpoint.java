@@ -225,6 +225,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
     /**
      * Return an available poller in true round robin fashion
      */
+    // 以 RR 的方式从 Poller 里面获取一个进行处理
     public Poller getPoller0() {
         int idx = Math.abs(pollerRotater.incrementAndGet()) % pollers.length;
         return pollers[idx];
@@ -351,9 +352,9 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
         serverSock = ServerSocketChannel.open();
         socketProperties.setProperties(serverSock.socket());
         InetSocketAddress addr = (getAddress()!=null?new InetSocketAddress(getAddress(),getPort()):new InetSocketAddress(getPort()));
-        serverSock.socket().bind(addr,getBacklog());                            // 绑定地址
+        serverSock.socket().bind(addr,getBacklog());                                // 绑定地址, 这里的 backLog 是请求的 socket 底层 "连接的队列" 大小
         serverSock.configureBlocking(true); //mimic APR behavior
-        serverSock.socket().setSoTimeout(getSocketProperties().getSoTimeout());
+        serverSock.socket().setSoTimeout(getSocketProperties().getSoTimeout());     // 这是 accept() 的超时时间,超时时间到了会报出异常, 但是 ServerSocket 还是有效的
 
         // Initialize thread count defaults for acceptor, poller
         if (acceptorThreadCount == 0) {
@@ -569,7 +570,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                 }
             }
             // 这里就是将 SocketChannel注册到 Poller 了
-            // getPoller0 用的循环的方式来返回 Poller, 即 Poller 1, 2, 3.....n  然后再回到 1, 2, 3
+            // getPoller0 用的循环的方式来返回 Poller, 即 Poller 1, 2, 3.....n  然后再回到 1, 2, 3 (以 RR 的方式从 Poller 里面获取一个进行处理)
             getPoller0().register(channel);
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
@@ -635,7 +636,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
             }
             attachment.setCometNotify(false); //will get reset upon next reg
             SocketProcessor sc = processorCache.pop();
-            if ( sc == null ) sc = new SocketProcessor(socket,status);
+            if ( sc == null ) sc = new SocketProcessor(socket,status);              // SocketProcessor 是工作线程池中的 Runnable
             else sc.reset(socket,status);
             Executor executor = getExecutor();
             if (dispatch && executor != null) { // 若配置了 ThreadPoolExecutor, 则让它来执行
@@ -853,6 +854,8 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
     /**
      * Poller class.
      */
+    // 参考资料 https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=402459056&idx=1&sn=909921555a7a4120a08b874ba1b40d61&mpshare=1&scene=23&srcid=0612CX2rqLOzsF4m7r1o8y41#rd
+    // Poller 主要是从 SynchronizedQueue 里面 poll 出PollerEvent事件, 并进行相应的处理
     public class Poller implements Runnable {
 
         private Selector selector;
@@ -953,7 +956,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
          * @param socket    The newly created socket
          */
         public void register(final NioChannel socket) {
-            socket.setPoller(this);
+            socket.setPoller(this);                                             // 每个 socket 绑定一个 Poller
             // KeyAttachment 是对 NioChannel 信息的包装, 同样是非GC的
             KeyAttachment key = keyCache.pop();
             final KeyAttachment ka = key!=null?key:new KeyAttachment(socket);
@@ -965,10 +968,9 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
             PollerEvent r = eventCache.pop();
             // 注册 Read 事件
             ka.interestOps(SelectionKey.OP_READ);//this is what OP_REGISTER turns into.
-            if ( r==null) r = new PollerEvent(socket,ka,OP_REGISTER);
+            if ( r==null) r = new PollerEvent(socket,ka,OP_REGISTER);       // 包装 REGISTER 事件, 放入 events 里面
             else r.reset(socket,ka,OP_REGISTER);
-            // 把事件加到 Poller
-            addEvent(r);
+            addEvent(r);                                                       // 把事件加到 Poller
         }
 
         public void cancelledKey(SelectionKey key, SocketStatus status) {
@@ -1105,7 +1107,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                         keyCount > 0 ? selector.selectedKeys().iterator() : null;
                     // Walk through the collection of ready keys and dispatch
                     // any active event.
-                    while (iterator != null && iterator.hasNext()) {
+                    while (iterator != null && iterator.hasNext()) {                            // 遍历 SelectionKey 事件
                         SelectionKey sk = iterator.next();
                         // 这里的 KeyAttachment 是在 #register() 方法中注册的
                         KeyAttachment attachment = (KeyAttachment)sk.attachment();
@@ -1116,7 +1118,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                         } else {
                             attachment.access();
                             iterator.remove();
-                            processKey(sk, attachment);         // 执行对应的事件
+                            processKey(sk, attachment);                                             // 交由工作线程继续处理
                         }
                     }//while
 
@@ -1563,7 +1565,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                     if (key != null) {
                         // For STOP there is no point trying to handshake as the
                         // Poller has been stopped.
-                        if (socket.isHandshakeComplete() ||
+                        if (socket.isHandshakeComplete() ||                     // 针对 SSL 的握手
                                 status == SocketStatus.STOP) {
                             handshake = 0;
                         } else {
@@ -1585,11 +1587,11 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                 } catch (CancelledKeyException ckx) {
                     handshake = -1;
                 }
-                if (handshake == 0) {
+                if (handshake == 0) {                                             // 针对 SSL 的握手
                     SocketState state = SocketState.OPEN;
                     // Process the request from this socket
                     if (status == null) {
-                        state = handler.process(ka, SocketStatus.OPEN_READ);
+                        state = handler.process(ka, SocketStatus.OPEN_READ);   // 这里是将工作移交给 Http11ConnectionHandler 来处理
                     } else {
                         state = handler.process(ka, status);
                     }
