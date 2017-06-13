@@ -95,7 +95,7 @@ public abstract class LifecycleBase implements Lifecycle {
 
     @Override
     public final synchronized void init() throws LifecycleException {
-        logger.info(this);
+        logger.info(this  + " init() ");
         if (!state.equals(LifecycleState.NEW)) {
             invalidTransition(Lifecycle.BEFORE_INIT_EVENT);
         }
@@ -121,7 +121,7 @@ public abstract class LifecycleBase implements Lifecycle {
      */
     @Override
     public final synchronized void start() throws LifecycleException {
-
+        logger.info(this  + " start() ");
         if (LifecycleState.STARTING_PREP.equals(state) ||
                 LifecycleState.STARTING.equals(state) ||
                 LifecycleState.STARTED.equals(state)) {
@@ -194,7 +194,7 @@ public abstract class LifecycleBase implements Lifecycle {
      */
     @Override
     public final synchronized void stop() throws LifecycleException {
-
+        logger.info(this  + " stop() ");
         if (LifecycleState.STOPPING_PREP.equals(state) ||
                 LifecycleState.STOPPING.equals(state) ||
                 LifecycleState.STOPPED.equals(state)) {
@@ -269,6 +269,7 @@ public abstract class LifecycleBase implements Lifecycle {
 
     @Override
     public final synchronized void destroy() throws LifecycleException {
+        logger.info(this  + " destroy() ");
         if (LifecycleState.FAILED.equals(state)) {
             try {
                 // Triggers clean-up

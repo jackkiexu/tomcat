@@ -1,5 +1,6 @@
-package org.apache.tomcat.util.net;
+package org.apache.coyote.http11;
 
+import org.apache.tomcat.util.net.NioSelectorPool;
 import org.junit.Test;
 
 /**
