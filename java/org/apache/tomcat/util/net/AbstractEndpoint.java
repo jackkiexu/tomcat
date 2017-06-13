@@ -698,7 +698,7 @@ public abstract class AbstractEndpoint<S> {
         acceptors = new Acceptor[count];
 
         for (int i = 0; i < count; i++) {
-            acceptors[i] = createAcceptor();
+            acceptors[i] = createAcceptor();                // 调用子类的 createAcceptor方法
             String threadName = getName() + "-Acceptor-" + i;
             acceptors[i].setThreadName(threadName);
             Thread t = new Thread(acceptors[i], threadName);
