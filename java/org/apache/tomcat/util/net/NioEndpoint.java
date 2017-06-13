@@ -72,6 +72,9 @@ import org.apache.tomcat.util.net.jsse.NioX509KeyManager;
  * http://zddava.iteye.com/blog/835244
  * http://tyrion.iteye.com/blog/2256898
  * http://tyrion.iteye.com/blog/2256896
+ * http://blog.csdn.net/yfkscu/article/details/38144029
+ * http://www.blogjava.net/zddava/archive/2010/12/08/340029.html
+ * http://tyrion.iteye.com/blog/2256896
  *
  * @author Mladen Turk
  * @author Remy Maucherat
