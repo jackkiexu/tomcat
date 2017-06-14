@@ -54,6 +54,10 @@ import org.apache.tomcat.util.res.StringManager;
  * Standard implementation of the <b>Server</b> interface, available for use
  * (but not required) when deploying and starting Catalina.
  *
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076431&idx=1&sn=1a3a04a29bb7b5e1c95bbe9d7ca832b9&chksm=878f9121b0f81837a1726b23135f95835944285978eda15e74c45e211251b1bef2737bd473f6&mpshare=1&scene=23&srcid=0614cGNWPARMjPHA88EQwnfH#rd
+ * tomcat 8 官方文档
+ * https://ci.apache.org/projects/tomcat/tomcat8/docs/config/server.html
+ *
  * @author Craig R. McClanahan
  */
 public final class StandardServer extends LifecycleMBeanBase implements Server {
@@ -390,7 +394,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
             // undocumented yet - for embedding apps that are around, alive.
             return;
         }
-        if( port==-1 ) {
+        if( port==-1 ) {                                                // 端口设置 -1 直接返回 (Set to -1 to disable the shutdown port.见 https://ci.apache.org/projects/tomcat/tomcat8/docs/config/server.html)
             try {
                 awaitThread = Thread.currentThread();
                 while(!stopAwait) {
@@ -408,7 +412,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
 
         // Set up a server socket to wait on
         try {
-            awaitSocket = new ServerSocket(port, 1,
+            awaitSocket = new ServerSocket(port, 1,                 // 启动监听 stop 命令的 ServerSocket
                     InetAddress.getByName(address));
         } catch (IOException e) {
             log.error("StandardServer.await: create[" + address
@@ -434,7 +438,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
                     InputStream stream;
                     try {
                         socket = serverSocket.accept();
-                        socket.setSoTimeout(10 * 1000);  // Ten seconds
+                        socket.setSoTimeout(10 * 1000);  // Ten seconds             // 这里设置的 so_timeout 指的是 read 方法, 超时的话直接报出异常(针对下面的 stream.read())
                         stream = socket.getInputStream();
                     } catch (AccessControlException ace) {
                         log.warn("StandardServer.accept security exception: "
@@ -459,7 +463,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
                     while (expected > 0) {
                         int ch = -1;
                         try {
-                            ch = stream.read();
+                            ch = stream.read();                                     // 读取传过来的 命令
                         } catch (IOException e) {
                             log.warn("StandardServer.await: read: ", e);
                             ch = -1;
@@ -481,10 +485,10 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
                 }
 
                 // Match against our command string
-                boolean match = command.toString().equals(shutdown);
+                boolean match = command.toString().equals(shutdown);            // 比较传过来的是否是 shutdown
                 if (match) {
                     log.info(sm.getString("standardServer.shutdownViaPort"));
-                    break;
+                    break;                                                       // 直接 break 退出, 最终执行 StandServer 的 stop 方法, (见 StandardServer.start() 的最后那部分)
                 } else
                     log.warn("StandardServer.await: Invalid command '"
                             + command.toString() + "' received");

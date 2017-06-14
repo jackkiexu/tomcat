@@ -49,6 +49,10 @@ import org.apache.juli.logging.LogFactory;
  * fully qualified host name of that virtual host. <br/>
  * You can set the jvmRoute direct or with the System.property <b>jvmRoute</b>.
  *
+ * 参考资料
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076429&idx=1&sn=ee98c998f6dfe4ddd75254585eabf6f9&chksm=878f9123b0f81835790a2180be6bed47f794034f06a94f2c544581f60e0bdf388f231760f668&mpshare=1&scene=23&srcid=06144eHTZgNrSSWaWpQhPq2w#rd
+ * https://ci.apache.org/projects/tomcat/tomcat8/docs/config/engine.html
+ *
  * @author Craig R. McClanahan
  */
 public class StandardEngine extends ContainerBase implements Engine {

@@ -45,6 +45,10 @@ import org.apache.tomcat.util.res.StringManager;
  * associated Container is generally an instance of Engine, but this is
  * not required.
  *
+ * 参考资料
+ * https://ci.apache.org/projects/tomcat/tomcat8/docs/config/service.html
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076430&idx=1&sn=9caca5b95603b70b8606d02bba62eeaa&chksm=878f9120b0f81836794a76e8b04fd951c813fdd941a6ef9b74776d54fd8104b0062d1b527c30&mpshare=1&scene=23&srcid=0614U4ULxxeo0PbWEEcttwOD#rd
+ *
  * @author Craig R. McClanahan
  */
 
@@ -234,7 +238,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
 
             if (getState().isAvailable()) {
                 try {
-                    connector.start();
+                    connector.start();                                  // 在 StandardService.addConnector 时就 调用 connector.start 方法
                 } catch (LifecycleException e) {
                     log.error(sm.getString(
                             "standardService.connector.startFailed",
@@ -554,15 +558,15 @@ public class StandardService extends LifecycleMBeanBase implements Service {
             if (executor instanceof JmxEnabled) {
                 ((JmxEnabled) executor).setDomain(getDomain());
             }
-            executor.init();
+            executor.init();                                        // 初始化自定义的线程池 StandardThreadExecutor
         }
 
         // Initialize mapper listener
-        mapperListener.init();
+        mapperListener.init();                                   // 初始化 MapperListener
 
         // Initialize our defined Connectors
         synchronized (connectorsLock) {
-            for (Connector connector : connectors) {
+            for (Connector connector : connectors) {            // 初始化 Connector (一个 StandardService 里面 n 个 connector 对应 一个 engine)
                 try {
                     connector.init();
                 } catch (Exception e) {

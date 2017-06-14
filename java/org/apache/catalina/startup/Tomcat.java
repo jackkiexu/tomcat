@@ -756,6 +756,7 @@ public class Tomcat {
         servlet.setLoadOnStartup(3);
         servlet.setOverridable(true);
 
+        // 增加 servlet 映射的路径, 参数分别是 匹配路径, 及 servlet 名
         // Servlet mappings
         ctx.addServletMapping("/", "default");
         ctx.addServletMapping("*.jsp", "jsp");

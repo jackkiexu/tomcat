@@ -241,11 +241,19 @@ public class MapperListener extends LifecycleMBeanBase
 
 
     // ------------------------------------------------------ Protected Methods
+    // 参考 https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076429&idx=1&sn=ee98c998f6dfe4ddd75254585eabf6f9&chksm=878f9123b0f81835790a2180be6bed47f794034f06a94f2c544581f60e0bdf388f231760f668&mpshare=1&scene=23&srcid=06144eHTZgNrSSWaWpQhPq2w#rd
 
     private void findDefaultHost() {
 
         Engine engine = (Engine) service.getContainer();
-        String defaultHost = engine.getDefaultHost();
+        /**
+         * 当路由的时候, 发现当前 Engine 中没有多余的 Host, 就用这个 DefaultHost进行路由
+         * 或者请求访问的时候, unknown host, 最终也是由这个 defaultHost 进行出面解决
+         * 其次, 就是这个 JVMRoute 属性最关键了, 该属性之所以像上述的描述那样可以为唯一标识
+         * 一个 tomcat的 servlet 实例, 其原因就是该 jvmroute 是在 Cluster 中参与了生成 sessionID 的算法
+         *
+         */
+        String defaultHost = engine.getDefaultHost();           // 这里的 defaultHost 就是在 server.xml 里面的 <Engine name="Catalina" defaultHost="localhost" />
 
         boolean found = false;
 
@@ -269,7 +277,7 @@ public class MapperListener extends LifecycleMBeanBase
             }
         }
 
-        if(found) {
+        if(found) {     // 最终要设置到 Mapper 组件中
             mapper.setDefaultHostName(defaultHost);
         } else {
             log.warn(sm.getString("mapperListener.unknownDefaultHost",
