@@ -56,6 +56,12 @@ import org.apache.tomcat.util.net.SocketStatus;
 import org.apache.tomcat.util.net.SocketWrapper;
 import org.apache.tomcat.util.res.StringManager;
 
+/**
+ * 参考资料
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076418&idx=1&sn=b1c742f96dad1552dcc37ce475d1b726&chksm=878f912cb0f8183ab7935d01b5331a23c2b10600267cca903136487850fdfadb9e203ff607b5&mpshare=1&scene=23&srcid=06145eQBL4amz9ek4Ex77oS1#rd
+ *
+ * @param <S>
+ */
 public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
     protected abstract Log getLog();
@@ -1509,6 +1515,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
     /**
      * Parse host.
      */
+    // 对于 host 的映射, 实际在 tomcat 前段解析 http 协议, 生成 Request 的时候, 会通过http协议逐字逐句的进行解析
     protected void parseHost(MessageBytes valueMB) {
 
         if (valueMB == null || valueMB.isNull()) {

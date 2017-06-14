@@ -57,6 +57,8 @@ import org.apache.tomcat.util.res.StringManager;
  * Implementation of a request processor which delegates the processing to a
  * Coyote processor.
  *
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076418&idx=1&sn=b1c742f96dad1552dcc37ce475d1b726&chksm=878f912cb0f8183ab7935d01b5331a23c2b10600267cca903136487850fdfadb9e203ff607b5&mpshare=1&scene=23&srcid=06145eQBL4amz9ek4Ex77oS1#rd
+ *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
  */
@@ -758,7 +760,7 @@ public class CoyoteAdapter implements Adapter {
                 res.action(ActionCode.REQ_LOCAL_NAME_ATTRIBUTE, null);
             }
         } else {
-            serverName = req.serverName();
+            serverName = req.serverName();              // 用于下面的 connector.getService().getMapper().map(serverName, decodedURI,
         }
         if (request.isAsyncStarted()) {
             //TODO SERVLET3 - async

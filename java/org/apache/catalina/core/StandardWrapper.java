@@ -73,6 +73,10 @@ import org.apache.tomcat.util.modeler.Util;
  * an individual servlet definition.  No child Containers are allowed, and
  * the parent Container must be a Context.
  *
+ * 参考资料
+ *
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076419&idx=1&sn=6943d35e95f4a2b9d2b76463ea09be94&chksm=878f912db0f8183bb61bdd2646f2340903c274c6a5145de2231aa7eb829cbc442a1a6d8e7b82&mpshare=1&scene=23&srcid=0614uxnpHUvn0D12zXFrHM84#rd
+ *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
  */

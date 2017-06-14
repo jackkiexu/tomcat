@@ -4903,7 +4903,7 @@ public class StandardContext extends ContainerBase
         for (ArrayList<Wrapper> list : map.values()) {
             for (Wrapper wrapper : list) {
                 try {
-                    wrapper.load();
+                    wrapper.load();                                             // 逐个启动 wrapper
                 } catch (ServletException e) {
                     getLogger().error(sm.getString("standardWrapper.loadException",
                                       getName()), StandardWrapper.getRootCause(e));
@@ -5503,7 +5503,7 @@ public class StandardContext extends ContainerBase
         Loader loader = getLoader();
         if (loader != null) {
             try {
-                loader.backgroundProcess();
+                loader.backgroundProcess();                 // 这里执行的就是 webapploader.backgroundProcess()
             } catch (Exception e) {
                 log.warn(sm.getString(
                         "standardContext.backgroundProcess.loader", loader), e);
@@ -5512,7 +5512,7 @@ public class StandardContext extends ContainerBase
         Manager manager = getManager();
         if (manager != null) {
             try {
-                manager.backgroundProcess();
+                manager.backgroundProcess();                // 实际及时看看 session 究竟过期没
             } catch (Exception e) {
                 log.warn(sm.getString(
                         "standardContext.backgroundProcess.manager", manager),
@@ -5522,7 +5522,7 @@ public class StandardContext extends ContainerBase
         WebResourceRoot resources = getResources();
         if (resources != null) {
             try {
-                resources.backgroundProcess();
+                resources.backgroundProcess();              // StandardRoot的backgroundProcess
             } catch (Exception e) {
                 log.warn(sm.getString(
                         "standardContext.backgroundProcess.resources",

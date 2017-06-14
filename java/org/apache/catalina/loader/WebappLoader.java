@@ -290,7 +290,7 @@ public class WebappLoader extends LifecycleMBeanBase
                 Thread.currentThread().setContextClassLoader
                     (WebappLoader.class.getClassLoader());
                 if (context != null) {
-                    context.reload();
+                    context.reload();                                           // 进行热部署
                 }
             } finally {
                 if (context != null && context.getLoader() != null) {

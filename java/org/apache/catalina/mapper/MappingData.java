@@ -28,20 +28,20 @@ import org.apache.tomcat.util.buf.MessageBytes;
  * @author Remy Maucherat
  */
 public class MappingData {
-
+    // Mapper 路由表填充
     public Host host = null;
     public Context context = null;
     public Context[] contexts = null;
     public Wrapper wrapper = null;
     public boolean jspWildCard = false;
-
+    // Tomcat 的 http 解析
     public final MessageBytes contextPath = MessageBytes.newInstance();
     public final MessageBytes requestPath = MessageBytes.newInstance();
     public final MessageBytes wrapperPath = MessageBytes.newInstance();
     public final MessageBytes pathInfo = MessageBytes.newInstance();
 
     public final MessageBytes redirectPath = MessageBytes.newInstance();
-
+    // 将 Mapping 信息填充到 Request 中, 这样就可以到后端 invoke 了
     public void recycle() {
         host = null;
         context = null;

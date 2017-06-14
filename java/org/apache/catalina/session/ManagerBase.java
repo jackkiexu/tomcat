@@ -510,7 +510,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
     public void processExpires() {
 
         long timeNow = System.currentTimeMillis();
-        Session sessions[] = findSessions();
+        Session sessions[] = findSessions();                    // 校验是否进行过期, 过期就进行处理
         int expireHere = 0 ;
 
         if(log.isDebugEnabled())

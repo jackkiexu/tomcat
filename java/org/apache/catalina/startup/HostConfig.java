@@ -69,6 +69,10 @@ import org.apache.tomcat.util.res.StringManager;
  * Startup event listener for a <b>Host</b> that configures the properties
  * of that Host, and the associated defined contexts.
  *
+ * 参考资料
+ * https://ci.apache.org/projects/tomcat/tomcat8/docs/config/host.html
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076425&idx=1&sn=1d29474d3c539990ae6d860ecb04a1de&chksm=878f9127b0f81831b6c679d253ff830818a1ea9824fb80ad8e9a57afd7e5c32e2264c1042671&mpshare=1&scene=23&srcid=0614EJPlk7NGkHROHzOKoy0Q#rd
+ *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
  */
@@ -1477,7 +1481,7 @@ public class HostConfig
             log.error(sm.getString("hostConfig.jmx.register", oname), e);
         }
 
-        if (host.getCreateDirs()) {
+        if (host.getCreateDirs()) {                                                     // 是否初始化创建 dir
             File[] dirs = new File[] {host.getAppBaseFile(),host.getConfigBaseFile()};
             for (int i=0; i<dirs.length; i++) {
                 if (!dirs[i].mkdirs() && !dirs[i].isDirectory()) {
@@ -1493,7 +1497,7 @@ public class HostConfig
             host.setAutoDeploy(false);
         }
 
-        if (host.getDeployOnStartup())
+        if (host.getDeployOnStartup())                                                  // 初始化进行部署
             deployApps();
 
     }
@@ -1522,8 +1526,8 @@ public class HostConfig
      * Check status of all webapps.
      */
     protected void check() {
-
-        if (host.getAutoDeploy()) {
+        // 当应用卸载的时候, 是否要将其老版本也卸载掉
+        if (host.getAutoDeploy()) {                                         // tomcat 自动部署开关
             // Check for resources modification to trigger redeployment
             DeployedApplication[] apps =
                 deployed.values().toArray(new DeployedApplication[0]);
@@ -1576,7 +1580,7 @@ public class HostConfig
                 // Current and previous are same path - current will always
                 // be a later version
                 Context previousContext =
-                        (Context) host.findChild(previous.getName());
+                        (Context) host.findChild(previous.getName());           // 找对应的老版本
                 Context currentContext =
                         (Context) host.findChild(previous.getName());
                 if (previousContext != null && currentContext != null &&
@@ -1587,7 +1591,7 @@ public class HostConfig
                         int sessionCount;
                         if (manager instanceof DistributedManager) {
                             sessionCount = ((DistributedManager)
-                                    manager).getActiveSessionsFull();
+                                    manager).getActiveSessionsFull();           // 清除 sessionID
                         } else {
                             sessionCount = manager.getActiveSessions();
                         }
@@ -1599,13 +1603,13 @@ public class HostConfig
                             }
                             DeployedApplication app =
                                     deployed.get(previous.getName());
-                            String[] resources =
+                            String[] resources =                               // 清除缓存
                                     app.redeployResources.keySet().toArray(
                                             new String[0]);
                             // Version is unused - undeploy it completely
                             // The -1 is a 'trick' to ensure all redeploy
                             // resources are removed
-                            undeploy(app);
+                            undeploy(app);                                    // 删除目录与文件资源
                             deleteRedeployResources(app, resources, -1,
                                     true);
                         }

@@ -295,14 +295,14 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         int result = getStartStopThreads();
 
         // Positive values are unchanged
-        if (result > 0) {
+        if (result > 0) {                                               // 若配置的值 > 0, 则直接使用这个值
             return result;
         }
 
         // Zero == Runtime.getRuntime().availableProcessors()
         // -ve  == Runtime.getRuntime().availableProcessors() + value
         // These two are the same
-        result = Runtime.getRuntime().availableProcessors() + result;
+        result = Runtime.getRuntime().availableProcessors() + result;   // 若配置的值 < 0, 则  使用 Runtime.getRuntime().availableProcessors() + result
         if (result < 1) {
             result = 1;
         }
@@ -1326,7 +1326,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
         @Override
         public void run() {
-            while (!threadDone) {
+            while (!threadDone) {       // 每次都会休息足够的时间再执行, 以让其 CPU 时间片让出供给其他的实际工作
                 try {
                     Thread.sleep(backgroundProcessorDelay * 1000L);
                 } catch (InterruptedException e) {
@@ -1353,7 +1353,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                     // is performed under the web app's class loader
                     originalClassLoader = ((Context) container).bind(false, null);
                 }
-                container.backgroundProcess();
+                container.backgroundProcess();                                      // 这是 backgroundProcessor 主要的工作
                 Container[] children = container.findChildren();
                 for (int i = 0; i < children.length; i++) {
                     if (children[i].getBackgroundProcessorDelay() <= 0) {

@@ -33,6 +33,9 @@ import org.apache.tomcat.util.res.StringManager;
  * Mapper, which implements the servlet API mapping rules (which are derived
  * from the HTTP rules).
  *
+ * 参考资料
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076419&idx=1&sn=6943d35e95f4a2b9d2b76463ea09be94&chksm=878f912db0f8183bb61bdd2646f2340903c274c6a5145de2231aa7eb829cbc442a1a6d8e7b82&mpshare=1&scene=23&srcid=0614uxnpHUvn0D12zXFrHM84#rd
+ *
  * @author Remy Maucherat
  */
 public final class Mapper {
@@ -357,7 +360,7 @@ public final class Mapper {
             newWrapper.object = wrapper;
             newWrapper.jspWildCard = jspWildCard;
             newWrapper.resourceOnly = resourceOnly;
-            if (path.endsWith("/*")) {
+            if (path.endsWith("/*")) {                                      // 路径匹配
                 // Wildcard wrapper
                 newWrapper.name = path.substring(0, path.length() - 2);
                 MappedWrapper[] oldWrappers = context.wildcardWrappers;
@@ -370,7 +373,7 @@ public final class Mapper {
                         context.nesting = slashCount;
                     }
                 }
-            } else if (path.startsWith("*.")) {
+            } else if (path.startsWith("*.")) {                             // 扩展名匹配
                 // Extension wrapper
                 newWrapper.name = path.substring(2);
                 MappedWrapper[] oldWrappers = context.extensionWrappers;
@@ -379,11 +382,11 @@ public final class Mapper {
                 if (insertMap(oldWrappers, newWrappers, newWrapper)) {
                     context.extensionWrappers = newWrappers;
                 }
-            } else if (path.equals("/")) {
+            } else if (path.equals("/")) {                                 // default 资源匹配
                 // Default wrapper
                 newWrapper.name = "";
                 context.defaultWrapper = newWrapper;
-            } else {
+            } else {                                                        // 精确匹配
                 // Exact wrapper
                 if (path.length() == 0) {
                     // Special case for the Context Root mapping which is
@@ -710,17 +713,17 @@ public final class Mapper {
 
         // Virtual host mapping
         if (mappingData.host == null) {
-            MappedHost[] hosts = this.hosts;
+            MappedHost[] hosts = this.hosts;                                // 根据传入的 host, 找到路由表中的 mappedHost
             int pos = findIgnoreCase(hosts, host);
             if ((pos != -1) && (host.equalsIgnoreCase(hosts[pos].name))) {
-                mappingData.host = hosts[pos].object;
+                mappingData.host = hosts[pos].object;                      // 基于找到的 MappedHost 找到当前host中应用的列表
                 contexts = hosts[pos].contextList.contexts;
                 nesting = hosts[pos].contextList.nesting;
             } else {
                 if (defaultHostName == null) {
                     return;
                 }
-                pos = find(hosts, defaultHostName);
+                pos = find(hosts, defaultHostName);                      // 基于 uri 匹配哪个应用
                 if ((pos != -1) && (defaultHostName.equals(hosts[pos].name))) {
                     mappingData.host = hosts[pos].object;
                     contexts = hosts[pos].contextList.contexts;
@@ -771,7 +774,7 @@ public final class Mapper {
                 context = contexts[pos];
             }
             if (context != null) {
-                mappingData.contextPath.setString(context.name);
+                mappingData.contextPath.setString(context.name);            // 精确找到对应的应用
             }
         }
 
@@ -812,6 +815,7 @@ public final class Mapper {
     /**
      * Wrapper mapping.
      */
+    // 路由到对应的应用版本
     private final void internalMapWrapper(ContextVersion contextVersion,
                                           CharChunk path,
                                           MappingData mappingData)
@@ -824,7 +828,7 @@ public final class Mapper {
 
         int length = contextVersion.path.length();
         if (length != (pathEnd - pathOffset)) {
-            servletPath = pathOffset + length;
+            servletPath = pathOffset + length;                      // 下面按照 servlet 的映射规范的顺序进行查找
         } else {
             noServletPath = true;
             path.append('/');
@@ -835,11 +839,11 @@ public final class Mapper {
 
         path.setOffset(servletPath);
 
-        // Rule 1 -- Exact Match
+        // Rule 1 -- Exact Match                                    // 精确匹配就是找前面缓存下来的 exactWrappers
         MappedWrapper[] exactWrappers = contextVersion.exactWrappers;
         internalMapExactWrapper(exactWrappers, path, mappingData);
 
-        // Rule 2 -- Prefix Match
+        // Rule 2 -- Prefix Match                                   // 路径匹配
         boolean checkJspWelcomeFiles = false;
         MappedWrapper[] wildcardWrappers = contextVersion.wildcardWrappers;
         if (mappingData.wrapper == null) {
@@ -875,14 +879,14 @@ public final class Mapper {
             return;
         }
 
-        // Rule 3 -- Extension Match
+        // Rule 3 -- Extension Match                                    // 扩展点匹配
         MappedWrapper[] extensionWrappers = contextVersion.extensionWrappers;
         if (mappingData.wrapper == null && !checkJspWelcomeFiles) {
             internalMapExtensionWrapper(extensionWrappers, path, mappingData,
                     true);
         }
 
-        // Rule 4 -- Welcome resources processing for servlets
+        // Rule 4 -- Welcome resources processing for servlets          // 欢迎页面也是servlet规范来进行匹配
         if (mappingData.wrapper == null) {
             boolean checkWelcomeFiles = checkJspWelcomeFiles;
             if (!checkWelcomeFiles) {
@@ -972,7 +976,7 @@ public final class Mapper {
         }
 
 
-        // Rule 7 -- Default servlet
+        // Rule 7 -- Default servlet                                        // defaultServlet 静态资源匹配
         if (mappingData.wrapper == null && !checkJspWelcomeFiles) {
             if (contextVersion.defaultWrapper != null) {
                 mappingData.wrapper = contextVersion.defaultWrapper.object;
@@ -1472,18 +1476,18 @@ public final class Mapper {
 
     // ---------------------------------------------------- Context Inner Class
 
-
+    // 因为 Tomcat 中应用可以有多个版本一说, 所以MappedContext 需要持有N个版本信息
     protected static final class MappedContext extends MapElement<Context> {
         public ContextVersion[] versions = new ContextVersion[0];
     }
 
 
     protected static final class ContextVersion extends MapElement<Context> {
-        public String path = null;
+        public String path = null;                                              // contextpath 请求 path
         public String[] welcomeResources = new String[0];
-        public WebResourceRoot resources = null;
+        public WebResourceRoot resources = null;                               // 当前应用的静态资源
         public MappedWrapper defaultWrapper = null;
-        public MappedWrapper[] exactWrappers = new MappedWrapper[0];
+        public MappedWrapper[] exactWrappers = new MappedWrapper[0];          // 基于 servlet-mapping 的精确匹配, 粗滤匹配, 扩展匹配
         public MappedWrapper[] wildcardWrappers = new MappedWrapper[0];
         public MappedWrapper[] extensionWrappers = new MappedWrapper[0];
         public int nesting = 0;
