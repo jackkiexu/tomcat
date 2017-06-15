@@ -282,10 +282,16 @@ public class WebappLoader extends LifecycleMBeanBase
      * Execute a periodic task, such as reloading, etc. This method will be
      * invoked inside the classloading context of this container. Unexpected
      * throwables will be caught and logged.
+     *
+     * 参考资料
+     * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076390&idx=1&sn=bbed2c98a89c976c20dc120df5f4bfb3&chksm=878f90c8b0f819de8ee7931432bed6f2cac5bf58f73c8e6acf52edfbcd603c10f083a617990b&mpshare=1&scene=23&srcid=0615hZXVxkRjfRKTHuOSYXS9#rd
+     *
      */
     @Override
     public void backgroundProcess() {
-        if (reloadable && modified()) {
+        // reloadable 热部署开关
+        // modified() 文件是否修改过
+        if (reloadable && modified()) {                         // 这个开关控制 监控 /WEB_INF/classes/ 与 /WEB-INF/lib 来自动加载, 起热部署的作用
             try {
                 Thread.currentThread().setContextClassLoader
                     (WebappLoader.class.getClassLoader());

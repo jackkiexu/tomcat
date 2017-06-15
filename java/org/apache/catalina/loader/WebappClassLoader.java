@@ -1227,10 +1227,10 @@ public class WebappClassLoader extends URLClassLoader
             }
         }
 
-        boolean delegateLoad = delegate || filter(name);
+        boolean delegateLoad = delegate || filter(name);                    // 读取 delegate 的配置信息
 
         // (1) Delegate to our parent if requested
-        if (delegateLoad) {
+        if (delegateLoad) {                                                   // 若 delegate 开启, 优先使用 parent classloader( delegate 默认是 false)
             if (log.isDebugEnabled())
                 log.debug("  Delegating to parent classloader1 " + parent);
             try {
@@ -1251,7 +1251,7 @@ public class WebappClassLoader extends URLClassLoader
         if (log.isDebugEnabled())
             log.debug("  Searching local repositories");
         try {
-            clazz = findClass(name);
+            clazz = findClass(name);                                        // 使用当前的 WebappClassLoader 加载
             if (clazz != null) {
                 if (log.isDebugEnabled())
                     log.debug("  Loading class from local repository");
@@ -1264,7 +1264,7 @@ public class WebappClassLoader extends URLClassLoader
         }
 
         // (3) Delegate to parent unconditionally
-        if (!delegateLoad) {
+        if (!delegateLoad) {                                                //这是在 delegate = false 时, 在本 classLoader 上进行加载后, 再进行操作这里
             if (log.isDebugEnabled())
                 log.debug("  Delegating to parent classloader at end: " + parent);
             try {
