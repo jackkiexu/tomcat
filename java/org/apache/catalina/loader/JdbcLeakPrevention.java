@@ -66,6 +66,10 @@ public class JdbcLeakPrevention {
             }
             // Only report drivers that were originally registered. Skip any
             // that were registered as a side-effect of this code.
+            /**
+             * 实际就是 DriverManager能拿到所有的 Driver的一个集合, 然后判断 Driver该类是否是由当前应用
+             * 类加载器进行加载的, 如果是的话, 直接调用 DriverManager.deregisterDriver() 对其进行卸载
+             */
             if (originalDrivers.contains(driver)) {
                 driverNames.add(driver.getClass().getCanonicalName());
             }

@@ -290,6 +290,8 @@ public class WebappLoader extends LifecycleMBeanBase
                 Thread.currentThread().setContextClassLoader
                     (WebappLoader.class.getClassLoader());
                 if (context != null) {
+                    // 通过设置 reloadable 来监控 /WEB_INF/classes/ 与 /WEB-INF/lib 下的文件是否改变
+                    // 这个 context.reload 是 tomcat 特有的重加载方法, 其目的是高效的对运用的一下 class 和 web.xml 等核心配置修改的修改, 做出反应, 并在最短时间内重新将应用准备好
                     context.reload();                                           // 进行热部署
                 }
             } finally {

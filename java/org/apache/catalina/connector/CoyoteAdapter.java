@@ -853,7 +853,7 @@ public class CoyoteAdapter implements Adapter {
                     }
                 }
             }
-            if (!mapRequired && request.getContext().getPaused()) {
+            if (!mapRequired && request.getContext().getPaused()) {         // 重部署时, 将会休息1秒 通过 StandardContext的 paused来判断
                 // Found a matching context but it is paused. Mapping data will
                 // be wrong since some Wrappers may not be registered at this
                 // point.

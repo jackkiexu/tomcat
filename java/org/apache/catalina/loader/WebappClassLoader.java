@@ -735,11 +735,11 @@ public class WebappClassLoader extends URLClassLoader
 
         if (log.isDebugEnabled())
             log.debug("modified()");
-
+                                                        // 除了 classes, 还包括 web.xml
         for (Entry<String,ResourceEntry> entry : resourceEntries.entrySet()) {
             long cachedLastModified = entry.getValue().lastModified;
             long lastModified = resources.getClassLoaderResource(
-                    entry.getKey()).getLastModified();
+                    entry.getKey()).getLastModified(); // 对比 file 的 lastModified的属性
             if (lastModified != cachedLastModified) {
                 if( log.isDebugEnabled() )
                     log.debug(sm.getString("webappClassLoader.resourceModified",
@@ -1443,7 +1443,7 @@ public class WebappClassLoader extends URLClassLoader
 
         // Clearing references should be done before setting started to
         // false, due to possible side effects
-        clearReferences();
+        clearReferences();              // 清除各种资源
 
         started = false;
 
@@ -1465,33 +1465,36 @@ public class WebappClassLoader extends URLClassLoader
     // ------------------------------------------------------ Protected Methods
 
     /**
+     * 参考资料
+     * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076392&idx=1&sn=871d952a75b80eef073127698faf3536&chksm=878f90c6b0f819d0324748e3087f2de0e54fb6823ecbb138479f9aa38c5826585e62cf674784&mpshare=1&scene=23&srcid=0615MemRBS2YodaqKAZaXcjY#rd
+     *
      * Clear references.
      */
     protected void clearReferences() {
 
         // De-register any remaining JDBC drivers
-        clearReferencesJdbc();
+        clearReferencesJdbc();                      // 清除应用链接的数据源
 
         // Stop any threads the web application started
-        clearReferencesThreads();
+        clearReferencesThreads();                   // 清除应用启动的线程
 
         // Check for leaks triggered by ThreadLocals loaded by this class loader
-        checkThreadLocalsForLeaks();
+        checkThreadLocalsForLeaks();                // 清除 ThreadLocal 缓存
 
         // Clear RMI Targets loaded by this class loader
-        clearReferencesRmiTargets();
+        clearReferencesRmiTargets();                // 清除 rmiTarget
 
         // Null out any static or final fields from loaded classes,
         // as a workaround for apparent garbage collection bugs
         if (clearReferencesStatic) {
-            clearReferencesStaticFinal();
+            clearReferencesStaticFinal();           // 静态资源清空
         }
 
          // Clear the IntrospectionUtils cache.
-        IntrospectionUtils.clear();
+        IntrospectionUtils.clear();                 // 反射资源清空
 
         // Clear the classloader reference in common-logging
-        if (clearReferencesLogFactoryRelease) {
+        if (clearReferencesLogFactoryRelease) { // 日志工厂释放
             org.apache.juli.logging.LogFactory.release(this);
         }
 
@@ -1500,10 +1503,10 @@ public class WebappClassLoader extends URLClassLoader
         // it has caused leaks. Oddly, using the leak detection code in
         // standard host allows the class loader to be GC'd. This has been seen
         // on Sun but not IBM JREs. Maybe a bug in Sun's GC impl?
-        clearReferencesResourceBundles();
+        clearReferencesResourceBundles();           // 资源绑定解除
 
         // Clear the classloader reference in the VM's bean introspector
-        java.beans.Introspector.flushCaches();
+        java.beans.Introspector.flushCaches();      // 清空缓存
 
         // Clear any custom URLStreamHandlers
         TomcatURLStreamHandlerFactory.release(this);
@@ -1578,6 +1581,10 @@ public class WebappClassLoader extends URLClassLoader
     }
 
 
+    /**
+     * 参考资料
+     * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076392&idx=1&sn=871d952a75b80eef073127698faf3536&chksm=878f90c6b0f819d0324748e3087f2de0e54fb6823ecbb138479f9aa38c5826585e62cf674784&mpshare=1&scene=23&srcid=0615MemRBS2YodaqKAZaXcjY#rd
+     */
     private final void clearReferencesStaticFinal() {
 
         Collection<ResourceEntry> values = resourceEntries.values();
@@ -1703,6 +1710,16 @@ public class WebappClassLoader extends URLClassLoader
     }
 
 
+    /**
+     * 参考资料
+     * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076392&idx=1&sn=871d952a75b80eef073127698faf3536&chksm=878f90c6b0f819d0324748e3087f2de0e54fb6823ecbb138479f9aa38c5826585e62cf674784&mpshare=1&scene=23&srcid=0615MemRBS2YodaqKAZaXcjY#rd
+     *
+     * 通过 StandardContext 的几个属性来控制是否 clear掉当前应用创建出来的线程
+     * 主要思路:
+     * 首先通过 当前的ThreadGroup来拿到 ThreadGroup来拿到当前Tomcat启动(也就是JVM虚拟机)的所有线程
+     * 拿到之后对比当前 Thread.contextClassLoader 是否就是当前应用的 webappClassLoader, 如果一样, 说明 Thread
+     * 就是当前应用创建出来的线程. 之后 Tomcat 针对 JVM 的线程, Timer线程, JDK线程池 ThreadExecutor中创建的线程等多种类型的线程, 给出其对应的办法
+     */
     @SuppressWarnings("deprecation") // thread.stop()
     private void clearReferencesThreads() {
         Thread[] threads = getThreads();
@@ -1942,6 +1959,11 @@ public class WebappClassLoader extends URLClassLoader
         }
     }
 
+    /**
+     * 参考资料
+     * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076392&idx=1&sn=871d952a75b80eef073127698faf3536&chksm=878f90c6b0f819d0324748e3087f2de0e54fb6823ecbb138479f9aa38c5826585e62cf674784&mpshare=1&scene=23&srcid=0615MemRBS2YodaqKAZaXcjY#rd
+     *
+     */
     private void checkThreadLocalsForLeaks() {
         Thread[] threads = getThreads();
 

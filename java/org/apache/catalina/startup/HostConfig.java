@@ -75,6 +75,8 @@ import org.apache.tomcat.util.res.StringManager;
  *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
+ *
+ * HostConfig是虚拟主机的管理器, 它能监控当前虚拟机下的所有运用的状态, 和引用中的资源情况
  */
 public class HostConfig
     implements LifecycleListener {
@@ -280,7 +282,7 @@ public class HostConfig
         }
 
         // Process the event that has occurred
-        if (event.getType().equals(Lifecycle.PERIODIC_EVENT)) {
+        if (event.getType().equals(Lifecycle.PERIODIC_EVENT)) {         // 周期性检测是否需要重新部署
             check();
         } else if (event.getType().equals(Lifecycle.START_EVENT)) {
             start();
@@ -385,15 +387,20 @@ public class HostConfig
     }
 
 
+
     /**
      * Deploy applications for any directories or WAR files that are found
      * in our "application root" directory.
+     *
+     * 参考资料
+     * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076396&idx=1&sn=8c7ce376de234b62a2233e2a7d96a1ec&chksm=878f90c2b0f819d42e8ba97b0c482966ae335b5c1b36f86699c83566051347cd7e0ae4ed3722&mpshare=1&scene=23&srcid=06159MdJ2nsbIzs8579w234k#rd
+     *
      */
     protected void deployApps() {
 
         File appBase = host.getAppBaseFile();
         File configBase = host.getConfigBaseFile();
-        String[] filteredAppPaths = filterAppPaths(appBase.list());
+        String[] filteredAppPaths = filterAppPaths(appBase.list());         // 找出一个待部署额列表
         // Deploy XML descriptors from configBase
         deployDescriptors(configBase, configBase.list());
         // Deploy WARs
@@ -418,6 +425,7 @@ public class HostConfig
             return unfilteredAppPaths;
         }
 
+        // 进行正则匹配
         List<String> filteredList = new ArrayList<>();
         Matcher matcher = null;
         for (String appPath : unfilteredAppPaths) {
@@ -531,7 +539,7 @@ public class HostConfig
 
         try (FileInputStream fis = new FileInputStream(contextXml)) {
             synchronized (digesterLock) {
-                try {
+                try {                   // 通过 Digest 读取 context.xml
                     context = (Context) digester.parse(fis);
                 } catch (Exception e) {
                     log.error(sm.getString(
@@ -544,7 +552,7 @@ public class HostConfig
                     digester.reset();
                 }
             }
-
+            // 实例化 StandardContext
             Class<?> clazz = Class.forName(host.getConfigClass());
             LifecycleListener listener =
                 (LifecycleListener) clazz.newInstance();
@@ -563,7 +571,7 @@ public class HostConfig
                 // If external docBase, register .xml as redeploy first
                 if (!docBase.getCanonicalPath().startsWith(
                         host.getAppBaseFile().getAbsolutePath() + File.separator)) {
-                    isExternal = true;
+                    isExternal = true;          // 将 context.xml 加入到 redeployResources 监视列表中
                     deployedApp.redeployResources.put(
                             contextXml.getAbsolutePath(),
                             Long.valueOf(contextXml.lastModified()));
@@ -579,7 +587,7 @@ public class HostConfig
                     context.setDocBase(null);
                 }
             }
-
+            // 部署
             host.addChild(context);
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
@@ -637,6 +645,7 @@ public class HostConfig
                 }
                 // Add the context XML to the list of files which should trigger a redeployment
                 if (!isExternal) {
+                    // 部署 context.xml 里面的内容
                     deployedApp.redeployResources.put(
                             contextXml.getAbsolutePath(),
                             Long.valueOf(contextXml.lastModified()));
@@ -1146,10 +1155,13 @@ public class HostConfig
 
             // Fake re-deploy resource to detect if a WAR is added at a later
             // point
+            // 解压 xxx.war 压缩文件
             deployedApp.redeployResources.put(dir.getAbsolutePath() + ".war",
                     Long.valueOf(0));
+            // 解压后的文件目录
             deployedApp.redeployResources.put(dir.getAbsolutePath(),
                     Long.valueOf(dir.lastModified()));
+            // MATA-INF/context.xml (部署之后就拷贝到了 conf/localhost/xxx/context.xml)
             if (deployXML && xml.exists()) {
                 if (copyThisXml) {
                     deployedApp.redeployResources.put(
@@ -1180,6 +1192,8 @@ public class HostConfig
             addWatchedResources(deployedApp, dir.getAbsolutePath(), context);
             // Add the global redeploy resources (which are never deleted) at
             // the end so they don't interfere with the deletion process
+            // 全局的 context.xml.default
+            // 全局的 catalinaBase/conf/context.xml
             addGlobalRedeployResources(deployedApp);
         }
 
@@ -1204,6 +1218,7 @@ public class HostConfig
      * @param docBase web app docBase
      * @param context web application context
      */
+    // 获取当前应用中所有需要 watch 的监视资源
     protected void addWatchedResources(DeployedApplication app, String docBase,
             Context context) {
         // FIXME: Feature idea. Add support for patterns (ex: WEB-INF/*,
@@ -1261,18 +1276,18 @@ public class HostConfig
      * Check resources for redeployment and reloading.
      */
     protected synchronized void checkResources(DeployedApplication app) {
-        String[] resources =
+        String[] resources =    // 获得该应用所有的需要件事的东西
             app.redeployResources.keySet().toArray(new String[0]);
         for (int i = 0; i < resources.length; i++) {
             File resource = new File(resources[i]);
             if (log.isDebugEnabled())
                 log.debug("Checking context[" + app.name +
                         "] redeploy resource " + resource);
-            long lastModified =
+            long lastModified =         // 查看监视的文件的 lastModified
                     app.redeployResources.get(resources[i]).longValue();
             if (resource.exists() || lastModified == 0) {
                 if (resource.lastModified() > lastModified) {
-                    if (resource.isDirectory()) {
+                    if (resource.isDirectory()) {                           // 更新目录部署的文件夹的 lastModified
                         // No action required for modified directory
                         app.redeployResources.put(resources[i],
                                 Long.valueOf(resource.lastModified()));
@@ -1300,7 +1315,7 @@ public class HostConfig
                         }
                         reload(app);
                         // Update times
-                        app.redeployResources.put(resources[i],
+                        app.redeployResources.put(resources[i],                 // 更新 war 包监视资源的lastModified
                                 Long.valueOf(resource.lastModified()));
                         app.timestamp = System.currentTimeMillis();
                         if (unpackWARs) {
@@ -1313,15 +1328,15 @@ public class HostConfig
                         // Everything else triggers a redeploy
                         // (just need to undeploy here, deploy will follow)
                         deleteRedeployResources(app, resources, i, false);
-                        undeploy(app);
+                        undeploy(app);  // 如果 context.xml 修改了, 那就达到冲部署条件, 先卸载再部署
                         return;
                     }
                 }
-            } else {
+            } else {    // 如果目标监视资源不存在
                 // There is a chance the the resource was only missing
                 // temporarily eg renamed during a text editor save
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(500);              // 等 5 秒看看, 有可能被一下系统编辑器重命名了
                 } catch (InterruptedException e1) {
                     // Ignore
                 }
@@ -1333,7 +1348,7 @@ public class HostConfig
                     continue;
                 }
                 // Undeploy application
-                undeploy(app);
+                undeploy(app);                  // 如果还没有目标监视资源, 那就是被删除, 这里直接进行卸载
                 deleteRedeployResources(app, resources, i, true);
                 return;
             }
@@ -1496,8 +1511,8 @@ public class HostConfig
             host.setDeployOnStartup(false);
             host.setAutoDeploy(false);
         }
-
-        if (host.getDeployOnStartup())                                                  // 初始化进行部署
+        // 若下面的属性是 true, 则调用 deployApps, 也就是部署 webapps 下面的应用
+        if (host.getDeployOnStartup())                                                  // 容器启动时, 初始化进行部署
             deployApps();
 
     }
@@ -1525,20 +1540,21 @@ public class HostConfig
     /**
      * Check status of all webapps.
      */
+    // Tomcat 会周期性的出发 check 方法
     protected void check() {
         // 当应用卸载的时候, 是否要将其老版本也卸载掉
-        if (host.getAutoDeploy()) {                                         // tomcat 自动部署开关
+        if (host.getAutoDeploy()) {                                         // 检测 tomcat 是否是 自动部署
             // Check for resources modification to trigger redeployment
             DeployedApplication[] apps =
                 deployed.values().toArray(new DeployedApplication[0]);
             for (int i = 0; i < apps.length; i++) {
                 if (!isServiced(apps[i].name))
-                    checkResources(apps[i]);
+                    checkResources(apps[i]);                                // 找出需要操作的资源 是否发生变化
             }
 
             // Check for old versions of applications that can now be undeployed
             if (host.getUndeployOldVersions()) {
-                checkUndeploy();
+                checkUndeploy();                                            // 针对这些资源进行重新部署
             }
 
             // Hotdeploy applications
@@ -1704,6 +1720,9 @@ public class HostConfig
          * contain resources like the context.xml file, a compressed WAR path.
          * The value is the last modification time.
          */
+        // 监测的待重部署的包
+        // redeployResources 是被监测的对象, 该对象一旦发生变化, checkResource方法就
+                // 开始进行工作, 如果监测的部署包没了, 那么直接 undeploy, 如果发生了变化, 发起重部署的流程
         public final LinkedHashMap<String, Long> redeployResources =
                 new LinkedHashMap<>();
 
@@ -1714,6 +1733,7 @@ public class HostConfig
          * additional descriptors.
          * The value is the last modification time.
          */
+        // 待 reload 的资源
         public final HashMap<String, Long> reloadResources = new HashMap<>();
 
         /**

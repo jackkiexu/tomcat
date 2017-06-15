@@ -135,6 +135,9 @@ import org.apache.tomcat.util.scan.StandardJarScanner;
  * child container must be a Wrapper implementation to process the
  * requests directed to a particular servlet.
  *
+ * 参考资料
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076393&idx=1&sn=39a7c386d454fdb71944acc22f7cde3c&chksm=878f90c7b0f819d1fc6fdc1f1371bfe6f390a910f18c2fe084be5fbe5c11ea86bde399b08d3e&mpshare=1&scene=23&srcid=0615yhxnimi3oLcjbibZgqJD#rd
+ *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
  */
@@ -3736,6 +3739,9 @@ public class StandardContext extends ContainerBase
                     getName()));
 
         // Stop accepting requests temporarily.
+        // 让请求暂停, 当 context 调用 reload 方法, 请求链路中不能继续向下执行了,
+        // 因为当前应用的状态已经发生改变, 例如可能很多 wrapper 类消失,
+        // 让请求停止, 通过一个标识, 在 CoyoteAdapter的 postParseRequest 方法中, 当看到请求的应用处于暂停的时候, 就休息1秒
         setPaused(true);
 
         try {
@@ -4931,7 +4937,7 @@ public class StandardContext extends ContainerBase
             log.debug("Starting " + getBaseName());
 
         // Send j2ee.state.starting notification
-        if (this.getObjectName() != null) {
+        if (this.getObjectName() != null) {     // 发送 JMX 通知
             Notification notification = new Notification("j2ee.state.starting",
                     this.getObjectName(), sequenceNumber.getAndIncrement());
             broadcaster.sendNotification(notification);
@@ -4943,7 +4949,7 @@ public class StandardContext extends ContainerBase
         // Currently this is effectively a NO-OP but needs to be called to
         // ensure the NamingResources follows the correct lifecycle
         if (namingResources != null) {
-            namingResources.start();
+            namingResources.start();        // 开启 JMDI 树, 要调用后端的资源,
         }
 
         // Add missing components as necessary
@@ -4951,7 +4957,7 @@ public class StandardContext extends ContainerBase
             if (log.isDebugEnabled())
                 log.debug("Configuring default Resources");
 
-            try {
+            try {       // 设置 resource 静态资源查找 root
                 setResources(new StandardRoot(this));
             } catch (IllegalArgumentException e) {
                 log.error("Error initializing resources: " + e.getMessage());
@@ -4959,20 +4965,20 @@ public class StandardContext extends ContainerBase
             }
         }
         if (ok) {
-            resourcesStart();
+            resourcesStart();       // 启动静态资源查找
         }
 
-        if (getLoader() == null) {
+        if (getLoader() == null) { // WebappLoader 启动
             WebappLoader webappLoader = new WebappLoader(getParentClassLoader());
             webappLoader.setDelegate(getDelegate());
-            setLoader(webappLoader);
+            setLoader(webappLoader);    // 将 delegate 传入到创建的 WebappClassLoader 中
         }
 
         // Initialize character set mapper
-        getCharsetMapper();
+        getCharsetMapper();                 // 开启 CharserMapper
 
         // Post work directory
-        postWorkDirectory();
+        postWorkDirectory();                // work 工作目录整理
 
         // Validate required extensions
         boolean dependencyCheck = true;
@@ -5002,7 +5008,7 @@ public class StandardContext extends ContainerBase
                 ncl.setName(getNamingContextName());
                 ncl.setExceptionOnFailedWrite(getJndiExceptionOnFailedWrite());
                 addLifecycleListener(ncl);
-                setNamingContextListener(ncl);
+                setNamingContextListener(ncl);  // 子树 JNDI 系统启动
             }
         }
 
@@ -5023,6 +5029,8 @@ public class StandardContext extends ContainerBase
 
                 // since the loader just started, the webapp classloader is now
                 // created.
+                // 启动 classLoader
+                // clearReference 准备好
                 setClassLoaderProperty("clearReferencesStatic",
                         getClearReferencesStatic());
                 setClassLoaderProperty("clearReferencesStopThreads",
@@ -5045,17 +5053,17 @@ public class StandardContext extends ContainerBase
                 Cluster cluster = getClusterInternal();
                 if ((cluster != null) && (cluster instanceof Lifecycle))
                     ((Lifecycle) cluster).start();
-                Realm realm = getRealmInternal();
+                Realm realm = getRealmInternal();       // realm 启动
                 if ((realm != null) && (realm instanceof Lifecycle))
                     ((Lifecycle) realm).start();
-
+                                                        //
                 // Notify our interested LifecycleListeners
                 fireLifecycleEvent(Lifecycle.CONFIGURE_START_EVENT, null);
 
                 // Start our child containers, if not already started
                 for (Container child : findChildren()) {
                     if (!child.getState().isAvailable()) {
-                        child.start();
+                        child.start();              // 依次启动 StandardContext 的子组件
                     }
                 }
 
@@ -5064,6 +5072,8 @@ public class StandardContext extends ContainerBase
                 if (pipeline instanceof Lifecycle) {
                     ((Lifecycle) pipeline).start();
                 }
+
+                // 集群的启动
 
                 // Acquire clustered manager
                 Manager contextManager = null;
@@ -5108,13 +5118,13 @@ public class StandardContext extends ContainerBase
             }
 
             // We put the resources into the servlet context
-            if (ok)
+            if (ok)                     // tomcat将 resource_attr 加入到 servlet Context 属性中
                 getServletContext().setAttribute
                     (Globals.RESOURCES_ATTR, getResources());
 
             if (ok ) {
                 if (getInstanceManager() == null) {
-                    javax.naming.Context context = null;
+                    javax.naming.Context context = null;    // 准备实例 Wrapper 的 InstanceMapper
                     if (isUseNaming() && getNamingContextListener() != null) {
                         context = getNamingContextListener().getEnvContext();
                     }
@@ -5137,6 +5147,7 @@ public class StandardContext extends ContainerBase
             mergeParameters();
 
             // Call ServletContainerInitializers
+            // 合并 init 参数
             for (Map.Entry<ServletContainerInitializer, Set<Class<?>>> entry :
                 initializers.entrySet()) {
                 try {
@@ -5145,13 +5156,13 @@ public class StandardContext extends ContainerBase
                 } catch (ServletException e) {
                     log.error(sm.getString("standardContext.sciFail"), e);
                     ok = false;
-                    break;
+                    break;              // servletContainerInitialize 回调函数
                 }
             }
 
             // Configure and call application event listeners
             if (ok) {
-                if (!listenerStart()) {
+                if (!listenerStart()) {     // 启动 Listener
                     log.error( "Error listenerStart");
                     ok = false;
                 }
@@ -5165,7 +5176,7 @@ public class StandardContext extends ContainerBase
             }
 
             try {
-                // Start manager
+                // Start manager Session 管理器启动
                 Manager manager = getManager();
                 if ((manager != null) && (manager instanceof Lifecycle)) {
                     ((Lifecycle) getManager()).start();
@@ -5177,19 +5188,19 @@ public class StandardContext extends ContainerBase
 
             // Configure and call application filters
             if (ok) {
-                if (!filterStart()) {
+                if (!filterStart()) {           // filter 启动
                     log.error("Error filterStart");
                     ok = false;
                 }
             }
 
             // Load and initialize all "load on startup" servlets
-            if (ok) {
+            if (ok) {           // 如果配置了 load onStartUp 的servlet在这里进行启动
                 loadOnStartup(findChildren());
             }
 
             // Start ContainerBackgroundProcessor thread
-            super.threadStart();
+            super.threadStart();// 启动周期后台线程
         } finally {
             // Unbinding thread
             unbindThread(oldCCL);
@@ -5206,7 +5217,7 @@ public class StandardContext extends ContainerBase
         startTime=System.currentTimeMillis();
 
         // Send j2ee.state.running notification
-        if (ok && (this.getObjectName() != null)) {
+        if (ok && (this.getObjectName() != null)) {// 发送 JSR77规范状态
             Notification notification =
                 new Notification("j2ee.state.running", this.getObjectName(),
                                  sequenceNumber.getAndIncrement());
@@ -5214,7 +5225,7 @@ public class StandardContext extends ContainerBase
         }
 
         // Reinitializing if something went wrong
-        if (!ok) {
+        if (!ok) {// 设置状态 OK
             setState(LifecycleState.FAILED);
         } else {
             setState(LifecycleState.STARTING);
@@ -5339,7 +5350,7 @@ public class StandardContext extends ContainerBase
             broadcaster.sendNotification(notification);
         }
 
-        setState(LifecycleState.STOPPING);
+        setState(LifecycleState.STOPPING);          // 设置 stoping 状态
 
         // Binding thread
         ClassLoader oldCCL = bindThread();
@@ -5349,22 +5360,25 @@ public class StandardContext extends ContainerBase
             final Container[] children = findChildren();
 
             // Stop ContainerBackgroundProcessor thread
+            // 停止 backgroundProcessor 线程, 该线程就是容器组件的周期性线程时间, 用于 reload....
             threadStop();
-
+            // 停止 StandardContext 下面所有子容器
             for (int i = 0; i < children.length; i++) {
                 children[i].stop();
             }
 
             // Stop our filters
+            // 停止 filter
             filterStop();
 
             Manager manager = getManager();
             if (manager != null && manager instanceof Lifecycle &&
                     ((Lifecycle) manager).getState().isAvailable()) {
-                ((Lifecycle) manager).stop();
+                ((Lifecycle) manager).stop();   // 停止该运用的 Session 管理器
             }
 
             // Stop our application listeners
+            // 停止 listener
             listenerStop();
 
             // Finalize our character set mapper
@@ -5379,7 +5393,7 @@ public class StandardContext extends ContainerBase
             // does a JNDI lookup to retrieve the resource. This needs to be
             // after the application has finished with the resource
             if (namingResources != null) {
-                namingResources.stop();
+                namingResources.stop(); // 当前应用的 JNDI 树停止服务
             }
 
             fireLifecycleEvent(Lifecycle.CONFIGURE_STOP_EVENT, null);
@@ -5387,16 +5401,16 @@ public class StandardContext extends ContainerBase
             // Stop the Valves in our pipeline (including the basic), if any
             if (pipeline instanceof Lifecycle &&
                     ((Lifecycle) pipeline).getState().isAvailable()) {
-                ((Lifecycle) pipeline).stop();
+                ((Lifecycle) pipeline).stop();      // 关闭所有 valve
             }
 
             // Clear all application-originated servlet context attributes
             if (context != null)
-                context.clearAttributes();
+                context.clearAttributes();      // 清除 StandardContext 属性
 
             Realm realm = getRealmInternal();
             if ((realm != null) && (realm instanceof Lifecycle)) {
-                ((Lifecycle) realm).stop();
+                ((Lifecycle) realm).stop();         // 关闭 realm
             }
             Cluster cluster = getClusterInternal();
             if ((cluster != null) && (cluster instanceof Lifecycle)) {
@@ -5404,7 +5418,7 @@ public class StandardContext extends ContainerBase
             }
             Loader loader = getLoader();
             if ((loader != null) && (loader instanceof Lifecycle)) {
-                ((Lifecycle) loader).stop();
+                ((Lifecycle) loader).stop();        // webapploader 关闭
             }
 
             // Stop resources
@@ -5430,7 +5444,7 @@ public class StandardContext extends ContainerBase
 
         // This object will no longer be visible or used.
         try {
-            resetContext();
+            resetContext();         // 重置一些变量
         } catch( Exception ex ) {
             log.error( "Error reseting context " + this + " " + ex, ex );
         }
