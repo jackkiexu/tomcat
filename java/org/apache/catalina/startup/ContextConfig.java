@@ -685,7 +685,7 @@ public class ContextConfig implements LifecycleListener {
             docBase = cn.getBaseName();
 
             if (originalDocBase.toLowerCase(Locale.ENGLISH).endsWith(".war")) {
-                antiLockingDocBase = new File(
+                antiLockingDocBase = new File(          // 拷贝到临时目录中
                         System.getProperty("java.io.tmpdir"),
                         deploymentCount++ + "-" + docBase + ".war");
             } else {
@@ -704,6 +704,7 @@ public class ContextConfig implements LifecycleListener {
             // Cleanup just in case an old deployment is lying around
             ExpandWar.delete(antiLockingDocBase);
             if (ExpandWar.copy(docBaseFile, antiLockingDocBase)) {
+                // 清除上一次的 antiLockingDocBase 的临时文件
                 context.setDocBase(antiLockingDocBase.getPath());
             }
         }
@@ -738,7 +739,7 @@ public class ContextConfig implements LifecycleListener {
     protected synchronized void beforeStart() {
 
         try {
-            fixDocBase();
+            fixDocBase();                       // 确定 docbase 相对目录
         } catch (IOException e) {
             log.error(sm.getString(
                     "contextConfig.fixDocBase", context.getName()), e);
@@ -1238,7 +1239,7 @@ public class ContextConfig implements LifecycleListener {
         // Everything else in order
         context.setEffectiveMajorVersion(webxml.getMajorVersion());
         context.setEffectiveMinorVersion(webxml.getMinorVersion());
-
+        // web.xml 中定义的 context 参数
         for (Entry<String, String> entry : webxml.getContextParams().entrySet()) {
             context.addParameter(entry.getKey(), entry.getValue());
         }

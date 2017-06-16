@@ -1509,7 +1509,7 @@ public class WebappClassLoader extends URLClassLoader
         java.beans.Introspector.flushCaches();      // 清空缓存
 
         // Clear any custom URLStreamHandlers
-        TomcatURLStreamHandlerFactory.release(this);
+        TomcatURLStreamHandlerFactory.release(this); // URL 句柄释放
     }
 
 
@@ -1722,6 +1722,10 @@ public class WebappClassLoader extends URLClassLoader
      */
     @SuppressWarnings("deprecation") // thread.stop()
     private void clearReferencesThreads() {
+        /**
+         * getThread返回是一个 JVM 实例中的所有的线程, 而我们需要处理
+         * 线程, 而我们需要处理的线程是ClassLoader上下文和该WebApp一致, 则处理
+         */
         Thread[] threads = getThreads();
         List<Thread> executorThreadsToStop = new ArrayList<>();
 
@@ -1736,10 +1740,16 @@ public class WebappClassLoader extends URLClassLoader
                     }
 
                     // JVM controlled threads
+                    // 对于 JVM 线程 保留
                     ThreadGroup tg = thread.getThreadGroup();
                     if (tg != null &&
                             JVM_THREAD_GROUP_NAMES.contains(tg.getName())) {
-
+                        /**
+                         * 对于 keeperalive的Timer线程, 应该由
+                         * keeperalive自己的心跳自己结束, 不应该在
+                         * 这里强制关掉, 因此这里讲该 Thread 交给
+                         * 其 classloader的上级, 让其自动扫描后关掉
+                         */
                         // HttpClient keep-alive threads
                         if (clearReferencesHttpClientKeepAliveThread &&
                                 thread.getName().equals("Keep-Alive-Timer")) {
@@ -1753,6 +1763,7 @@ public class WebappClassLoader extends URLClassLoader
                     }
 
                     // Skip threads that have already died
+                    // 看看线程是否还存活
                     if (!thread.isAlive()) {
                         continue;
                     }
@@ -1763,10 +1774,10 @@ public class WebappClassLoader extends URLClassLoader
                     if (thread.getClass().getName().startsWith("java.util.Timer") &&
                             clearReferencesStopTimerThreads) {
                         clearReferencesStopTimerThread(thread);
-                        continue;
+                        continue;                   // 检测是 Timer 线程的话直接关闭
                     }
 
-                    if (isRequestThread(thread)) {
+                    if (isRequestThread(thread)) {  // 检测是请求线程的话保持不动
                         log.error(sm.getString("webappClassLoader.warnRequestThread",
                                 getContextName(), thread.getName()));
                     } else {
@@ -1776,6 +1787,7 @@ public class WebappClassLoader extends URLClassLoader
 
                     // Don't try an stop the threads unless explicitly
                     // configured to do so
+                    // 设置 clearReferencesStopThreads = false 直接 continue
                     if (!clearReferencesStopThreads) {
                         continue;
                     }
@@ -1840,6 +1852,7 @@ public class WebappClassLoader extends URLClassLoader
                         // Executor may take a short time to stop all the
                         // threads. Make a note of threads that should be
                         // stopped and check them at the end of the method.
+                        // 如果是 ThreadPoolExecutor 创建, 则直接加入到其 stop 队列
                         executorThreadsToStop.add(thread);
                     } else {
                         // This method is deprecated and for good reason. This
@@ -1873,7 +1886,7 @@ public class WebappClassLoader extends URLClassLoader
                 // very risky code but is the only option at this point.
                 // A *very* good reason for apps to do this clean-up
                 // themselves.
-                t.stop();
+                t.stop();           // 最后执行 stop
             }
         }
     }
@@ -2144,6 +2157,11 @@ public class WebappClassLoader extends URLClassLoader
         ThreadGroup tg = Thread.currentThread().getThreadGroup();
         // Find the root thread group
         try {
+            /**
+             * 首先找出当前的 ThreadGroup, 然后
+             * 不断的向上递归, 知道找到最父的线程组
+             * 这个旧市 JVM 的根线程组
+             */
             while (tg.getParent() != null) {
                 tg = tg.getParent();
             }
@@ -2157,6 +2175,7 @@ public class WebappClassLoader extends URLClassLoader
             }
         }
 
+        // 然后 搞一个Thread集合返回, 因为不知道究竟有多少的线程
         int threadCountGuess = tg.activeCount() + 50;
         Thread[] threads = new Thread[threadCountGuess];
         int threadCountActual = tg.enumerate(threads);

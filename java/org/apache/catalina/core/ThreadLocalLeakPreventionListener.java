@@ -93,7 +93,7 @@ public class ThreadLocalLeakPreventionListener implements LifecycleListener,
 
             if (Lifecycle.AFTER_STOP_EVENT.equals(event.getType()) &&
                     lifecycle instanceof Context) {
-                stopIdleThreads((Context) lifecycle);
+                stopIdleThreads((Context) lifecycle);           // 停止线程池中的线程
             }
         } catch (Exception e) {
             String msg =
@@ -195,7 +195,7 @@ public class ThreadLocalLeakPreventionListener implements LifecycleListener,
         if (serverStopping) return;
 
         if (context instanceof StandardContext &&
-            !((StandardContext) context).getRenewThreadsWhenStoppingContext()) {
+            !((StandardContext) context).getRenewThreadsWhenStoppingContext()) {            // 判断是否配置 renewThreadsWhenStoppingContext 属性
             log.debug("Not renewing threads when the context is stopping, "
                 + "it is configured not to do it.");
             return;
@@ -215,11 +215,11 @@ public class ThreadLocalLeakPreventionListener implements LifecycleListener,
                 if (executor instanceof ThreadPoolExecutor) {
                     ThreadPoolExecutor threadPoolExecutor =
                         (ThreadPoolExecutor) executor;
-                    threadPoolExecutor.contextStopping();
+                    threadPoolExecutor.contextStopping();       // 停止
                 } else if (executor instanceof StandardThreadExecutor) {
                     StandardThreadExecutor stdThreadExecutor =
                         (StandardThreadExecutor) executor;
-                    stdThreadExecutor.contextStopping();
+                    stdThreadExecutor.contextStopping();        // 停止
                 }
 
             }

@@ -137,6 +137,8 @@ import org.apache.tomcat.util.scan.StandardJarScanner;
  *
  * 参考资料
  * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076393&idx=1&sn=39a7c386d454fdb71944acc22f7cde3c&chksm=878f90c7b0f819d1fc6fdc1f1371bfe6f390a910f18c2fe084be5fbe5c11ea86bde399b08d3e&mpshare=1&scene=23&srcid=0615yhxnimi3oLcjbibZgqJD#rd
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076360&idx=1&sn=0ba3e94e1ac39b583de09affff5d1dee&chksm=878f90e6b0f819f003b42506dc1f8d3f4edac186dc3e533d135bb567955c369fce0602de7790&mpshare=1&scene=23&srcid=0616bcQXZ7LEMbcDRn15KxJr#rd
+ *
  *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
@@ -263,6 +265,7 @@ public class StandardContext extends ContainerBase
     /**
      * The set of application parameters defined for this application.
      */
+    // server.xml 中 context 元素定义
     private ApplicationParameter applicationParameters[] =
         new ApplicationParameter[0];
 
@@ -503,6 +506,9 @@ public class StandardContext extends ContainerBase
 
     /**
      * Context level override for default {@link StandardHost#isCopyXML()}.
+     * Set to true if you want a context XML descriptor embedded inside the application
+     * (locate at /META-INF/context.xml) to be copied to the owing Host's xmlBase when the application
+     * is deployed
      */
     private boolean copyXML = false;
 
@@ -4842,12 +4848,12 @@ public class StandardContext extends ContainerBase
         if (!resources.getState().isAvailable()) {
             resources.start();
         }
-
+        // servlet 规范 > 3                  开关开启
         if (effectiveMajorVersion >=3 && addWebinfClassesResources) {
             WebResource webinfClassesResource = resources.getResource(
                     "/WEB-INF/classes/META-INF/resources");
             if (webinfClassesResource.isDirectory()) {
-                getResources().createWebResourceSet(
+                getResources().createWebResourceSet(        // 将 Websource 添加资源
                         WebResourceRoot.ResourceSetType.RESOURCE_JAR, "/",
                         webinfClassesResource.getURL(), "/");
             }

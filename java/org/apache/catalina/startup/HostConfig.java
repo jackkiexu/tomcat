@@ -899,7 +899,7 @@ public class HostConfig
                 entry = null;
                 try {
                     jar = new JarFile(war);
-                    entry =
+                    entry = // 进行拷贝
                         jar.getJarEntry(Constants.ApplicationContextXml);
                     istream = jar.getInputStream(entry);
 
@@ -1666,6 +1666,7 @@ public class HostConfig
         host.addChild(context);
         // Add the eventual unpacked WAR and all the resources which will be
         // watched inside it
+        // uppack war 文件, 解压后的文件加入 WatchedResources, 一旦这些资源变化, 就会触发 reload
         if (isWar && unpackWARs) {
             File docBase = new File(host.getAppBaseFile(), context.getBaseName());
             deployedApp.redeployResources.put(docBase.getAbsolutePath(),

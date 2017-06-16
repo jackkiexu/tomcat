@@ -1411,6 +1411,11 @@ public class StandardWrapper extends ContainerBase
                                           countAllocated.toString(),
                                           getName()));
                 }
+                /**
+                 * 休息过后再执行 Servlet实例的移除
+                 * 这样也是为了让很多正在请求的线程, 提供一个让其执行完毕
+                 * 的缓冲的机会
+                 */
                 try {
                     Thread.sleep(delay);
                 } catch (InterruptedException e) {
