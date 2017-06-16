@@ -197,7 +197,7 @@ public class ThreadPoolExecutor extends java.util.concurrent.ThreadPoolExecutor 
         this.lastContextStoppedTime.set(System.currentTimeMillis());
 
         // save the current pool parameters to restore them later
-        int savedCorePoolSize = this.getCorePoolSize();
+        int savedCorePoolSize = this.getCorePoolSize();                 // 记录一下当前的线程数
         TaskQueue taskQueue =
                 getQueue() instanceof TaskQueue ? (TaskQueue) getQueue() : null;
         if (taskQueue != null) {
@@ -209,7 +209,7 @@ public class ThreadPoolExecutor extends java.util.concurrent.ThreadPoolExecutor 
         }
 
         // setCorePoolSize(0) wakes idle threads
-        this.setCorePoolSize(0);
+        this.setCorePoolSize(0);                                        // 干掉核心线程数, 让其减少为 0 (看 ThreadPoolExecutor里面的代码)
 
         // wait a little so that idle threads wake and poll the queue again,
         // this time always with a timeout (queue.poll() instead of
@@ -228,6 +228,8 @@ public class ThreadPoolExecutor extends java.util.concurrent.ThreadPoolExecutor 
             // ok, restore the state of the queue and pool
             taskQueue.setForcedRemainingCapacity(null);
         }
+        // 再设置回来, 这样虽然线程数没有变, 但
+        // 是线程池中的线程都是新的
         this.setCorePoolSize(savedCorePoolSize);
     }
 

@@ -190,7 +190,7 @@ public class ApplicationSessionCookieConfig implements SessionCookieConfig {
         if (scc.isSecure() || secure) {
             cookie.setSecure(true);
         }
-
+        // 在 response 中写入 httponly的标志位, 那么在浏览器中的 document 对象就拿不到cookie了
         // Always set httpOnly if the context is configured for that
         if (scc.isHttpOnly() || context.getUseHttpOnly()) {
             cookie.setHttpOnly(true);

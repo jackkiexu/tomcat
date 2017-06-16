@@ -735,11 +735,11 @@ public class WebappClassLoader extends URLClassLoader
 
         if (log.isDebugEnabled())
             log.debug("modified()");
-
+                                                        // 除了 classes, 还包括 web.xml
         for (Entry<String,ResourceEntry> entry : resourceEntries.entrySet()) {
             long cachedLastModified = entry.getValue().lastModified;
             long lastModified = resources.getClassLoaderResource(
-                    entry.getKey()).getLastModified();
+                    entry.getKey()).getLastModified(); // 对比 file 的 lastModified的属性
             if (lastModified != cachedLastModified) {
                 if( log.isDebugEnabled() )
                     log.debug(sm.getString("webappClassLoader.resourceModified",
@@ -1227,10 +1227,10 @@ public class WebappClassLoader extends URLClassLoader
             }
         }
 
-        boolean delegateLoad = delegate || filter(name);
+        boolean delegateLoad = delegate || filter(name);                    // 读取 delegate 的配置信息
 
         // (1) Delegate to our parent if requested
-        if (delegateLoad) {
+        if (delegateLoad) {                                                   // 若 delegate 开启, 优先使用 parent classloader( delegate 默认是 false)
             if (log.isDebugEnabled())
                 log.debug("  Delegating to parent classloader1 " + parent);
             try {
@@ -1251,7 +1251,7 @@ public class WebappClassLoader extends URLClassLoader
         if (log.isDebugEnabled())
             log.debug("  Searching local repositories");
         try {
-            clazz = findClass(name);
+            clazz = findClass(name);                                        // 使用当前的 WebappClassLoader 加载
             if (clazz != null) {
                 if (log.isDebugEnabled())
                     log.debug("  Loading class from local repository");
@@ -1264,7 +1264,7 @@ public class WebappClassLoader extends URLClassLoader
         }
 
         // (3) Delegate to parent unconditionally
-        if (!delegateLoad) {
+        if (!delegateLoad) {                                                //这是在 delegate = false 时, 在本 classLoader 上进行加载后, 再进行操作这里
             if (log.isDebugEnabled())
                 log.debug("  Delegating to parent classloader at end: " + parent);
             try {
@@ -1443,7 +1443,7 @@ public class WebappClassLoader extends URLClassLoader
 
         // Clearing references should be done before setting started to
         // false, due to possible side effects
-        clearReferences();
+        clearReferences();              // 清除各种资源
 
         started = false;
 
@@ -1465,33 +1465,36 @@ public class WebappClassLoader extends URLClassLoader
     // ------------------------------------------------------ Protected Methods
 
     /**
+     * 参考资料
+     * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076392&idx=1&sn=871d952a75b80eef073127698faf3536&chksm=878f90c6b0f819d0324748e3087f2de0e54fb6823ecbb138479f9aa38c5826585e62cf674784&mpshare=1&scene=23&srcid=0615MemRBS2YodaqKAZaXcjY#rd
+     *
      * Clear references.
      */
     protected void clearReferences() {
 
         // De-register any remaining JDBC drivers
-        clearReferencesJdbc();
+        clearReferencesJdbc();                      // 清除应用链接的数据源
 
         // Stop any threads the web application started
-        clearReferencesThreads();
+        clearReferencesThreads();                   // 清除应用启动的线程
 
         // Check for leaks triggered by ThreadLocals loaded by this class loader
-        checkThreadLocalsForLeaks();
+        checkThreadLocalsForLeaks();                // 清除 ThreadLocal 缓存
 
         // Clear RMI Targets loaded by this class loader
-        clearReferencesRmiTargets();
+        clearReferencesRmiTargets();                // 清除 rmiTarget
 
         // Null out any static or final fields from loaded classes,
         // as a workaround for apparent garbage collection bugs
         if (clearReferencesStatic) {
-            clearReferencesStaticFinal();
+            clearReferencesStaticFinal();           // 静态资源清空
         }
 
          // Clear the IntrospectionUtils cache.
-        IntrospectionUtils.clear();
+        IntrospectionUtils.clear();                 // 反射资源清空
 
         // Clear the classloader reference in common-logging
-        if (clearReferencesLogFactoryRelease) {
+        if (clearReferencesLogFactoryRelease) { // 日志工厂释放
             org.apache.juli.logging.LogFactory.release(this);
         }
 
@@ -1500,13 +1503,13 @@ public class WebappClassLoader extends URLClassLoader
         // it has caused leaks. Oddly, using the leak detection code in
         // standard host allows the class loader to be GC'd. This has been seen
         // on Sun but not IBM JREs. Maybe a bug in Sun's GC impl?
-        clearReferencesResourceBundles();
+        clearReferencesResourceBundles();           // 资源绑定解除
 
         // Clear the classloader reference in the VM's bean introspector
-        java.beans.Introspector.flushCaches();
+        java.beans.Introspector.flushCaches();      // 清空缓存
 
         // Clear any custom URLStreamHandlers
-        TomcatURLStreamHandlerFactory.release(this);
+        TomcatURLStreamHandlerFactory.release(this); // URL 句柄释放
     }
 
 
@@ -1578,6 +1581,10 @@ public class WebappClassLoader extends URLClassLoader
     }
 
 
+    /**
+     * 参考资料
+     * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076392&idx=1&sn=871d952a75b80eef073127698faf3536&chksm=878f90c6b0f819d0324748e3087f2de0e54fb6823ecbb138479f9aa38c5826585e62cf674784&mpshare=1&scene=23&srcid=0615MemRBS2YodaqKAZaXcjY#rd
+     */
     private final void clearReferencesStaticFinal() {
 
         Collection<ResourceEntry> values = resourceEntries.values();
@@ -1703,8 +1710,22 @@ public class WebappClassLoader extends URLClassLoader
     }
 
 
+    /**
+     * 参考资料
+     * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076392&idx=1&sn=871d952a75b80eef073127698faf3536&chksm=878f90c6b0f819d0324748e3087f2de0e54fb6823ecbb138479f9aa38c5826585e62cf674784&mpshare=1&scene=23&srcid=0615MemRBS2YodaqKAZaXcjY#rd
+     *
+     * 通过 StandardContext 的几个属性来控制是否 clear掉当前应用创建出来的线程
+     * 主要思路:
+     * 首先通过 当前的ThreadGroup来拿到 ThreadGroup来拿到当前Tomcat启动(也就是JVM虚拟机)的所有线程
+     * 拿到之后对比当前 Thread.contextClassLoader 是否就是当前应用的 webappClassLoader, 如果一样, 说明 Thread
+     * 就是当前应用创建出来的线程. 之后 Tomcat 针对 JVM 的线程, Timer线程, JDK线程池 ThreadExecutor中创建的线程等多种类型的线程, 给出其对应的办法
+     */
     @SuppressWarnings("deprecation") // thread.stop()
     private void clearReferencesThreads() {
+        /**
+         * getThread返回是一个 JVM 实例中的所有的线程, 而我们需要处理
+         * 线程, 而我们需要处理的线程是ClassLoader上下文和该WebApp一致, 则处理
+         */
         Thread[] threads = getThreads();
         List<Thread> executorThreadsToStop = new ArrayList<>();
 
@@ -1719,10 +1740,16 @@ public class WebappClassLoader extends URLClassLoader
                     }
 
                     // JVM controlled threads
+                    // 对于 JVM 线程 保留
                     ThreadGroup tg = thread.getThreadGroup();
                     if (tg != null &&
                             JVM_THREAD_GROUP_NAMES.contains(tg.getName())) {
-
+                        /**
+                         * 对于 keeperalive的Timer线程, 应该由
+                         * keeperalive自己的心跳自己结束, 不应该在
+                         * 这里强制关掉, 因此这里讲该 Thread 交给
+                         * 其 classloader的上级, 让其自动扫描后关掉
+                         */
                         // HttpClient keep-alive threads
                         if (clearReferencesHttpClientKeepAliveThread &&
                                 thread.getName().equals("Keep-Alive-Timer")) {
@@ -1736,6 +1763,7 @@ public class WebappClassLoader extends URLClassLoader
                     }
 
                     // Skip threads that have already died
+                    // 看看线程是否还存活
                     if (!thread.isAlive()) {
                         continue;
                     }
@@ -1746,10 +1774,10 @@ public class WebappClassLoader extends URLClassLoader
                     if (thread.getClass().getName().startsWith("java.util.Timer") &&
                             clearReferencesStopTimerThreads) {
                         clearReferencesStopTimerThread(thread);
-                        continue;
+                        continue;                   // 检测是 Timer 线程的话直接关闭
                     }
 
-                    if (isRequestThread(thread)) {
+                    if (isRequestThread(thread)) {  // 检测是请求线程的话保持不动
                         log.error(sm.getString("webappClassLoader.warnRequestThread",
                                 getContextName(), thread.getName()));
                     } else {
@@ -1759,6 +1787,7 @@ public class WebappClassLoader extends URLClassLoader
 
                     // Don't try an stop the threads unless explicitly
                     // configured to do so
+                    // 设置 clearReferencesStopThreads = false 直接 continue
                     if (!clearReferencesStopThreads) {
                         continue;
                     }
@@ -1823,6 +1852,7 @@ public class WebappClassLoader extends URLClassLoader
                         // Executor may take a short time to stop all the
                         // threads. Make a note of threads that should be
                         // stopped and check them at the end of the method.
+                        // 如果是 ThreadPoolExecutor 创建, 则直接加入到其 stop 队列
                         executorThreadsToStop.add(thread);
                     } else {
                         // This method is deprecated and for good reason. This
@@ -1856,7 +1886,7 @@ public class WebappClassLoader extends URLClassLoader
                 // very risky code but is the only option at this point.
                 // A *very* good reason for apps to do this clean-up
                 // themselves.
-                t.stop();
+                t.stop();           // 最后执行 stop
             }
         }
     }
@@ -1942,6 +1972,11 @@ public class WebappClassLoader extends URLClassLoader
         }
     }
 
+    /**
+     * 参考资料
+     * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076392&idx=1&sn=871d952a75b80eef073127698faf3536&chksm=878f90c6b0f819d0324748e3087f2de0e54fb6823ecbb138479f9aa38c5826585e62cf674784&mpshare=1&scene=23&srcid=0615MemRBS2YodaqKAZaXcjY#rd
+     *
+     */
     private void checkThreadLocalsForLeaks() {
         Thread[] threads = getThreads();
 
@@ -2122,6 +2157,11 @@ public class WebappClassLoader extends URLClassLoader
         ThreadGroup tg = Thread.currentThread().getThreadGroup();
         // Find the root thread group
         try {
+            /**
+             * 首先找出当前的 ThreadGroup, 然后
+             * 不断的向上递归, 知道找到最父的线程组
+             * 这个旧市 JVM 的根线程组
+             */
             while (tg.getParent() != null) {
                 tg = tg.getParent();
             }
@@ -2135,6 +2175,7 @@ public class WebappClassLoader extends URLClassLoader
             }
         }
 
+        // 然后 搞一个Thread集合返回, 因为不知道究竟有多少的线程
         int threadCountGuess = tg.activeCount() + 50;
         Thread[] threads = new Thread[threadCountGuess];
         int threadCountActual = tg.enumerate(threads);

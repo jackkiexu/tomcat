@@ -58,6 +58,9 @@ import org.apache.tomcat.util.res.StringManager;
  * org.apache.catalina.WebResourceRoot.ResourceSetType, String, String, String,
  * String)} represents the absolute path to a file.
  * </p>
+ *
+ * 参考资料
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076399&idx=1&sn=29d53ab5115f8d3e085247315d9ecae9&chksm=878f90c1b0f819d747eed2fbf7606c4302080852d56e20deace3da28a5622d4e1239993fb1db&mpshare=1&scene=23&srcid=0615of2sEuBCwnETcxn9r4F8#rd
  */
 public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot {
 
@@ -67,10 +70,23 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
 
     private Context context;
     private boolean allowLinking = false;
+    // 下面这些集合在应用初始化之后, 被添加到 allResources 中
+    // Resources defined by the PreResource element in the web
+    // application's context.xml, Resources will be searched in the order
+    // they were specified
     private final ArrayList<WebResourceSet> preResources = new ArrayList<>();
+    // The main resources for the web application(The WAR or the directory containing the espanded WAR)
     private WebResourceSet main;
+    //指的是 WEB-INF/classes 下面的类
     private final ArrayList<WebResourceSet> classResources = new ArrayList<>();
+    // Resource JARS as defined by the Servlet specification. JARs will
+    // be searched in the order they were added to the ResourceRoot
+    // 指的是 WEB-INF/lib 下面的jar
     private final ArrayList<WebResourceSet> jarResources = new ArrayList<>();
+    // Resource defined by the PostResource element in the web
+    // application's context.xml. Resources will be searched in the order
+    // they were specified
+    // 这里面的资源是在 <Context> 标签里面
     private final ArrayList<WebResourceSet> postResources = new ArrayList<>();
 
     private final Cache cache = new Cache(this);

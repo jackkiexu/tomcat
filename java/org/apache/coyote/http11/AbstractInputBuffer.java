@@ -109,6 +109,8 @@ public abstract class AbstractInputBuffer<S> implements InputBuffer{
 
     /**
      * Swallow input ? (in the case of an expectation)
+     *
+     * 这个值非常重要, 就是防止单次请求上传的 buffer 大小超过限制
      */
     protected boolean swallowInput;
 
@@ -314,10 +316,13 @@ public abstract class AbstractInputBuffer<S> implements InputBuffer{
      * End request (consumes leftover bytes).
      *
      * @throws IOException an underlying I/O error occurred
+     *
+     * 参考资料
+     * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076358&idx=1&sn=2f7b3f020330e57b4b8188509453e678&chksm=878f90e8b0f819fe7f7f577b23dcb07429a0a45df347cdd16b25bb16d5b94565867d9086edc6&mpshare=1&scene=23&srcid=0616V1viNSDtJcaBYI6rLVLP#rd
      */
     public void endRequest()
         throws IOException {
-
+        // 直接将pos的位置移动，将附件的byte字节不进行解析了
         if (swallowInput && (lastActiveFilter != -1)) {
             int extraBytes = (int) activeFilters[lastActiveFilter].end();
             pos = pos - extraBytes;

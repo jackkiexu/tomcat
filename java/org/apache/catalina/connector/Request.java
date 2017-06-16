@@ -2786,7 +2786,7 @@ public class Request
         // Use the SSL session ID if one is present.
         if (("/".equals(context.getSessionCookiePath())
                 && isRequestedSessionIdFromCookie()) || requestedSessionSSL ) {
-            session = manager.createSession(getRequestedSessionId());
+            session = manager.createSession(getRequestedSessionId());       // 从客户端读取 sessionID
         } else {
             session = manager.createSession(null);
         }

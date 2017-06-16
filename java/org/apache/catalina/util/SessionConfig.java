@@ -30,6 +30,7 @@ public class SessionConfig {
      * context.
      * @param context
      */
+    // 获取 cookie 的默认名称
     public static String getSessionCookieName(Context context) {
 
         String result = getConfiguredSessionCookieName(context);

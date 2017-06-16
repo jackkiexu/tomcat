@@ -211,6 +211,7 @@ public class NamingContextListener
 
         container = event.getLifecycle();
 
+        // 两个级别的 NamingResource
         if (container instanceof Context) {
             namingResources = ((Context) container).getNamingResources();
             logger = log;
@@ -227,11 +228,13 @@ public class NamingContextListener
 
             Hashtable<String, Object> contextEnv = new Hashtable<>();
             try {
+                // 初始化 JNDI 树的根 NamingContext
                 namingContext = new NamingContext(contextEnv, getName());
             } catch (NamingException e) {
                 // Never happens
             }
             ContextAccessController.setSecurityToken(getName(), container);
+            // 绑定到 ContextBindings
             ContextBindings.bindContext(container, namingContext, container);
             if( log.isDebugEnabled() ) {
                 log.debug("Bound " + container );
@@ -242,6 +245,7 @@ public class NamingContextListener
                     getExceptionOnFailedWrite());
 
             // Setting the context in read/write mode
+            // 通过属性控制 JNDI 树是否允许读写
             ContextAccessController.setWritable(getName(), container);
 
             try {
@@ -254,6 +258,8 @@ public class NamingContextListener
             namingResources.addPropertyChangeListener(this);
 
             // Binding the naming context to the class loader
+            // 对两个不同级别进行 NamingResource与Container关联
+            // 并保存在 ContextBuildings中
             if (container instanceof Context) {
                 // Setting the context in read only mode
                 ContextAccessController.setReadOnly(getName());
@@ -342,6 +348,7 @@ public class NamingContextListener
             return;
 
         // Setting the context in read/write mode
+        // 先变成可写
         ContextAccessController.setWritable(getName(), container);
 
         String type = event.getType();
@@ -460,6 +467,7 @@ public class NamingContextListener
         }
 
         // Setting the context in read only mode
+        // 变成只读
         ContextAccessController.setReadOnly(getName());
 
     }
