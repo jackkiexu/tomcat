@@ -32,6 +32,9 @@ import org.apache.naming.ResourceRef;
 /**
  * Object factory for Resources.
  *
+ * 参考
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076379&idx=1&sn=7be4c54a4a136c6742c39b67a00e2671&chksm=878f90f5b0f819e3a67bd6c8c1e5ca9591ca99ac8c42063362948a9f66eb3f66750dbf6039a8&mpshare=1&scene=23&srcid=0616vRNPPLPPiTlDhjsv3bmf#rd
+ *
  * @author Remy Maucherat
  */
 public class ResourceFactory
