@@ -72,6 +72,7 @@ import org.apache.tomcat.util.res.StringManager;
  * 参考资料
  * https://ci.apache.org/projects/tomcat/tomcat8/docs/config/host.html
  * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076425&idx=1&sn=1d29474d3c539990ae6d860ecb04a1de&chksm=878f9127b0f81831b6c679d253ff830818a1ea9824fb80ad8e9a57afd7e5c32e2264c1042671&mpshare=1&scene=23&srcid=0614EJPlk7NGkHROHzOKoy0Q#rd
+ * http://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076402&idx=1&sn=ebf663653bd3980d69ab37b30db0b973&chksm=878f90dcb0f819cafe5d1f0c97dfca41b3b2d8a1d83bc49231e8d7abe2b2777c0199dc4f4520&mpshare=1&scene=23&srcid=06145kqxdqJHkGVHAVq7FKje#rd
  *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
@@ -134,6 +135,7 @@ public class HostConfig
     /**
      * Map of deployed applications.
      */
+    // 如果运用部署上了, 那么会将 DeployedApplication缓存到 deployed 中
     protected final Map<String, DeployedApplication> deployed =
             new ConcurrentHashMap<>();
 
@@ -142,6 +144,7 @@ public class HostConfig
      * List of applications which are being serviced, and shouldn't be
      * deployed/undeployed/redeployed at the moment.
      */
+    // 这里的 serviced来表示该运用正在被部署
     protected final ArrayList<String> serviced = new ArrayList<>();
 
 
@@ -389,6 +392,7 @@ public class HostConfig
      * Deploy applications for any directories or WAR files that are found
      * in our "application root" directory.
      */
+    // tomcat运用的自动部署
     protected void deployApps() {
 
         File appBase = host.getAppBaseFile();
@@ -491,7 +495,7 @@ public class HostConfig
 
                 if (isServiced(cn.getName()) || deploymentExists(cn.getName()))
                     continue;
-
+                // DeployDescriptor 是一个 Runnable
                 results.add(
                         es.submit(new DeployDescriptor(this, cn, contextXml)));
             }
@@ -514,7 +518,7 @@ public class HostConfig
      */
     @SuppressWarnings("null") // context is not null
     protected void deployDescriptor(ContextName cn, File contextXml) {
-
+        // 初始化 DelpoyedApplication 对象
         DeployedApplication deployedApp =
                 new DeployedApplication(cn.getName(), true);
 
@@ -531,7 +535,7 @@ public class HostConfig
 
         try (FileInputStream fis = new FileInputStream(contextXml)) {
             synchronized (digesterLock) {
-                try {
+                try {                       // 解析对应的 context.xml 文件
                     context = (Context) digester.parse(fis);
                 } catch (Exception e) {
                     log.error(sm.getString(
@@ -545,6 +549,7 @@ public class HostConfig
                 }
             }
 
+            // 初始化 StandardContext 对象
             Class<?> clazz = Class.forName(host.getConfigClass());
             LifecycleListener listener =
                 (LifecycleListener) clazz.newInstance();
@@ -579,7 +584,7 @@ public class HostConfig
                     context.setDocBase(null);
                 }
             }
-
+            // 进行最终的部署, 实际上就是将前面解析的 context.xml 的StandardContext放入当前的 Host
             host.addChild(context);
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
@@ -601,6 +606,7 @@ public class HostConfig
 
             // Add the eventual unpacked WAR and all the resources which will be
             // watched inside it
+            // 当部署完, 最后给该 deployedApplication加, 该应用的重部署和 reload 热部署资源
             if (isExternalWar && unpackWARs) {
                 deployedApp.redeployResources.put(expandedDocBase.getAbsolutePath(),
                         Long.valueOf(expandedDocBase.lastModified()));
@@ -648,7 +654,7 @@ public class HostConfig
         }
 
         if (host.findChild(context.getName()) != null) {
-            deployed.put(context.getName(), deployedApp);
+            deployed.put(context.getName(), deployedApp);   // 部署成功, 最终加入到 deployed已部署列表中
         }
     }
 
@@ -676,7 +682,7 @@ public class HostConfig
 
                 ContextName cn = new ContextName(files[i], true);
 
-                if (isServiced(cn.getName())) {
+                if (isServiced(cn.getName())) {         // 来判断运用是否在部署
                     continue;
                 }
                 if (deploymentExists(cn.getName())) {
@@ -778,6 +784,7 @@ public class HostConfig
         JarEntry entry = null;
         try {
             jar = new JarFile(war);
+            // 需要通过 jarFile 获取
             entry = jar.getJarEntry(Constants.ApplicationContextXml);
             if (entry != null) {
                 xmlInWar = true;
@@ -1060,6 +1067,7 @@ public class HostConfig
             log.info(sm.getString("hostConfig.deployDir",
                     dir.getAbsolutePath()));
 
+        // 检查当前应用的目录下 media-inf目录下是否有 context.xml 文件
         Context context = null;
         File xml = new File(dir, Constants.ApplicationContextXml);
         File xmlCopy =
@@ -1069,10 +1077,10 @@ public class HostConfig
         DeployedApplication deployedApp;
         boolean copyThisXml = copyXML;
 
-        try {
+        try {   // 如果支持 context.xml
             if (deployXML && xml.exists()) {
                 synchronized (digesterLock) {
-                    try {
+                    try {                   // 解析 context.xml
                         context = (Context) digester.parse(xml);
                     } catch (Exception e) {
                         log.error(sm.getString(
@@ -1086,7 +1094,8 @@ public class HostConfig
                         digester.reset();
                     }
                 }
-
+                // 如果配置le copyXML属性, 就需要拷贝到 tomcat 的conf/hostxx目录下面去
+                // 以该为止作为部署描述文件的主扫描位置
                 if (copyThisXml == false && context instanceof StandardContext) {
                     // Host is using default value. Context may override it.
                     copyThisXml = ((StandardContext) context).getCopyXML();
@@ -1126,6 +1135,7 @@ public class HostConfig
                 context = (Context) Class.forName(contextClass).newInstance();
             }
 
+            // 根据前面的配置, 初始化 StandardContext
             Class<?> clazz = Class.forName(host.getConfigClass());
             LifecycleListener listener =
                 (LifecycleListener) clazz.newInstance();
@@ -1135,6 +1145,7 @@ public class HostConfig
             context.setPath(cn.getPath());
             context.setWebappVersion(cn.getVersion());
             context.setDocBase(cn.getBaseName());
+            // 加入 hosts 中
             host.addChild(context);
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
@@ -1679,6 +1690,7 @@ public class HostConfig
      * This class represents the state of a deployed application, as well as
      * the monitored resources.
      */
+    // 其实 无论哪一种部署, 都会初始化 DeployedApplication 对象
     protected static class DeployedApplication {
         public DeployedApplication(String name, boolean hasDescriptor) {
             this.name = name;
@@ -1689,13 +1701,13 @@ public class HostConfig
          * Application context path. The assertion is that
          * (host.getChild(name) != null).
          */
-        public final String name;
+        public final String name;               // 运用的路径
 
         /**
          * Does this application have a context.xml descriptor file on the
          * host's configBase?
          */
-        public final boolean hasDescriptor;
+        public final boolean hasDescriptor;     // 运用是否存在 部署描述文件 context.xml
 
         /**
          * Any modification of the specified (static) resources will cause a
@@ -1704,6 +1716,7 @@ public class HostConfig
          * contain resources like the context.xml file, a compressed WAR path.
          * The value is the last modification time.
          */
+        // 当前应用需要重新部署的监控资源
         public final LinkedHashMap<String, Long> redeployResources =
                 new LinkedHashMap<>();
 
@@ -1714,11 +1727,13 @@ public class HostConfig
          * additional descriptors.
          * The value is the last modification time.
          */
+        // 当前应用下需要重新热部署的资源
         public final HashMap<String, Long> reloadResources = new HashMap<>();
 
         /**
          * Instant where the application was last put in service.
          */
+        // 应用部署的时间戳
         public long timestamp = System.currentTimeMillis();
 
         /**
@@ -1745,6 +1760,7 @@ public class HostConfig
 
         @Override
         public void run() {
+            // 最终还是调用 deployDescriptor
             config.deployDescriptor(cn, descriptor);
         }
     }
