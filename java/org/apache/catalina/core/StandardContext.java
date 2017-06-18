@@ -401,6 +401,7 @@ public class StandardContext extends ContainerBase
      * The set of filter definitions for this application, keyed by
      * filter name.
      */
+    // web.xml 中的 filter 和 filter-mapping
     private HashMap<String, FilterDef> filterDefs = new HashMap<>();
 
 
@@ -4573,12 +4574,13 @@ public class StandardContext extends ContainerBase
         boolean ok = true;
         synchronized (filterConfigs) {
             filterConfigs.clear();
-            for (Entry<String,FilterDef> entry : filterDefs.entrySet()) {
+            for (Entry<String,FilterDef> entry : filterDefs.entrySet()) {       //  filterDefs 里面就是 web.xml 里面的 filter 的配置
                 String name = entry.getKey();
                 if (getLogger().isDebugEnabled()) {
                     getLogger().debug(" Starting filter '" + name + "'");
                 }
                 try {
+                    // 根据 filterDefs 创建 ApplicationFilterConfig
                     ApplicationFilterConfig filterConfig =
                             new ApplicationFilterConfig(this, entry.getValue());
                     filterConfigs.put(name, filterConfig);
