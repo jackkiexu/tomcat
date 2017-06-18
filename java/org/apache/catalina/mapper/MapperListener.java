@@ -39,6 +39,8 @@ import org.apache.tomcat.util.res.StringManager;
 /**
  * Mapper listener.
  *
+ * 参考资料
+ * http://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076405&idx=1&sn=01fb0eb30c85744a874aa4894d9a45cf&chksm=878f90dbb0f819cdc8bbb5371f27bb7b835afa8e042bd0df880a05c5649f83ca2031ff34fe4a&mpshare=1&scene=23&srcid=06141Mk3xUVzfDCzh14X2hQx#rd
  * @author Remy Maucherat
  * @author Costin Manolache
  */
@@ -94,17 +96,17 @@ public class MapperListener extends LifecycleMBeanBase
         // Find any components that have already been initialized since the
         // MBean listener won't be notified as those components will have
         // already registered their MBeans
-        findDefaultHost();
+        findDefaultHost();                                  // 获取对应的默认 Host
 
         Engine engine = (Engine) service.getContainer();
-        addListeners(engine);
+        addListeners(engine);                               // 给tomcat后端组件加上 lifecycle事件
 
         Container[] conHosts = engine.findChildren();
         for (Container conHost : conHosts) {
             Host host = (Host) conHost;
             if (!LifecycleState.NEW.equals(host.getState())) {
                 // Registering the host will register the context and wrappers
-                registerHost(host);
+                registerHost(host);                         // 注册现有的 Host和 Wrapper到 Mapper数据结构中
             }
         }
     }
@@ -137,6 +139,7 @@ public class MapperListener extends LifecycleMBeanBase
     @Override
     public void containerEvent(ContainerEvent event) {
 
+        // Host, Context, Wrapper 的添加事件
         if (Container.ADD_CHILD_EVENT.equals(event.getType())) {
             Container child = (Container) event.getData();
             addListeners(child);
@@ -151,19 +154,22 @@ public class MapperListener extends LifecycleMBeanBase
                     registerWrapper((Wrapper) child);
                 }
             }
-        } else if (Container.REMOVE_CHILD_EVENT.equals(event.getType())) {
+        } // Host, Context, Wrapper 的删除事件
+        else if (Container.REMOVE_CHILD_EVENT.equals(event.getType())) {
             Container child = (Container) event.getData();
             removeListeners(child);
             // No need to unregister - life-cycle listener will handle this when
             // the child stops
-        } else if (Host.ADD_ALIAS_EVENT.equals(event.getType())) {
+        }  // Host的别名处理
+        else if (Host.ADD_ALIAS_EVENT.equals(event.getType())) {
             // Handle dynamically adding host aliases
             mapper.addHostAlias(((Host) event.getSource()).getName(),
                     event.getData().toString());
         } else if (Host.REMOVE_ALIAS_EVENT.equals(event.getType())) {
             // Handle dynamically removing host aliases
             mapper.removeHostAlias(event.getData().toString());
-        } else if (Wrapper.ADD_MAPPING_EVENT.equals(event.getType())) {
+        } // wrapper的mapping增加, 实际对应的就是 servlet的servlet-mapping
+        else if (Wrapper.ADD_MAPPING_EVENT.equals(event.getType())) {
             // Handle dynamically adding wrappers
             Wrapper wrapper = (Wrapper) event.getSource();
             Context context = (Context) wrapper.getParent();
@@ -179,7 +185,8 @@ public class MapperListener extends LifecycleMBeanBase
                     && mapping.endsWith("/*"));
             mapper.addWrapper(hostName, contextPath, version, mapping, wrapper,
                     jspWildCard, context.isResourceOnlyServlet(wrapperName));
-        } else if (Wrapper.REMOVE_MAPPING_EVENT.equals(event.getType())) {
+        } // wrapper的mapping减少
+        else if (Wrapper.REMOVE_MAPPING_EVENT.equals(event.getType())) {
             // Handle dynamically removing wrappers
             Wrapper wrapper = (Wrapper) event.getSource();
 
@@ -193,7 +200,8 @@ public class MapperListener extends LifecycleMBeanBase
             String mapping = (String) event.getData();
 
             mapper.removeWrapper(hostName, contextPath, version, mapping);
-        } else if (Context.ADD_WELCOME_FILE_EVENT.equals(event.getType())) {
+        } // welcome 文件的增删清空
+        else if (Context.ADD_WELCOME_FILE_EVENT.equals(event.getType())) {
             // Handle dynamically adding welcome files
             Context context = (Context) event.getSource();
 
@@ -242,10 +250,10 @@ public class MapperListener extends LifecycleMBeanBase
 
     // ------------------------------------------------------ Protected Methods
     // 参考 https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076429&idx=1&sn=ee98c998f6dfe4ddd75254585eabf6f9&chksm=878f9123b0f81835790a2180be6bed47f794034f06a94f2c544581f60e0bdf388f231760f668&mpshare=1&scene=23&srcid=06144eHTZgNrSSWaWpQhPq2w#rd
-
+    // 因为每个 Engine 下面有 n 个 Host, 我们进行 Mapping 路由的时候, 需要找一个默认的 Host 进行映射
     private void findDefaultHost() {
 
-        Engine engine = (Engine) service.getContainer();
+        Engine engine = (Engine) service.getContainer();        // 获取 Engine的配置
         /**
          * 当路由的时候, 发现当前 Engine 中没有多余的 Host, 就用这个 DefaultHost进行路由
          * 或者请求访问的时候, unknown host, 最终也是由这个 defaultHost 进行出面解决
@@ -253,10 +261,12 @@ public class MapperListener extends LifecycleMBeanBase
          * 一个 tomcat的 servlet 实例, 其原因就是该 jvmroute 是在 Cluster 中参与了生成 sessionID 的算法
          *
          */
+        // 获取默认的 defaultHost
         String defaultHost = engine.getDefaultHost();           // 这里的 defaultHost 就是在 server.xml 里面的 <Engine name="Catalina" defaultHost="localhost" />
 
         boolean found = false;
 
+        // 进行校验
         if (defaultHost != null && defaultHost.length() >0) {
             Container[] containers = engine.findChildren();
 
@@ -277,7 +287,7 @@ public class MapperListener extends LifecycleMBeanBase
             }
         }
 
-        if(found) {     // 最终要设置到 Mapper 组件中
+        if(found) {     // 最终进行设置 host
             mapper.setDefaultHostName(defaultHost);
         } else {
             log.warn(sm.getString("mapperListener.unknownDefaultHost",

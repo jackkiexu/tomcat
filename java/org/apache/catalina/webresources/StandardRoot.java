@@ -215,9 +215,9 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
             path = validate(path);
         }
 
-        if (isCachingAllowed()) {
+        if (isCachingAllowed()) {       // 如果有缓存
             return cache.getResource(path, useClassLoaderResources);
-        } else {
+        } else {                // 如果不能使用缓存
             return getResourceInternal(path, useClassLoaderResources);
         }
     }

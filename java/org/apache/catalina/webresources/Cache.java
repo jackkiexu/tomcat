@@ -49,7 +49,7 @@ public class Cache {
 
     private AtomicLong lookupCount = new AtomicLong(0);
     private AtomicLong hitCount = new AtomicLong(0);
-
+    // tomcat为每个资源抽象出一个 CachedResource 对象
     private final ConcurrentMap<String,CachedResource> resourceCache =
             new ConcurrentHashMap<>();
 
@@ -59,12 +59,12 @@ public class Cache {
 
     protected WebResource getResource(String path, boolean useClassLoaderResources) {
 
-        lookupCount.incrementAndGet();
+        lookupCount.incrementAndGet();  // 查询次数 + 1
 
         if (noCache(path)) {
             return root.getResourceInternal(path, useClassLoaderResources);
         }
-
+        // 看看缓存里面有没有
         CachedResource cacheEntry = resourceCache.get(path);
 
         if (cacheEntry != null && !cacheEntry.validate(useClassLoaderResources)) {
@@ -74,7 +74,9 @@ public class Cache {
 
         if (cacheEntry == null) {
             // Local copy to ensure consistency
+            // 查询对象的最大size
             int objectMaxSizeBytes = getObjectMaxSizeBytes();
+            // 创建 CachedResource
             CachedResource newCacheEntry =
                     new CachedResource(root, path, getTtl(), objectMaxSizeBytes);
 
@@ -85,6 +87,7 @@ public class Cache {
             if (cacheEntry == null) {
                 // newCacheEntry was inserted into the cache - validate it
                 cacheEntry = newCacheEntry;
+                // 每一次都更新 ttl 的时间
                 cacheEntry.validate(useClassLoaderResources);
 
                 // Even if the resource content larger than objectMaxSizeBytes
@@ -105,6 +108,8 @@ public class Cache {
                     if (newSize > maxSize) {
                         // Unable to create sufficient space for this resource
                         // Remove it from the cache
+                        // 如果计算当前缓存已经超过 maxSize 的话
+                        // 那么直接从缓存中删除
                         removeCacheEntry(path, true);
                         log.warn(sm.getString("cache.addFail", path));
                     }

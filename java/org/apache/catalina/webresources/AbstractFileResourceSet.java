@@ -58,11 +58,12 @@ public abstract class AbstractFileResourceSet extends AbstractResourceSet {
         }
         File file = new File(fileBase, name);
         if (!mustExist || file.canRead()) {
-
+            // 如果是符号链接, 就不进行下面关于该资源是否在应用内部的检验了
             if (getRoot().getAllowLinking()) {
                 return file;
             }
 
+            // 正常的 Resources 定义的文件会检验是否在 web 应用的base目录下
             // Check that this file is located under the WebResourceSet's base
             String canPath = null;
             try {
@@ -82,6 +83,7 @@ public abstract class AbstractFileResourceSet extends AbstractResourceSet {
             //       point. The purpose of this code is to check in a case
             //       sensitive manner, the path to the resource under base
             //       agrees with what was requested
+            // 路径大小写检查
             String fileAbsPath = file.getAbsolutePath();
             if (fileAbsPath.endsWith("."))
                 fileAbsPath = fileAbsPath + '/';

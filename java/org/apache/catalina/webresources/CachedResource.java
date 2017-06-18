@@ -72,7 +72,7 @@ public class CachedResource implements WebResource {
                             webAppPath, useClassLoaderResources);
                     getLastModified();
                     getContentLength();
-                    nextCheck = ttl + now;
+                    nextCheck = ttl + now; // 计算下次检查的时间
                     // exists() is a relatively expensive check for a file so
                     // use the fact that we know if it exists at this point
                     if (webResource instanceof EmptyResource) {
@@ -85,7 +85,7 @@ public class CachedResource implements WebResource {
             }
         }
 
-        if (now < nextCheck) {
+        if (now < nextCheck) {          // 每次检验该文件是否已经修改过
             return true;
         }
 
@@ -100,7 +100,7 @@ public class CachedResource implements WebResource {
                 webResource.getContentLength() != getContentLength()) {
             return false;
         }
-
+        // 每一次ttl快过期的时候, 如果发现文件没有更新, 继续缓存着
         nextCheck = ttl + now;
         return true;
     }
