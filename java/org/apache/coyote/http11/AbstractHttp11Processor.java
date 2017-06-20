@@ -1147,7 +1147,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         if (endpoint.isSSLEnabled()) {
             request.scheme().setString("https");
         }
-        MessageBytes protocolMB = request.protocol();
+        MessageBytes protocolMB = request.protocol();       // 通过请求头来判断 keepalive 是否支持
         if (protocolMB.equals(Constants.HTTP_11)) {
             http11 = true;
             protocolMB.setString(Constants.HTTP_11);
@@ -1182,7 +1182,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         MimeHeaders headers = request.getMimeHeaders();
 
         // Check connection header
-        MessageBytes connectionValueMB = headers.getValue(Constants.CONNECTION);
+        MessageBytes connectionValueMB = headers.getValue(Constants.CONNECTION);    // 通过请求头中的 Connection 判断是否是 Close 状态, 来判断 Keepalive 是否需要关闭
         if (connectionValueMB != null) {
             ByteChunk connectionValueBC = connectionValueMB.getByteChunk();
             if (findBytes(connectionValueBC, Constants.CLOSE_BYTES) != -1) {
@@ -1204,7 +1204,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         }
 
         // Check user-agent header
-        if ((restrictedUserAgents != null) && ((http11) || (keepAlive))) {
+        if ((restrictedUserAgents != null) && ((http11) || (keepAlive))) {      // 通过客户端的 Agent 来判断 keepalive 是否支持
             MessageBytes userAgentValueMB = headers.getValue("user-agent");
             // Check in the restricted list, and adjust the http11
             // and keepAlive flags accordingly

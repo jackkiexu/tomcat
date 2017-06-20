@@ -1113,7 +1113,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
         if (!getState().isAvailable())
             return;
-
+        // 类处理
         Cluster cluster = getClusterInternal();
         if (cluster != null) {
             try {

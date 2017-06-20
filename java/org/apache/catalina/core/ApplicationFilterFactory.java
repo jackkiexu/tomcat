@@ -69,12 +69,14 @@ public final class ApplicationFilterFactory {
     public ApplicationFilterChain createFilterChain
         (ServletRequest request, Wrapper wrapper, Servlet servlet) {
 
-        // get the dispatcher type
+        // get the dispatcher type 根据 request
         DispatcherType dispatcher = null;
         if (request.getAttribute(Globals.DISPATCHER_TYPE_ATTR) != null) {
             dispatcher = (DispatcherType) request.getAttribute(
                     Globals.DISPATCHER_TYPE_ATTR);
         }
+
+        // 请求路径的获取
         String requestPath = null;
         Object attribute = request.getAttribute(
                 Globals.DISPATCHER_REQUEST_PATH_ATTR);
@@ -111,7 +113,7 @@ public final class ApplicationFilterFactory {
             // Request dispatcher in use
             filterChain = new ApplicationFilterChain();
         }
-
+        // 设置 servlet
         filterChain.setServlet(servlet);
 
         filterChain.setSupport
@@ -119,7 +121,7 @@ public final class ApplicationFilterFactory {
 
         // Acquire the filter mappings for this Context
         StandardContext context = (StandardContext) wrapper.getParent();
-        FilterMap filterMaps[] = context.findFilterMaps();
+        FilterMap filterMaps[] = context.findFilterMaps(); // 从 context 中拿到所有 filter
 
         // If there are no filter mappings, we are done
         if ((filterMaps == null) || (filterMaps.length == 0))
@@ -131,9 +133,9 @@ public final class ApplicationFilterFactory {
         // Add the relevant path-mapped filters to this filter chain
         for (int i = 0; i < filterMaps.length; i++) {
             if (!matchDispatcher(filterMaps[i] ,dispatcher)) {
-                continue;
+                continue; // 首先过滤  dispatcher 是否一致
             }
-            if (!matchFiltersURL(filterMaps[i], requestPath))
+            if (!matchFiltersURL(filterMaps[i], requestPath)) // 判断 uri 是否匹配
                 continue;
             ApplicationFilterConfig filterConfig = (ApplicationFilterConfig)
                 context.findFilterConfig(filterMaps[i].getFilterName());

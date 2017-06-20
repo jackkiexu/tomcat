@@ -99,7 +99,7 @@ final class StandardWrapperValve
         Throwable throwable = null;
         // This should be a Request attribute...
         long t1=System.currentTimeMillis();
-        requestCount.incrementAndGet();
+        requestCount.incrementAndGet();             // 增加请求次数
         StandardWrapper wrapper = (StandardWrapper) getContainer();
         Servlet servlet = null;
         Context context = (Context) wrapper.getParent();
@@ -132,7 +132,7 @@ final class StandardWrapperValve
         // Allocate a servlet instance to process this request
         try {
             if (!unavailable) {
-                servlet = wrapper.allocate();
+                servlet = wrapper.allocate();       // 进行 servlet 的分配
             }
         } catch (UnavailableException e) {
             container.getLogger().error(
@@ -181,7 +181,7 @@ final class StandardWrapperValve
         ApplicationFilterFactory factory =
             ApplicationFilterFactory.getInstance();
         // 创建 ApplicationFilterChain
-        ApplicationFilterChain filterChain =
+        ApplicationFilterChain filterChain =                        // 创建 FilterChain
             factory.createFilterChain(request, wrapper, servlet);
 
         // Reset comet flag value after creating the filter chain
@@ -201,7 +201,7 @@ final class StandardWrapperValve
                             filterChain.doFilterEvent(request.getEvent());
                             request.setComet(true);
                         } else {
-                            filterChain.doFilter(request.getRequest(),
+                            filterChain.doFilter(request.getRequest(),      // 执行 filterChain 链, 在链的末尾就是 servlet
                                     response.getResponse());
                         }
                     } finally {
@@ -316,7 +316,7 @@ final class StandardWrapperValve
         long t2=System.currentTimeMillis();
 
         long time=t2-t1;
-        processingTime += time;
+        processingTime += time;                     // 这里的 processingTime 就是请求的处理时间
         if( time > maxTime) maxTime=time;
         if( time < minTime) minTime=time;
 

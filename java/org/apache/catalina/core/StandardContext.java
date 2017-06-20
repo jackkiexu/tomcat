@@ -139,6 +139,7 @@ import org.apache.tomcat.util.scan.StandardJarScanner;
  * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076393&idx=1&sn=39a7c386d454fdb71944acc22f7cde3c&chksm=878f90c7b0f819d1fc6fdc1f1371bfe6f390a910f18c2fe084be5fbe5c11ea86bde399b08d3e&mpshare=1&scene=23&srcid=0615yhxnimi3oLcjbibZgqJD#rd
  * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076360&idx=1&sn=0ba3e94e1ac39b583de09affff5d1dee&chksm=878f90e6b0f819f003b42506dc1f8d3f4edac186dc3e533d135bb567955c369fce0602de7790&mpshare=1&scene=23&srcid=0616bcQXZ7LEMbcDRn15KxJr#rd
  *
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076096&idx=1&sn=d6ab83b803d0c68c1299c1acfc916c17&mpshare=1&scene=23&srcid=0620ceqNwF7WliSUOSnfT8jw#rd
  *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
@@ -5262,6 +5263,7 @@ public class StandardContext extends ContainerBase
         }
     }
 
+    // 下面的 namingResources 就是 Tomcat 的 JNDI, 在 JDNI 中进行查找
     private Map<String, Map<String, String>> buildInjectionMap(NamingResourcesImpl namingResources) {
         Map<String, Map<String, String>> injectionMap = new HashMap<>();
         for (Injectable resource: namingResources.findLocalEjbs()) {
@@ -5270,19 +5272,19 @@ public class StandardContext extends ContainerBase
         for (Injectable resource: namingResources.findEjbs()) {
             addInjectionTarget(resource, injectionMap);
         }
-        for (Injectable resource: namingResources.findEnvironments()) {
+        for (Injectable resource: namingResources.findEnvironments()) {// 环境变量
             addInjectionTarget(resource, injectionMap);
         }
-        for (Injectable resource: namingResources.findMessageDestinationRefs()) {
+        for (Injectable resource: namingResources.findMessageDestinationRefs()) { // 消息驱动 Bean 资源
             addInjectionTarget(resource, injectionMap);
         }
-        for (Injectable resource: namingResources.findResourceEnvRefs()) {
+        for (Injectable resource: namingResources.findResourceEnvRefs()) { // resource env
             addInjectionTarget(resource, injectionMap);
         }
-        for (Injectable resource: namingResources.findResources()) {
+        for (Injectable resource: namingResources.findResources()) {    // resource JNDI 资源
             addInjectionTarget(resource, injectionMap);
         }
-        for (Injectable resource: namingResources.findServices()) {
+        for (Injectable resource: namingResources.findServices()) {     // webService 服务
             addInjectionTarget(resource, injectionMap);
         }
         return injectionMap;

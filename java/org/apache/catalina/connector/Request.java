@@ -102,6 +102,8 @@ import org.ietf.jgss.GSSException;
 
 /**
  * Wrapper object for the Coyote request.
+ * 参考资料
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076026&idx=1&sn=d49ba50cfbda1dfbaf68cbe0c720cedf&mpshare=1&scene=23&srcid=06201CgMX2N9AtnNwKbE2Wr1#rd
  *
  * @author Remy Maucherat
  * @author Craig R. McClanahan
@@ -2728,16 +2730,16 @@ public class Request
 
 
     // ------------------------------------------------------ Protected Methods
-
+    // create 代表是否创建 StandardSession
     protected Session doGetSession(boolean create) {
 
         // There cannot be a session if no context has been assigned yet
         if (context == null) {
-            return (null);
+            return (null);      // 查找 StandardContext
         }
 
         // Return the current session if it exists and is valid
-        if ((session != null) && !session.isValid()) {
+        if ((session != null) && !session.isValid()) {  // 校验 Session 的有效性
             session = null;
         }
         if (session != null) {
@@ -2759,18 +2761,18 @@ public class Request
             } catch (IOException e) {
                 session = null;
             }
-            if ((session != null) && !session.isValid()) {
+            if ((session != null) && !session.isValid()) {  // 判断 session 是否有效
                 session = null;
             }
             if (session != null) {
-                session.access();
+                session.access();           // session access +1
                 return (session);
             }
         }
 
         // Create a new session if requested and the response is not committed
         if (!create) {
-            return (null);
+            return (null);      // 根据标识是否创建 StandardSession
         }
         if ((context != null) && (response != null) &&
             context.getServletContext().getEffectiveSessionTrackingModes().

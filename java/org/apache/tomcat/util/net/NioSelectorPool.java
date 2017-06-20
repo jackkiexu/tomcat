@@ -33,6 +33,7 @@ import org.apache.juli.logging.LogFactory;
  * 参考资料
  * http://gearever.iteye.com/blog/1844203
  * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650075890&idx=1&sn=ae57162a5d557bbadcbc9fb0ea1d44e3&mpshare=1&scene=23&srcid=06125QjgxvOSnhUYwDe2fMWN#rd
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650075890&idx=1&sn=ae57162a5d557bbadcbc9fb0ea1d44e3&mpshare=1&scene=23&srcid=06203XK7llXuAWHiKFO3bYRc#rd
  *
  * Thread safe non blocking selector pool
  * @version 1.0

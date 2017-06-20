@@ -157,7 +157,7 @@ public class DefaultInstanceManager implements InstanceManager {
             InvocationTargetException, InstantiationException,
             ClassNotFoundException {
         Class<?> clazz = classLoader.loadClass(className);
-        return newInstance(clazz.newInstance(), clazz);
+        return newInstance(clazz.newInstance(), clazz); // 直接通过 Class 反射获取
     }
 
     @Override
@@ -165,14 +165,15 @@ public class DefaultInstanceManager implements InstanceManager {
             throws IllegalAccessException, InvocationTargetException, NamingException {
         newInstance(o, o.getClass());
     }
-
+    // 自己的模板方法
+    //
     private Object newInstance(Object instance, Class<?> clazz)
             throws IllegalAccessException, InvocationTargetException, NamingException {
-        if (!ignoreAnnotations) {
+        if (!ignoreAnnotations) { // 找到当前的 inject 点, 从 injectionMap 中查找出当前 Servlet 的 Inject集合
             Map<String, String> injections = assembleInjectionsFromClassHierarchy(clazz);
-            populateAnnotationsCache(clazz, injections);
+            populateAnnotationsCache(clazz, injections); // 将jndi的引用实例化为 annotationCache引用集合, 并进行缓存起来
             processAnnotations(instance, injections);
-            postConstruct(instance, clazz);
+            postConstruct(instance, clazz); // 实例化 Object
         }
         return instance;
     }

@@ -818,17 +818,18 @@ public class StandardWrapper extends ContainerBase
         boolean newInstance = false;
 
         // If not SingleThreadedModel, return the same instance every time
-        if (!singleThreadModel) {
+        if (!singleThreadModel) {       // 是否是单例的模型
+            // 这里的 Servlet 若是已经实例化了, 则说明 在 load-on-startup 时已经实例化了
 
             // Load and initialize our instance if necessary
-            if (instance == null) {
+            if (instance == null) {             // double check lock
                 synchronized (this) {
                     if (instance == null) {
                         try {
                             if (log.isDebugEnabled())
                                 log.debug("Allocating non-STM instance");
 
-                            instance = loadServlet();
+                            instance = loadServlet();       // 通过 InstanceManager 来实例化
                             if (!singleThreadModel) {
                                 // For non-STM, increment here to prevent a race
                                 // condition with unload. Bug 43683, test case
@@ -851,7 +852,7 @@ public class StandardWrapper extends ContainerBase
                 initServlet(instance);
             }
 
-            if (singleThreadModel) {
+            if (singleThreadModel) {        // 若是单例模式, 就直接放到  instancePool 里面
                 if (newInstance) {
                     // Have to do this outside of the sync above to prevent a
                     // possible deadlock
@@ -1042,9 +1043,9 @@ public class StandardWrapper extends ContainerBase
      */
     @Override
     public synchronized void load() throws ServletException {
-        instance = loadServlet();
+        instance = loadServlet();       // 加载 Servlet
 
-        if (!instanceInitialized) {
+        if (!instanceInitialized) {     // 初始化 Servlet
             initServlet(instance);
         }
 
@@ -1082,7 +1083,7 @@ public class StandardWrapper extends ContainerBase
 
         // Nothing to do if we already have an instance or an instance pool
         if (!singleThreadModel && (instance != null))
-            return instance;
+            return instance;        // 是不是 单例 Servlet
 
         PrintStream out = System.out;
         if (swallowOutput) {
@@ -1098,7 +1099,7 @@ public class StandardWrapper extends ContainerBase
                 throw new ServletException
                     (sm.getString("standardWrapper.notClass", getName()));
             }
-
+            // 通过 InstanceManager 来获取 Servlet
             InstanceManager instanceManager = ((StandardContext)getParent()).getInstanceManager();
             try {
                 servlet = (Servlet) instanceManager.newInstance(servletClass);
@@ -1150,8 +1151,8 @@ public class StandardWrapper extends ContainerBase
                 singleThreadModel = true;
             }
 
-            initServlet(servlet);
-
+            initServlet(servlet);   // 初始化 Servlet
+            // 触发容器的生命周期事件
             fireContainerEvent("load", this);
 
             loadTime=System.currentTimeMillis() -t1;

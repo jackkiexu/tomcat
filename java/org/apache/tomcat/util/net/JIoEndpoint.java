@@ -305,8 +305,9 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
             boolean launch = false;
             synchronized (socket) {
                 try {
-                    SocketState state = SocketState.OPEN;
+                    SocketState state = SocketState.OPEN;       // 初始化 Socket 的状态位 OPEN
                     handler.beforeHandshake(socket);
+                    // 若是 SSL 则先握手
                     try {
                         // SSL handshake
                         serverSocketFactory.handshake(socket.getSocket());
@@ -319,6 +320,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                         state = SocketState.CLOSED;
                     }
 
+                    // 让工作线程干活
                     if ((state != SocketState.CLOSED)) {
                         if (status == null) {
                             state = handler.process(socket, SocketStatus.OPEN_READ);
@@ -326,6 +328,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                             state = handler.process(socket,status);
                         }
                     }
+                    // 收尾工作
                     if (state == SocketState.CLOSED) {
                         // Close socket
                         if (log.isTraceEnabled()) {
@@ -333,11 +336,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                         }
                         countDownConnection();
                         try {
-                            socket.getSocket().close();
+                            socket.getSocket().close(); // 在处理好业务后, 进行 socket 的关闭
                         } catch (IOException e) {
                             // Ignore
                         }
-                    } else if (state == SocketState.OPEN ||
+                    } else if (state == SocketState.OPEN ||     // 若是 OPEN  则说明是 Keepalive 在工作
                             state == SocketState.UPGRADING  ||
                             state == SocketState.UPGRADED){
                         socket.setKeptAlive(true);
@@ -434,14 +437,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
             // Create worker collection
             if (getExecutor() == null) {
-                createExecutor();
+                createExecutor();       // 工作线程池
             }
 
             initializeConnectionLatch();
 
-            startAcceptorThreads();
+            startAcceptorThreads(); // Accept 连接线程池
 
-            // Start async timeout thread
+            // Start async timeout thread   检查  Timeout 的线程池
             Thread timeoutThread = new Thread(new AsyncTimeout(),
                     getName() + "-AsyncTimeout");
             timeoutThread.setPriority(threadPriority);

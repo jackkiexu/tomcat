@@ -75,6 +75,8 @@ import org.apache.tomcat.util.net.jsse.NioX509KeyManager;
  * http://blog.csdn.net/yfkscu/article/details/38144029
  * http://www.blogjava.net/zddava/archive/2010/12/08/340029.html
  * http://tyrion.iteye.com/blog/2256896
+ * http://ifeve.com/how-tomcat-implements-keep-alive/
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650075870&idx=1&sn=51feda8e62906f97a8937076cbce786f&mpshare=1&scene=23&srcid=0620P9MIR65qjXpu4lXVKAGs#rd
  *
  * @author Mladen Turk
  * @author Remy Maucherat
@@ -1604,7 +1606,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                     socket.getPoller().getSelector());
             KeyAttachment ka = null;
 
-            if (key != null) {
+            if (key != null) {      // 拿到 Poller 线程轮询出来的 Key
                 ka = (KeyAttachment)key.attachment();
             }
 
@@ -1666,7 +1668,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                         // Close socket and pool
                         try {
                             if (ka!=null) ka.setComet(false);
-                            socket.getPoller().cancelledKey(key, SocketStatus.ERROR);
+                            socket.getPoller().cancelledKey(key, SocketStatus.ERROR); // NIO 中的 CLOSE 就是告诉 Poller 不需要再关注这个 Socket 了 然后socket 在 Poller 里面被关闭掉
                             if (running && !paused) {
                                 nioChannels.push(socket);
                             }
@@ -1695,7 +1697,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                     }
                     ka = null;
                 } else {
-                    ka.getPoller().add(socket,handshake);
+                    ka.getPoller().add(socket,handshake); // 若是 keepalive 的话, 下一个 Poller 轮询, 这个 socket 还需要参与
                 }
             } catch (CancelledKeyException cx) {
                 socket.getPoller().cancelledKey(key, null);
@@ -1737,7 +1739,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                 status = null;
                 //return to cache
                 if (running && !paused) {
-                    processorCache.push(this);
+                    processorCache.push(this);  // 将 SocketProcessor 缓存起来
                 }
             }
         }
