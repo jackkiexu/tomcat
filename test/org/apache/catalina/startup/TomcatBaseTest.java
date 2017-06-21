@@ -35,6 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import static org.junit.Assert.fail;
 
+import org.apache.coyote.http11.Http11Protocol;
 import org.junit.After;
 import org.junit.Before;
 
@@ -148,6 +149,7 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
         // Use NIO by default starting with Tomcat 8
         if (protocol == null) {
             protocol = Http11NioProtocol.class.getName();
+            protocol = Http11Protocol.class.getName();
         }
 
         return protocol;

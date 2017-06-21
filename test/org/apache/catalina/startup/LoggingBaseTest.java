@@ -96,9 +96,10 @@ public abstract class LoggingBaseTest {
         if (!tempDir.mkdirs() && !tempDir.isDirectory()) {
             fail("Unable to create temporary directory for test");
         }
-
+        // 设置 绝对路径到 "catalina.base"
         System.setProperty("catalina.base", tempDir.getAbsolutePath());
 
+        // 配置 logger 的 ClassLoader 及 properties 文件
         // Configure logging
         System.setProperty("java.util.logging.manager",
                 "org.apache.juli.ClassLoaderLogManager");
