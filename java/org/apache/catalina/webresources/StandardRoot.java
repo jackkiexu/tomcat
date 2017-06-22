@@ -768,5 +768,33 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         String getArchivePath() {
             return archivePath;
         }
+
+        @Override
+        public String toString() {
+            return "BaseLocation{" +
+                    "basePath='" + basePath + '\'' +
+                    ", archivePath='" + archivePath + '\'' +
+                    '}';
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "StandardRoot{" +
+                "context=" + context +
+                ", allowLinking=" + allowLinking +
+                ", preResources=" + preResources +
+                ", main=" + main +
+                ", classResources=" + classResources +
+                ", jarResources=" + jarResources +
+                ", postResources=" + postResources +
+                ", cache=" + cache +
+                ", cachingAllowed=" + cachingAllowed +
+                ", cacheJmxName=" + cacheJmxName +
+                ", trackLockedFiles=" + trackLockedFiles +
+                ", trackedResources=" + trackedResources +
+                ", mainResources=" + mainResources +
+                ", allResources=" + allResources +
+                '}';
     }
 }

@@ -248,4 +248,9 @@ public class DirResourceSet extends AbstractFileResourceSet {
                     "TODO-i18n: base/internalPath is not a directory");
         }
     }
+
+    @Override
+    public String toString() {
+        return "DirResourceSet{} " + super.toString();
+    }
 }
