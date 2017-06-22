@@ -20,6 +20,7 @@ package org.apache.catalina.core;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.management.ObjectName;
 
@@ -342,20 +343,6 @@ public class StandardService extends LifecycleMBeanBase implements Service {
 
 
     /**
-     * Return a String representation of this component.
-     */
-    @Override
-    public String toString() {
-
-        StringBuilder sb = new StringBuilder("StandardService[");
-        sb.append(getName());
-        sb.append("]");
-        return (sb.toString());
-
-    }
-
-
-    /**
      * Adds a named executor to the service
      * @param ex Executor
      */
@@ -659,5 +646,24 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     @Override
     public final String getObjectNameKeyProperties() {
         return "type=Service";
+    }
+
+    /**
+     * Return a String representation of this component.
+     */
+    @Override
+    public String toString() {
+        return "StandardService{" +
+                "name='" + name + '\'' +
+                ", server=" + server +
+                ", support=" + support +
+                ", connectors=" + Arrays.toString(connectors) +
+                ", connectorsLock=" + connectorsLock +
+                ", executors=" + executors +
+                ", container=" + container +
+                ", parentClassLoader=" + parentClassLoader +
+                ", mapper=" + mapper +
+                ", mapperListener=" + mapperListener +
+                '}';
     }
 }

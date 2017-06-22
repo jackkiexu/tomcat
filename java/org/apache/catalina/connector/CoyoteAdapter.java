@@ -460,6 +460,7 @@ public class CoyoteAdapter implements Adapter {
 
     /**
      * Service method.
+     * CoyoteAdapter 适配器的体现, 将 org.apache.coyote.Request/Response 进行转化操作, 以适应 Valve.invoke(request, response)
      */
     @Override
     public void service(org.apache.coyote.Request req,

@@ -780,6 +780,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
      */
     @Override
     protected void initInternal() throws LifecycleException {
+        logger.info(this + " initInternal() ");
 
         super.initInternal();
 

@@ -508,4 +508,13 @@ public class MapperListener extends LifecycleMBeanBase
             removeListeners(child);
         }
     }
+
+    @Override
+    public String toString() {
+        return "MapperListener{" +
+                "mapper=" + mapper +
+                ", service=" + service +
+                ", domain='" + domain + '\'' +
+                '}';
+    }
 }

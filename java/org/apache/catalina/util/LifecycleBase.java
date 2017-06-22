@@ -139,6 +139,7 @@ public abstract class LifecycleBase implements Lifecycle {
         }
 
         if (state.equals(LifecycleState.NEW)) {
+            logger.info(this  + " start() ");
             init();
         } else if (state.equals(LifecycleState.FAILED)){
             stop();
@@ -150,6 +151,7 @@ public abstract class LifecycleBase implements Lifecycle {
         setStateInternal(LifecycleState.STARTING_PREP, null, false);
 
         try {
+            logger.info(this  + " startInternal() ");
             startInternal();
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);

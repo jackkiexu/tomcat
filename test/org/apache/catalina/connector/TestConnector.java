@@ -40,8 +40,7 @@ public class TestConnector extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         Context root = tomcat.addContext("", TEMP_DIR);
-        Wrapper w =
-            Tomcat.addServlet(root, "tester", new TesterServlet());
+        Wrapper w = Tomcat.addServlet(root, "tester", new TesterServlet());
         w.setAsyncSupported(true);
         root.addServletMapping("/", "tester");
 
@@ -63,11 +62,13 @@ public class TestConnector extends TomcatBaseTest {
         try {
             rc = getUrl("http://localhost:" + getPort() + "/", bc, 1000,
                     null, null);
+            logger.info("rc:" + rc);
         } catch (SocketTimeoutException ste) {
             // May also see this with NIO
             // Make sure the test passes if we do
             rc = 503;
         }
+        logger.info("rc:" + rc);
         assertEquals(503, rc);
     }
 

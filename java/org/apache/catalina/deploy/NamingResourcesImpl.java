@@ -1248,4 +1248,23 @@ public class NamingResourcesImpl extends LifecycleMBeanBase
         }
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "NamingResourcesImpl{" +
+                "resourceRequireExplicitRegistration=" + resourceRequireExplicitRegistration +
+                ", container=" + container +
+                ", entries=" + entries +
+                ", ejbs=" + ejbs +
+                ", envs=" + envs +
+                ", localEjbs=" + localEjbs +
+                ", mdrs=" + mdrs +
+                ", resourceEnvRefs=" + resourceEnvRefs +
+                ", resources=" + resources +
+                ", resourceLinks=" + resourceLinks +
+                ", services=" + services +
+                ", transaction=" + transaction +
+                ", support=" + support +
+                '}';
+    }
 }

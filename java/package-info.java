@@ -4,6 +4,9 @@
  * http://blog.csdn.net/c929833623lvcha/article/details/44677569
  * http://blog.csdn.net/column/details/tomcat7-internal.html
  *
+ * tomcat 系列文章
+ * http://blog.csdn.net/yangzl2008/article/category/5791147
+ *
  * 讲 classLoader 的
  * http://blog.csdn.net/irelandken/article/details/7048817
  * https://liuzhengyang.github.io/2016/09/28/classloader/
@@ -32,6 +35,10 @@
  * 9. tomcat JMX 使用
  *
  * 10. tomcat 默认 bash 处理
+ *
+ * 11. tomcat 里面的各种线程模型(线程池)
+ *
+ * 12. tomcat 里面所使用的设计模式
  *
  * Created by xjk on 5/31/17.
  */

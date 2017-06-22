@@ -907,7 +907,9 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
         // Start our child containers, if any
         Container children[] = findChildren();
-        List<Future<Void>> results = new ArrayList<>();
+        // 通过一个线程池来进行启动对应的子容器
+        // 有点不明白, 这种写法不能提高什么程序 lazyInit 或性能之类
+        /*List<Future<Void>> results = new ArrayList<>();
         for (int i = 0; i < children.length; i++) {
             results.add(startStopExecutor.submit(new StartChild(children[i])));
         }
@@ -925,6 +927,16 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         if (fail) {
             throw new LifecycleException(
                     sm.getString("containerBase.threadedStartFailed"));
+        }*/
+
+        try {
+            for (int i = 0; i < children.length; i++) {
+                logger.info(" children :" + children + " start ()");
+                children[i].start();
+            }
+        } catch (LifecycleException e) {
+            e.printStackTrace();
+            throw new LifecycleException(sm.getString("containerBase.threadedStartFailed"));
         }
 
         // Start the Valves in our pipeline (including the basic), if any
