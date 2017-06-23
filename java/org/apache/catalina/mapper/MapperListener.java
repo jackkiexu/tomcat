@@ -513,7 +513,6 @@ public class MapperListener extends LifecycleMBeanBase
     public String toString() {
         return "MapperListener{" +
                 "mapper=" + mapper +
-                ", service=" + service +
                 ", domain='" + domain + '\'' +
                 '}';
     }
