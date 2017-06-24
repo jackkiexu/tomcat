@@ -1041,26 +1041,39 @@ public class Connector extends LifecycleMBeanBase  {
     }
 
 
+    @Override
+    public String toString() {
+        return "Connector{" +
+                ", allowTrace=" + allowTrace +
+                ", asyncTimeout=" + asyncTimeout +
+                ", enableLookups=" + enableLookups +
+                ", xpoweredBy=" + xpoweredBy +
+                ", port=" + port +
+                ", proxyName='" + proxyName + '\'' +
+                ", proxyPort=" + proxyPort +
+                ", redirectPort=" + redirectPort +
+                ", scheme='" + scheme + '\'' +
+                ", secure=" + secure +
+                ", maxParameterCount=" + maxParameterCount +
+                ", maxPostSize=" + maxPostSize +
+                ", maxSavePostSize=" + maxSavePostSize +
+                ", parseBodyMethods='" + parseBodyMethods + '\'' +
+                ", parseBodyMethodsSet=" + parseBodyMethodsSet +
+                ", useIPVHosts=" + useIPVHosts +
+                ", protocolHandlerClassName='" + protocolHandlerClassName + '\'' +
+                ", protocolHandler=" + protocolHandler +
+                ", adapter=" + adapter +
+                ", URIEncoding='" + URIEncoding + '\'' +
+                ", URIEncodingLower='" + URIEncodingLower + '\'' +
+                ", useBodyEncodingForURI=" + useBodyEncodingForURI +
+                "} " + super.toString();
+    }
+
     /**
      * Provide a useful toString() implementation as it may be used when logging
      * Lifecycle errors to identify the component.
      */
-    @Override
-    public String toString() {
-        // Not worth caching this right now
-        StringBuilder sb = new StringBuilder("Connector[");
-        sb.append(getProtocol());
-        sb.append('-');
-        int port = getPort();
-        if (port > 0) {
-            sb.append(getPort());
-        } else {
-            sb.append("auto-");
-            sb.append(getProperty("nameIndex"));
-        }
-        sb.append(']');
-        return sb.toString();
-    }
+
 
 
     // -------------------- JMX registration  --------------------

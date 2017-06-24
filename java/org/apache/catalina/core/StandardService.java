@@ -657,7 +657,6 @@ public class StandardService extends LifecycleMBeanBase implements Service {
                 "name='" + name + '\'' +
                 ", server=" + server +
                 ", support=" + support +
-                ", connectors=" + Arrays.toString(connectors) +
                 ", connectorsLock=" + connectorsLock +
                 ", executors=" + executors +
                 ", container=" + container +

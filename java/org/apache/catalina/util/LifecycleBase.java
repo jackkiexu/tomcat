@@ -139,7 +139,7 @@ public abstract class LifecycleBase implements Lifecycle {
         }
 
         if (state.equals(LifecycleState.NEW)) {
-            logger.info(this  + " start() ");
+            logger.info(this  + " init() ");
             init();
         } else if (state.equals(LifecycleState.FAILED)){
             stop();
