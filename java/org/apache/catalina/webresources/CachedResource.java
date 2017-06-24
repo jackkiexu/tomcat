@@ -20,6 +20,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.security.cert.Certificate;
+import java.util.Arrays;
 import java.util.jar.Manifest;
 
 import org.apache.catalina.WebResource;
@@ -286,5 +287,25 @@ public class CachedResource implements WebResource {
             result += getContentLength();
         }
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "CachedResource{" +
+                "root=" + root +
+                ", webAppPath='" + webAppPath + '\'' +
+                ", ttl=" + ttl +
+                ", objectMaxSizeBytes=" + objectMaxSizeBytes +
+                ", webResource=" + webResource +
+                ", nextCheck=" + nextCheck +
+                ", cachedLastModified=" + cachedLastModified +
+                ", cachedLastModifiedHttp='" + cachedLastModifiedHttp + '\'' +
+                ", cachedContent=" + Arrays.toString(cachedContent) +
+                ", cachedIsFile=" + cachedIsFile +
+                ", cachedIsDirectory=" + cachedIsDirectory +
+                ", cachedExists=" + cachedExists +
+                ", cachedIsVirtual=" + cachedIsVirtual +
+                ", cachedContentLength=" + cachedContentLength +
+                '}';
     }
 }

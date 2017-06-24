@@ -220,4 +220,13 @@ public class FileResource extends AbstractResource {
     protected Log getLog() {
         return log;
     }
+
+    @Override
+    public String toString() {
+        return "FileResource{" +
+                "resource=" + resource +
+                ", name='" + name + '\'' +
+                ", readOnly=" + readOnly +
+                '}';
+    }
 }

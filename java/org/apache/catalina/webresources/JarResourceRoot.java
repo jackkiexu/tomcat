@@ -147,4 +147,13 @@ public class JarResourceRoot extends AbstractResource {
     public Manifest getManifest() {
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "JarResourceRoot{" +
+                "base=" + base +
+                ", baseUrl='" + baseUrl + '\'' +
+                ", name='" + name + '\'' +
+                '}';
+    }
 }

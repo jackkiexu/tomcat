@@ -62,4 +62,5 @@ public class JarResource extends AbstractArchiveResource {
     protected Log getLog() {
         return log;
     }
+
 }

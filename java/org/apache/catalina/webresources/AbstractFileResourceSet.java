@@ -150,4 +150,14 @@ public abstract class AbstractFileResourceSet extends AbstractResourceSet {
 
 
     protected abstract void checkType(File file);
+
+    @Override
+    public String toString() {
+        return "AbstractFileResourceSet{" +
+                "fileBase=" + fileBase +
+                ", absoluteBase='" + absoluteBase + '\'' +
+                ", canonicalBase='" + canonicalBase + '\'' +
+                ", readOnly=" + readOnly +
+                '}';
+    }
 }

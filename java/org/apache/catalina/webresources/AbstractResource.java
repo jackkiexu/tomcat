@@ -104,4 +104,14 @@ public abstract class AbstractResource implements WebResource {
 
 
     protected abstract Log getLog();
+
+    @Override
+    public String toString() {
+        return "AbstractResource{" +
+                "root=" + root +
+                ", webAppPath='" + webAppPath + '\'' +
+                ", mimeType='" + mimeType + '\'' +
+                ", weakETag='" + weakETag + '\'' +
+                '}';
+    }
 }

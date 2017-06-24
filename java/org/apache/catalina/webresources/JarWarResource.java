@@ -87,4 +87,11 @@ public class JarWarResource extends AbstractArchiveResource {
     protected Log getLog() {
         return log;
     }
+
+    @Override
+    public String toString() {
+        return "JarWarResource{" +
+                "archivePath='" + archivePath + '\'' +
+                '}';
+    }
 }

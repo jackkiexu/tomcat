@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.cert.Certificate;
+import java.util.Arrays;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -273,5 +274,18 @@ public abstract class AbstractArchiveResource extends AbstractResource {
         public Certificate[] getCertificates() {
             return jarEntry.getCertificates();
         }
+    }
+
+    @Override
+    public String toString() {
+        return "AbstractArchiveResource{" +
+                "base='" + base + '\'' +
+                ", baseUrl='" + baseUrl + '\'' +
+                ", resource=" + resource +
+                ", manifest=" + manifest +
+                ", name='" + name + '\'' +
+                ", readCerts=" + readCerts +
+                ", certificates=" + Arrays.toString(certificates) +
+                '}';
     }
 }
