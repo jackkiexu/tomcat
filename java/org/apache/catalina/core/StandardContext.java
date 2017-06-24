@@ -1253,7 +1253,7 @@ public class StandardContext extends ContainerBase
 
         // Create a mapper the first time it is requested
         if (this.charsetMapper == null) {
-            try {
+            try {                   // Class.forName 将会触发 类初始化, 且用当前线程的类加载器, 详情看 Class.forName 里面
                 Class<?> clazz = Class.forName(charsetMapperClass);
                 this.charsetMapper = (CharsetMapper) clazz.newInstance();
             } catch (Throwable t) {
