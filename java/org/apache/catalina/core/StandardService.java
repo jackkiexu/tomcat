@@ -229,7 +229,12 @@ public class StandardService extends LifecycleMBeanBase implements Service {
      */
     @Override
     public void addConnector(Connector connector) {
-
+        /**
+         * 下面这种写法的有点
+         * 1. 保证线程安全
+         * 2. 保证增加进入的 connector 是按照顺序进行排序的
+         * 在 Java 中有一种数据结构能保证这种 按照插入顺序保存数据, 它就是 LinkedHashMap, 可惜, 它不是线程安全
+         */
         synchronized (connectorsLock) {
             connector.setService(this);
             Connector results[] = new Connector[connectors.length + 1];

@@ -16,6 +16,7 @@
  */
 package org.apache.catalina.mapper;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -1503,5 +1504,14 @@ public final class Mapper {
 
         public boolean jspWildCard = false;
         public boolean resourceOnly = false;
+    }
+
+    @Override
+    public String toString() {
+        return "Mapper{" +
+                "hosts=" + Arrays.toString(hosts) +
+                ", defaultHostName='" + defaultHostName + '\'' +
+                ", contextObjectToContextVersionMap=" + contextObjectToContextVersionMap +
+                '}';
     }
 }
