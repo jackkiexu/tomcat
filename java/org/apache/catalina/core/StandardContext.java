@@ -6105,7 +6105,7 @@ public class StandardContext extends ContainerBase
 
         // Set the appropriate servlet context attribute
         if (context == null) {
-            getServletContext();   // 出发new ApplicationContext
+            getServletContext();   // 触发 new ApplicationContext
         }
         context.setAttribute(ServletContext.TEMPDIR, dir);
         context.setAttributeReadOnly(ServletContext.TEMPDIR);

@@ -540,7 +540,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     protected void initInternal() throws LifecycleException {
 
         super.initInternal();
-
+        // StandardService 里面的子容器就是 StandardEngine
         if (container != null) {
             container.init();
         }

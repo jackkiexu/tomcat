@@ -43,8 +43,7 @@ public class TestStandardRoot {
 
     @Test
     public void testBaseLocation01() throws Exception {
-        doTestBaseLocation(new URL (fileUrl),
-                file.getAbsolutePath(), null);
+        doTestBaseLocation(new URL (fileUrl), file.getAbsolutePath(), null);
     }
 
     @Test

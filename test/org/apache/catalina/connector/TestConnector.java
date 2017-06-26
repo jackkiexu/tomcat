@@ -90,6 +90,9 @@ public class TestConnector extends TomcatBaseTest {
         int localPort1 = connector1.getLocalPort();
         int localPort2 = connector2.getLocalPort();
 
+        logger.info("localPort1:" + localPort1);
+        logger.info("localPort2:" + localPort2);
+
         assertTrue(localPort1 > 0);
         assertTrue(localPort2 > 0);
     }

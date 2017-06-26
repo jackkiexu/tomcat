@@ -40,5 +40,7 @@
  *
  * 12. tomcat 里面所使用的设计模式
  *
+ * 13. Tomcat 里面的 StandardServer, StandardService, StandardEngine, StandardHost, StandardContext 为什么需要 listener 监听其生命周期
+ *      tomcat 是一个热部署的web容器, 需要通过监听的机制, 知道tomcat以前及现在的运行状态
  * Created by xjk on 5/31/17.
  */

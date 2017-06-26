@@ -479,7 +479,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
     public void setName(String name) {
 
         String oldName = this.name;
-        this.name = name;
+        this.name = name; // 这里的 support 的作用就是触发
         support.firePropertyChange("name", oldName, this.name);
     }
 
