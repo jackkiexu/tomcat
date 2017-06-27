@@ -470,7 +470,7 @@ public class ContextConfig implements LifecycleListener {
         if (!context.getOverride()) {
             File defaultContextFile = new File(defaultContextXml);
             if (!defaultContextFile.isAbsolute()) {
-                defaultContextFile =
+                defaultContextFile =                // conf/context.xml
                         new File(context.getCatalinaBase(), defaultContextXml);
             }
             if (defaultContextFile.exists()) {
@@ -482,7 +482,7 @@ public class ContextConfig implements LifecycleListener {
                             "contextConfig.badUrl", defaultContextFile), e);
                 }
             }
-
+                                                                    // conf/host下面的 context.xml
             File hostContextFile = new File(getHostConfigBase(), Constants.HostContextXml);
             if (hostContextFile.exists()) {
                 try {
@@ -494,7 +494,7 @@ public class ContextConfig implements LifecycleListener {
                 }
             }
         }
-        if (context.getConfigFile() != null) {
+        if (context.getConfigFile() != null) {  // conf/host/context下面的 context.xml
             processContextConfig(digester, context.getConfigFile());
         }
 
@@ -590,10 +590,10 @@ public class ContextConfig implements LifecycleListener {
         }
 
         File file = new File(docBase);
-        if (!file.isAbsolute()) {
+        if (!file.isAbsolute()) {   // 相对路径
             docBase = (new File(appBase, docBase)).getPath();
         } else {
-            docBase = file.getCanonicalPath();
+            docBase = file.getCanonicalPath();  // 绝对路径
         }
         file = new File(docBase);
         String origDocBase = docBase;
@@ -1183,7 +1183,7 @@ public class ContextConfig implements LifecycleListener {
         // components, specifically Jasper, to save those components
         // from having to re-generate it.
         // TODO Use a ServletContainerInitializer for Jasper
-        String mergedWebXml = webXml.toXml();
+        String mergedWebXml = webXml.toXml();  // 这里的 mergedWebXml 就是合并 xml 里面的配置信息
         sContext.setAttribute(
                org.apache.tomcat.util.scan.Constants.MERGED_WEB_XML,
                mergedWebXml);

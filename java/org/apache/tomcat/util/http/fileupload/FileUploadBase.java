@@ -277,18 +277,20 @@ public abstract class FileUploadBase {
         List<FileItem> items = new ArrayList<>();
         boolean successful = false;
         try {
+            // 这一步非常关键, tomcat 文件上传系统直接解析成 FileItemIterator
             FileItemIterator iter = getItemIterator(ctx);
             FileItemFactory fac = getFileItemFactory();
             if (fac == null) {
                 throw new NullPointerException("No FileItemFactory has been set.");
             }
-            while (iter.hasNext()) {
+            while (iter.hasNext()) { // 进行迭代
                 final FileItemStream item = iter.next();
                 // Don't use getName() here to prevent an InvalidFileNameException.
                 final String fileName = ((FileItemIteratorImpl.FileItemStreamImpl) item).name;
+                // 通过 FileItem工厂创建 FileItem
                 FileItem fileItem = fac.createItem(item.getFieldName(), item.getContentType(),
                                                    item.isFormField(), fileName);
-                items.add(fileItem);
+                items.add(fileItem); // 加入到迭代器中
                 try {
                     Streams.copy(item.openStream(), fileItem.getOutputStream(), true);
                 } catch (FileUploadIOException e) {
@@ -298,7 +300,7 @@ public abstract class FileUploadBase {
                                                            MULTIPART_FORM_DATA, e.getMessage()), e);
                 }
                 final FileItemHeaders fih = item.getHeaders();
-                fileItem.setHeaders(fih);
+                fileItem.setHeaders(fih);   // 最后对 FileItem 设置一下 header
             }
             successful = true;
             return items;
@@ -842,7 +844,7 @@ public abstract class FileUploadBase {
             multi.setHeaderEncoding(charEncoding);
 
             skipPreamble = true;
-            findNextItem();
+            findNextItem(); // 这个方法就是从开始对http流进行分割解析, 例如每一个附件, 都作为一个  part, 一个 FileItem, 一个FileItem的生成
         }
 
         /**
@@ -864,7 +866,7 @@ public abstract class FileUploadBase {
                 if (skipPreamble) {
                     nextPart = multi.skipPreamble();
                 } else {
-                    nextPart = multi.readBoundary();
+                    nextPart = multi.readBoundary();        // 读取 boundry 的分割字节前的内容
                 }
                 if (!nextPart) {
                     if (currentFieldName == null) {
@@ -876,7 +878,7 @@ public abstract class FileUploadBase {
                     multi.setBoundary(boundary);
                     currentFieldName = null;
                     continue;
-                }
+                }                           // 读取每一个 part 的 header 的内容
                 FileItemHeaders headers = getParsedHeaders(multi.readHeaders());
                 if (currentFieldName == null) {
                     // We're parsing the outer multipart
@@ -915,6 +917,12 @@ public abstract class FileUploadBase {
                         return true;
                     }
                 }
+                // 读取每一个 part 的 body 数据, 并将 mark 标志置为 下一个 part, 扔掉当前的 body 数据
+                /**
+                 * 最后就是调用 MultipartStream 的 discardBodyCard 方法, 读取 part中的文件上传的内容, 应该说这一步分是比较大的,
+                 * http协议明确对上传的大小有限制, 并且 RequestContext中持有的流是要继续随着游标进行读取下一个 part的, 那么这里为了
+                 * 让客户端能方便的调用每一个 part 中的流, 肯定有流的赋值
+                 */
                 multi.discardBodyData();
             }
         }

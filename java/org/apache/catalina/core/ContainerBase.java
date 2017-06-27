@@ -1350,6 +1350,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
             }
         }
 
+        // 递归调用 processChildren
         protected void processChildren(Container container) {
             ClassLoader originalClassLoader = null;
 

@@ -2556,16 +2556,19 @@ public class Request
         return parts;
     }
 
+    // 上传文件参考资料
+    // http://fromwiz.com/share/s/0181H434kN7x2Fc00z1ZXVvc1Iqeib2aFQAM26j1nO3_1U9d
     private void parseParts(boolean explicit) {
 
         // Return immediately if the parts have already been parsed
         if (parts != null || partsParseException != null) {
             return;
         }
-
+        // 解析 Servlet 上的 @MultipartConfig 注解
         MultipartConfigElement mce = getWrapper().getMultipartConfigElement();
 
         if (mce == null) {
+            // Tomcat 中的上传文件 MultipaerConfigElement
             if(getContext().getAllowCasualMultipartParsing()) {
                 mce = new MultipartConfigElement(null,
                                                  connector.getMaxPostSize(),
@@ -2611,7 +2614,7 @@ public class Request
                 return;
             }
 
-
+            // 基于前面配置的 FileLocation 组装 FileItemFactory
             // Create a new file upload handler
             DiskFileItemFactory factory = new DiskFileItemFactory();
             try {
@@ -2629,6 +2632,7 @@ public class Request
 
             parts = new ArrayList<>();
             try {
+                // 将上述创建的 FileItemFactory 传入ServletFileUpload 中, 用以根据调用 Tomcat 文件系统的结果, 然后实例化 FileItem
                 List<FileItem> items =
                         upload.parseRequest(new ServletRequestContext(this));
                 int maxPostSize = getConnector().getMaxPostSize();
@@ -2642,6 +2646,8 @@ public class Request
                         // Ignore
                     }
                 }
+                // 最后一步, 组装 FileItem, 将其塞入 Part 的实现中
+                // 这样 Servlet 客户端可以通过 request.getParts去拿上传的附件了, 整个流程 OK
                 for (FileItem item : items) {
                     ApplicationPart part = new ApplicationPart(item, location);
                     parts.add(part);
@@ -2939,6 +2945,7 @@ public class Request
                 contentType = contentType.trim();
             }
 
+            // 解析上传的文件
             if ("multipart/form-data".equals(contentType)) {
                 parseParts(false);
                 success = true;

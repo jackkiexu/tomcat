@@ -380,6 +380,8 @@ public class MultipartStream {
      * @throws MalformedStreamException if the stream ends unexpectedly or
      *                                  fails to follow required syntax.
      */
+    // 首先使用 MultipartStream 读取到 boundary 的位置, 这个时候游标指向当前的 part 的第一个字符,
+    // 这里就是基于 boundary 的规则进行字符的解析, 并将游标指向正确的位置
     public boolean readBoundary()
             throws FileUploadIOException, MalformedStreamException {
         byte[] marker = new byte[2];
