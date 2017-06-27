@@ -130,6 +130,7 @@ public class TestCoyoteAdapter extends TomcatBaseTest {
         tomcat.start();
 
         ByteChunk res = getUrl("http://localhost:" + getPort() + path);
+        logger.info("ByteChunk:" + res.toString());
         Assert.assertEquals(expected, res.toString());
     }
 

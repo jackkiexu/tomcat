@@ -73,6 +73,7 @@ public class TestConnector extends TomcatBaseTest {
     }
 
 
+    // 若像下面的设置 端口号都是 0 的话, 就会随机的分配一个端口
     @Test
     public void testPort() throws Exception {
         Tomcat tomcat = getTomcatInstance();
