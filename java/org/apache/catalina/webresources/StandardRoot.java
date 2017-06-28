@@ -781,7 +781,6 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
     @Override
     public String toString() {
         return "StandardRoot{" +
-                "context=" + context +
                 ", allowLinking=" + allowLinking +
                 ", preResources=" + preResources +
                 ", main=" + main +

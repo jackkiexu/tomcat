@@ -118,7 +118,6 @@ public abstract class AbstractResourceSet extends LifecycleBase
     @Override
     public String toString() {
         return "AbstractResourceSet{" +
-                "root=" + root +
                 ", base='" + base + '\'' +
                 ", internalPath='" + internalPath + '\'' +
                 ", webAppMount='" + webAppMount + '\'' +

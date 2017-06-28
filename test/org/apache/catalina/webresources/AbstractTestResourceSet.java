@@ -23,6 +23,7 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,6 +34,8 @@ import org.apache.catalina.WebResource;
 import org.apache.catalina.WebResourceRoot;
 
 public abstract class AbstractTestResourceSet {
+
+    public Logger logger = Logger.getLogger(getClass());
 
     protected WebResourceRoot resourceRoot;
 
@@ -67,6 +70,7 @@ public abstract class AbstractTestResourceSet {
     @Test
     public final void testGetResourceRoot() {
         WebResource webResource = resourceRoot.getResource(getMount() + "/");
+        logger.info("webResource:" + webResource);
         Assert.assertTrue(webResource.isDirectory());
         String expected;
         if (getMount().length() > 0) {
@@ -74,7 +78,9 @@ public abstract class AbstractTestResourceSet {
         } else {
             expected = "";
         }
+        logger.info("webResource:" + webResource.getName());
         Assert.assertEquals(expected, webResource.getName());
+        logger.info("webResource:" + webResource.getWebappPath());
         Assert.assertEquals(getMount() + "/", webResource.getWebappPath());
     }
 
