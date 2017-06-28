@@ -29,6 +29,10 @@ import org.apache.catalina.startup.TomcatBaseTest;
 
 public class TestWebappClassLoader extends TomcatBaseTest {
 
+    /**
+     * 这个 test 是通过指定 一个 StandardContext 的 baseDir 来确定一下最终 classLoader 的加载路径
+     * @throws Exception
+     */
     @Test
     public void testGetURLs() throws Exception {
         File f = new File("test/webresources/war-url-connection.war");
