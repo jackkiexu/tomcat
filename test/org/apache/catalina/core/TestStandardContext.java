@@ -853,6 +853,11 @@ public class TestStandardContext extends TomcatBaseTest {
     @Test(expected = IllegalArgumentException.class)
     public void testAddPreDestroyMethodConflicts() {
         StandardContext standardContext = new StandardContext();
+        try {
+            standardContext.startInternal();
+        } catch (LifecycleException e) {
+            e.printStackTrace();
+        }
         standardContext.addPreDestroyMethod("a", "a");
         standardContext.addPreDestroyMethod("a", "b");
     }
