@@ -134,7 +134,7 @@ public final class ExtensionValidator {
         if (resources == null) return false;
         // Find the Manifest for the Web Application
         InputStream inputStream = null;
-        try {
+        try {                                                           // 获取 /META-INF/MANIFEST.MF
             WebResource resource =
                     resources.getResource("/META-INF/MANIFEST.MF");
             if (resource.isFile()) {
@@ -159,13 +159,13 @@ public final class ExtensionValidator {
 
         // Primarily used for error reporting
         String jarName = null;
-        WebResource[] jars = resources.listResources("/WEB-INF/lib");
+        WebResource[] jars = resources.listResources("/WEB-INF/lib");               // 获取 /WEB-INF/lib
         for (WebResource jar : jars) {
             jarName = jar.getName();
             if (jarName.toLowerCase(Locale.ENGLISH).endsWith(".jar") &&
                     jar.isFile()) {
 
-                Manifest jmanifest = jar.getManifest();
+                Manifest jmanifest = jar.getManifest();                               // 获取 jar 包里面的 Manifest
                 if (jmanifest != null) {
                     ManifestResource mre = new ManifestResource(jarName,
                             jmanifest, ManifestResource.APPLICATION);

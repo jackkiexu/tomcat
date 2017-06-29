@@ -1401,16 +1401,16 @@ public class WebappClassLoader extends URLClassLoader
      */
     @Override
     public void start() throws LifecycleException {
-
+        // WebappClassLoader 进行资源/类的加载操作 (/WEB-INF/classes  与 WEB-INF/lib 下面的资源)
         WebResource classes = resources.getResource("/WEB-INF/classes");
         if (classes.isDirectory() && classes.canRead()) {
             addURL(classes.getURL());
-        }
+        }                                                                   // 加入 /WEB_INF/lib 下面的 jar 的目录
         WebResource[] jars = resources.listResources("/WEB-INF/lib");
         for (WebResource jar : jars) {
             if (jar.getName().endsWith(".jar") && jar.isFile() && jar.canRead()) {
                 addURL(jar.getURL());
-                jarModificationTimes.put(
+                jarModificationTimes.put(                                   // 放一下 jar 文件的 lastModified
                         jar.getName(), Long.valueOf(jar.getLastModified()));
             }
         }

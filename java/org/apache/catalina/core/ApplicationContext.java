@@ -118,7 +118,7 @@ public class ApplicationContext
         this.sessionCookieConfig = new ApplicationSessionCookieConfig(context);
 
         // Populate session tracking modes
-        populateSessionTrackingModes();
+        populateSessionTrackingModes(); // 初始化 StandardContext 跟踪 Session 的方式 URL, COOKIE, SSL
     }
 
 
@@ -1120,6 +1120,7 @@ public class ApplicationContext
         return defaultSessionTrackingModes;
     }
 
+    // 下面是标识 StandardContext 是否支持 URL, COOKIE 的方式来确认 session
     private void populateSessionTrackingModes() {
         // URL re-writing is always enabled by default
         defaultSessionTrackingModes = EnumSet.of(SessionTrackingMode.URL);
