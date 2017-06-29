@@ -55,6 +55,8 @@ import org.apache.tomcat.util.ExceptionUtils;
  * reloading depends upon external calls to the <code>start()</code> and
  * <code>stop()</code> methods of this class at the correct times.
  *
+ * StandardManager 最简单的 session 持久层
+ *
  * @author Craig R. McClanahan
  */
 public class StandardManager extends ManagerBase {
@@ -199,7 +201,7 @@ public class StandardManager extends ManagerBase {
         sessions.clear();
 
         // Open an input stream to the specified pathname, if any
-        File file = file();
+        File file = file();                 // 获取 SESSIONS.ser 的文件路径
         if (file == null)
             return;
         if (log.isDebugEnabled())
@@ -250,6 +252,7 @@ public class StandardManager extends ManagerBase {
         }
 
         // Load the previously unloaded active sessions
+        // 从数据流中解析除 session 的信息
         synchronized (sessions) {
             try {
                 Integer count = (Integer) ois.readObject();
@@ -257,7 +260,7 @@ public class StandardManager extends ManagerBase {
                 if (log.isDebugEnabled())
                     log.debug("Loading " + n + " persisted sessions");
                 for (int i = 0; i < n; i++) {
-                    StandardSession session = getNewSession();
+                    StandardSession session = getNewSession();          // 构建新的 StandardSession
                     session.readObjectData(ois);
                     session.setManager(this);
                     sessions.put(session.getIdInternal(), session);
@@ -296,7 +299,7 @@ public class StandardManager extends ManagerBase {
 
                 // Delete the persistent storage file
                 if (file.exists() )
-                    file.delete();
+                    file.delete();                  // 最后进行 SESSIONS.ser 文件的删除操作
             }
         }
 

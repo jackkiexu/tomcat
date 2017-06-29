@@ -133,7 +133,7 @@ public abstract class AbstractArchiveResource extends AbstractResource {
 
     @Override
     public URL getURL() {
-        try {
+        try {                   // 组装 war 包下面的 WEB-INF/classes / jar包目录
             return new URL(baseUrl + "!/" + resource.getName());
         } catch (MalformedURLException e) {
             if (getLog().isDebugEnabled()) {

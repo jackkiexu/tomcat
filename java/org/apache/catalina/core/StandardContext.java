@@ -2183,7 +2183,7 @@ public class StandardContext extends ContainerBase
             if (altDDName != null)
                 context.setAttribute(Globals.ALT_DD_ATTR,altDDName);
         }
-        return (context.getFacade());
+        return (context.getFacade());                   // 最后暴露出去的是一个 facade 类
 
     }
 
@@ -4692,7 +4692,7 @@ public class StandardContext extends ContainerBase
             }
             if ((results[i] instanceof ServletContextListener)
                 || (results[i] instanceof HttpSessionListener)) {
-                lifecycleListeners.add(results[i]);
+                lifecycleListeners.add(results[i]);                             // 上面这些 Listener 都是在 javax 包下面的
             }
         }
 
@@ -4851,7 +4851,7 @@ public class StandardContext extends ContainerBase
         if (!resources.getState().isAvailable()) {
             resources.start();
         }
-        // servlet 规范 > 3                  开关开启
+        // servlet 规范 > 3                  开关开启 WEB-INF/classes/META_INF/resources 下面的资源加载
         if (effectiveMajorVersion >=3 && addWebinfClassesResources) {
             WebResource webinfClassesResource = resources.getResource(
                     "/WEB-INF/classes/META-INF/resources");
@@ -4962,6 +4962,7 @@ public class StandardContext extends ContainerBase
         }
 
         // Add missing components as necessary
+        // 设置 Context 对应的 StandardRoot
         if (getResources() == null) {   // (1) Required by Loader
             if (log.isDebugEnabled())
                 log.debug("Configuring default Resources");
@@ -5027,7 +5028,7 @@ public class StandardContext extends ContainerBase
 
 
         // Binding thread
-        ClassLoader oldCCL = bindThread();
+        ClassLoader oldCCL = bindThread();                          // 第一次获取 ClassLoader 是一个 null
 
         try {
             if (ok) {
@@ -5052,7 +5053,7 @@ public class StandardContext extends ContainerBase
                 // By calling unbindThread and bindThread in a row, we setup the
                 // current Thread CCL to be the webapp classloader
                 unbindThread(oldCCL);
-                oldCCL = bindThread();
+                oldCCL = bindThread();                              // 这里 oldCCL 又变成 Launcher.AppClassLoader 了
 
                 // Initialize logger again. Other components might have used it
                 // too early, so it should be reset.
@@ -5078,7 +5079,7 @@ public class StandardContext extends ContainerBase
 
                 // Start the Valves in our pipeline (including the basic),
                 // if any
-                if (pipeline instanceof Lifecycle) {
+                if (pipeline instanceof Lifecycle) {            // 启动 StandardContext 对应的 Pipeline
                     ((Lifecycle) pipeline).start();
                 }
 
@@ -5171,7 +5172,7 @@ public class StandardContext extends ContainerBase
 
             // Configure and call application event listeners
             if (ok) {
-                if (!listenerStart()) {     // 启动 Listener
+                if (!listenerStart()) {                                      // 启动 Listener (启动很多都是 在 javax 包下面的 listener 接口的实现)
                     log.error( "Error listenerStart");
                     ok = false;
                 }
@@ -5314,6 +5315,8 @@ public class StandardContext extends ContainerBase
      * server configuration, respecting the <code>override</code> property of
      * the application parameters appropriately.
      */
+    // 合并 Context 里面的配置的参数
+    // 下面是将好几个地方的参数合并在一起, 设置到 ApplicationContext
     private void mergeParameters() {
         Map<String,String> mergedParams = new HashMap<>();
 
@@ -5772,7 +5775,7 @@ public class StandardContext extends ContainerBase
                 PrivilegedAction<ClassLoader> pa = new PrivilegedGetTccl();
                 originalClassLoader = AccessController.doPrivileged(pa);
             } else {
-                originalClassLoader = Thread.currentThread().getContextClassLoader();
+                originalClassLoader = Thread.currentThread().getContextClassLoader();                   // 获取当前线程的 ClassLoader
             }
         }
 
@@ -6105,10 +6108,10 @@ public class StandardContext extends ContainerBase
 
         // Set the appropriate servlet context attribute
         if (context == null) {
-            getServletContext();   // 触发 new ApplicationContext
+            getServletContext();   // 初始化出 StandardContext 对应的 ApplicationContext
         }
-        context.setAttribute(ServletContext.TEMPDIR, dir);
-        context.setAttributeReadOnly(ServletContext.TEMPDIR);
+        context.setAttribute(ServletContext.TEMPDIR, dir);      // ApplicationContext 设置临时目录
+        context.setAttributeReadOnly(ServletContext.TEMPDIR);   // ApplicationContext 设置临时目录为只读
     }
 
 

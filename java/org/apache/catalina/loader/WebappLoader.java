@@ -386,7 +386,7 @@ public class WebappLoader extends LifecycleMBeanBase
      */
     @Override
     protected void startInternal() throws LifecycleException {
-
+        // 初始化 WebappLoader 对象
         if (log.isDebugEnabled())
             log.debug(sm.getString("webappLoader.starting"));
 
@@ -399,9 +399,9 @@ public class WebappLoader extends LifecycleMBeanBase
         // Construct a class loader based on our current repositories list
         try {
 
-            classLoader = createClassLoader();
-            classLoader.setResources(context.getResources());
-            classLoader.setDelegate(this.delegate);
+            classLoader = createClassLoader();                      // 通过反射构建 WebAppClassLoader
+            classLoader.setResources(context.getResources());      // 设置 WebappClassLoader 的 resources (其实就是 StandardRoot)
+            classLoader.setDelegate(this.delegate);               // 设置 WebappClassLoader 是否也按照双亲委派机制
 
             // Configure our repositories
             setClassPath();
@@ -508,14 +508,14 @@ public class WebappLoader extends LifecycleMBeanBase
     private WebappClassLoader createClassLoader()
         throws Exception {
 
-        Class<?> clazz = Class.forName(loaderClass);
+        Class<?> clazz = Class.forName(loaderClass);               // 通过反射生成 WebappClassLoader
         WebappClassLoader classLoader = null;
 
         if (parentClassLoader == null) {
             parentClassLoader = context.getParentClassLoader();
         }
         Class<?>[] argTypes = { ClassLoader.class };
-        Object[] args = { parentClassLoader };
+        Object[] args = { parentClassLoader };                  // 初始化 WebappClassLoader, 并将其的 parentClassLoader 设置为 Launcher.AppClassLoader
         Constructor<?> constr = clazz.getConstructor(argTypes);
         classLoader = (WebappClassLoader) constr.newInstance(args);
 
@@ -585,7 +585,7 @@ public class WebappLoader extends LifecycleMBeanBase
             if (!buildClassPath(classpath, loader)) {
                 break;
             }
-            loader = loader.getParent();
+            loader = loader.getParent();                // 递归的设置 全局的 classpath
         }
 
         if (delegate) {
@@ -596,7 +596,7 @@ public class WebappLoader extends LifecycleMBeanBase
             }
         }
 
-        this.classpath = classpath.toString();
+        this.classpath = classpath.toString();                                  // 这里的 classpath 是从底层的 WebappClassLoader 一直递归到 BootstrapClassLoader 合并在一起的 classpath
 
         // Store the assembled class path as a servlet context attribute
         servletContext.setAttribute(Globals.CLASS_PATH_ATTR, this.classpath);
@@ -646,6 +646,7 @@ public class WebappLoader extends LifecycleMBeanBase
     }
 
     // try to extract the classpath from a loader that is not URLClassLoader
+    // 当 ClassLoader 不是继承自 URLClassLoader 时, 直接通过反射获取 Method(getClasspath) 方法
     private String getClasspath( ClassLoader loader ) {
         try {
             Method m=loader.getClass().getMethod("getClasspath", new Class[] {});

@@ -1368,7 +1368,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                 }
                 container.backgroundProcess();                                      // 这是 backgroundProcessor 主要的工作
                 Container[] children = container.findChildren();
-                for (int i = 0; i < children.length; i++) {
+                for (int i = 0; i < children.length; i++) {                       // 处理所有子容器的 background processor
                     if (children[i].getBackgroundProcessorDelay() <= 0) {
                         processChildren(children[i]);
                     }
