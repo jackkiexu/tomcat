@@ -29,18 +29,18 @@ import org.apache.tomcat.util.buf.MessageBytes;
  */
 public class MappingData {
     // Mapper 路由表填充
-    public Host host = null;
-    public Context context = null;
-    public Context[] contexts = null;
-    public Wrapper wrapper = null;
-    public boolean jspWildCard = false;
+    public Host host = null;                                                       // 匹配的 Host
+    public Context context = null;                                                // 匹配的 Context
+    public Context[] contexts = null;                                             // 匹配的 Context 列表, 用于匹配过程,  并非最终使用的结果
+    public Wrapper wrapper = null;                                                // 匹配的 Wrapper
+    public boolean jspWildCard = false;                                         // 对于 JspServlet 其对应的匹配 pattern 是否包含通配符
     // Tomcat 的 http 解析
-    public final MessageBytes contextPath = MessageBytes.newInstance();
-    public final MessageBytes requestPath = MessageBytes.newInstance();
-    public final MessageBytes wrapperPath = MessageBytes.newInstance();
-    public final MessageBytes pathInfo = MessageBytes.newInstance();
+    public final MessageBytes contextPath = MessageBytes.newInstance();          // Context 的路径
+    public final MessageBytes requestPath = MessageBytes.newInstance();          // 相对于 Context 的请求路径
+    public final MessageBytes wrapperPath = MessageBytes.newInstance();          // Servlet 的路径
+    public final MessageBytes pathInfo = MessageBytes.newInstance();             // 相对于 Servlet 的请求路径
 
-    public final MessageBytes redirectPath = MessageBytes.newInstance();
+    public final MessageBytes redirectPath = MessageBytes.newInstance();        // 重定向 路径
     // 将 Mapping 信息填充到 Request 中, 这样就可以到后端 invoke 了
     public void recycle() {
         host = null;

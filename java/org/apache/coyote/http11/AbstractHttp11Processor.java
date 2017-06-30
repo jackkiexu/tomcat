@@ -897,10 +897,10 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         RequestInfo rp = request.getRequestProcessor();
         rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);
 
-        // Setting up the I/O
+        // Setting up the I/O 设置 SocketWrapper
         setSocketWrapper(socketWrapper);
-        getInputBuffer().init(socketWrapper, endpoint);
-        getOutputBuffer().init(socketWrapper, endpoint);
+        getInputBuffer().init(socketWrapper, endpoint);     // 获取 Socket 中的 InputStream 设置到 InputBuffer, 也就是设置到 Request 中
+        getOutputBuffer().init(socketWrapper, endpoint);   // 获取 Socket 中的 OutputStream 设置到 OutputBuffer, 也就是设置到 Response 中
 
         // Flags
         error = false;
@@ -925,7 +925,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             // Parsing the request header                                           // 解析 HTTP 请求的头
             try {
                 setRequestLineReadTimeout();
-
+                // 解析 HTTP 请求的method, requestURL, protocol 等
                 if (!getInputBuffer().parseRequestLine(keptAlive)) {
                     if (handleIncompleteRequestLineRead()) {
                         break;
@@ -947,7 +947,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
                     // Set this every time in case limit has been changed via JMX
                     request.getMimeHeaders().setLimit(endpoint.getMaxHeaderCount());
                     // Currently only NIO will ever return false here
-                    if (!getInputBuffer().parseHeaders()) {
+                    if (!getInputBuffer().parseHeaders()) {                     // 解析 HTTP 请求的包问头 headers
                         // We've read part of the request, don't recycle it
                         // instead associate it with the socket
                         openSocket = true;
@@ -992,7 +992,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             if (!error) {
                 // Setting up filters, and parse some request headers
                 rp.setStage(org.apache.coyote.Constants.STAGE_PREPARE);
-                try {
+                try {   // 准备 Request, 根据已解析的信息做一些过滤
                     prepareRequest();
                 } catch (Throwable t) {
                     ExceptionUtils.handleThrowable(t);
@@ -1018,6 +1018,8 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             if (!error) {
                 try {
                     rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
+                    // 调用 CoyoteAdapter 的 service 方法, 传入 org.apache.coyote.Request对象及
+                    // org.apache.coyoteResponse 对象
                     getAdapter().service(request, response);
                     // Handle when the response was committed before a serious
                     // error occurred.  Throwing a ServletException should both

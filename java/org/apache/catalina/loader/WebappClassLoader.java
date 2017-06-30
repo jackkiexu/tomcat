@@ -1179,6 +1179,7 @@ public class WebappClassLoader extends URLClassLoader
         }
 
         // (0) Check our previously loaded local class cache
+        // 当前对象缓存中检查是否已经加载该类
         clazz = findLoadedClass0(name);
         if (clazz != null) {
             if (log.isDebugEnabled())
@@ -1189,6 +1190,7 @@ public class WebappClassLoader extends URLClassLoader
         }
 
         // (0.1) Check our previously loaded class cache
+        // 检查 JVM 缓存 是否已经加载过该类
         clazz = findLoadedClass(name);
         if (clazz != null) {
             if (log.isDebugEnabled())
@@ -1232,6 +1234,7 @@ public class WebappClassLoader extends URLClassLoader
         boolean delegateLoad = delegate || filter(name);                    // 读取 delegate 的配置信息
 
         // (1) Delegate to our parent if requested
+        // 如果配置了 parent-first 模式, 那么委托给父加载器
         if (delegateLoad) {                                                   // 若 delegate 开启, 优先使用 parent classloader( delegate 默认是 false)
             if (log.isDebugEnabled())
                 log.debug("  Delegating to parent classloader1 " + parent);
@@ -1253,6 +1256,7 @@ public class WebappClassLoader extends URLClassLoader
         if (log.isDebugEnabled())
             log.debug("  Searching local repositories");
         try {
+            // 从 WebApp 中去加载类, 主要是 WebApp 下的 classes 目录 与 lib 目录
             clazz = findClass(name);                                        // 使用当前的 WebappClassLoader 加载
             if (clazz != null) {
                 if (log.isDebugEnabled())
@@ -1266,6 +1270,7 @@ public class WebappClassLoader extends URLClassLoader
         }
 
         // (3) Delegate to parent unconditionally
+        // 如果在当前 WebApp 中无法加载到, 委托给 StandardClassLoader 从 $catalina_home/lib 中去加载
         if (!delegateLoad) {                                                //这是在 delegate = false 时, 在本 classLoader 上进行加载后, 再进行操作这里
             if (log.isDebugEnabled())
                 log.debug("  Delegating to parent classloader at end: " + parent);
@@ -2492,6 +2497,8 @@ public class WebappClassLoader extends URLClassLoader
     /**
      * Find specified resource in local repositories.
      *
+     * 从 WebappClassLoader 的 classpath 中加载类或资源文件
+     *
      * @return the loaded resource, or null if the resource isn't found
      */
     protected ResourceEntry findResourceInternal(final String name, final String path) {
@@ -2580,6 +2587,7 @@ public class WebappClassLoader extends URLClassLoader
                             this, internalName, null, null, entry.binaryContent
                     );
                     if (transformed != null) {
+                        // 设置 二进制设置到 ResourceEntry
                         entry.binaryContent = transformed;
                     }
                 } catch (IllegalClassFormatException e) {
@@ -2596,6 +2604,7 @@ public class WebappClassLoader extends URLClassLoader
             // instance
             ResourceEntry entry2 = resourceEntries.get(path);
             if (entry2 == null) {
+                // 向本地资源缓存注册 ResourceEntry
                 resourceEntries.put(path, entry);
             } else {
                 entry = entry2;

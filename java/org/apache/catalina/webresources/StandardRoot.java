@@ -70,19 +70,29 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
 
     private Context context;
     private boolean allowLinking = false;
+
     // 下面这些集合在应用初始化之后, 被添加到 allResources 中
     // Resources defined by the PreResource element in the web
     // application's context.xml, Resources will be searched in the order
     // they were specified
+    // 即在 context.xml 中通过 <PreResource> 配置的资源, 这些资源将按照它们的配置的顺序进行查找
     private final ArrayList<WebResourceSet> preResources = new ArrayList<>();
+
+    // 即 Web 应用目录, WAR包或者 WAR 包解压目录包含的文件, 这些资源的查找顺序是 WEB-INF/classes WEB-INF/lib
     // The main resources for the web application(The WAR or the directory containing the espanded WAR)
     private WebResourceSet main;
+
+
     //指的是 WEB-INF/classes 下面的类
     private final ArrayList<WebResourceSet> classResources = new ArrayList<>();
+
     // Resource JARS as defined by the Servlet specification. JARs will
     // be searched in the order they were added to the ResourceRoot
     // 指的是 WEB-INF/lib 下面的jar
+    // 即在 Context.xml 中通过 <JarResource>配置的资源. 这些资源将按照它们的配置的顺序查找
     private final ArrayList<WebResourceSet> jarResources = new ArrayList<>();
+
+    // 即在 Context.xml 中通过 <PostResources> 配置的资源. 这些资源将按照它们配置的顺序进行查找
     // Resource defined by the PostResource element in the web
     // application's context.xml. Resources will be searched in the order
     // they were specified

@@ -43,6 +43,8 @@
  * 13. Tomcat 里面的 StandardServer, StandardService, StandardEngine, StandardHost, StandardContext 为什么需要 listener 监听其生命周期
  *      tomcat 是一个热部署的web容器, 需要通过监听的机制, 知道tomcat以前及现在的运行状态
  *
+ * 14. Tomcat 的 keepalive 原理
+ *
  * 14. request.getAttribute 触发什么动作
  * Created by xjk on 5/31/17.
  */

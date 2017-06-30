@@ -112,6 +112,8 @@ import org.xml.sax.SAXParseException;
  * Startup event listener for a <b>Context</b> that configures the properties
  * of that Context, and the associated defined servlets.
  *
+ * 主要工作: 解析 web.xml中的 servlet, 请求映射, Fil等相关配置ter
+ *
  * @author Craig R. McClanahan
  */
 public class ContextConfig implements LifecycleListener {
@@ -299,6 +301,7 @@ public class ContextConfig implements LifecycleListener {
         }
 
         // Process the event that has occurred
+        // 在 StandardContext 进行 startInitInternal 时会出发 Lifecycle.CONFIGURE_START_EVENT 事件, ContextConfig 会进行相应的处理
         if (event.getType().equals(Lifecycle.CONFIGURE_START_EVENT)) {
             configureStart();
         } else if (event.getType().equals(Lifecycle.BEFORE_START_EVENT)) {
@@ -571,6 +574,7 @@ public class ContextConfig implements LifecycleListener {
 
     /**
      * Adjust docBase.
+     * 根据 Host的 appBase 以及 Context的 docBase 计算 docBase 的绝对路径
      */
     protected void fixDocBase()
         throws IOException {
@@ -609,7 +613,8 @@ public class ContextConfig implements LifecycleListener {
                 unpackWARs =  ((StandardContext) context).getUnpackWAR();
             }
         }
-
+        // 如果 docBase 是一个 war 包, 且需要解压
+        // 则 解压 war 包, 并更新 docBase 路径
         if (docBase.toLowerCase(Locale.ENGLISH).endsWith(".war") && !file.isDirectory() && unpackWARs) {
             URL war = new URL("jar:" + (new File(docBase)).toURI().toURL() + "!/");
             docBase = ExpandWar.expand(host, war, pathName);
@@ -618,7 +623,7 @@ public class ContextConfig implements LifecycleListener {
             if (context instanceof StandardContext) {
                 ((StandardContext) context).setOriginalDocBase(origDocBase);
             }
-        } else if (docBase.toLowerCase(Locale.ENGLISH).endsWith(".war") &&
+        } else if (docBase.toLowerCase(Locale.ENGLISH).endsWith(".war") &&          // 如果是 war 包 但不需要解压, 则只进行检查
                 !file.isDirectory() && !unpackWARs) {
             URL war =
                 new URL("jar:" + (new File (docBase)).toURI().toURL() + "!/");
@@ -735,22 +740,24 @@ public class ContextConfig implements LifecycleListener {
 
     /**
      * Process a "before start" event for this Context.
+     * 更新 Context 的 docbase 属性 和解决 Web 目录锁的问题
      */
     protected synchronized void beforeStart() {
-
+        // docBase 属性指向的 War 包 解压后的文件夹目录
         try {
             fixDocBase();                       // 确定 docbase 相对目录
         } catch (IOException e) {
             log.error(sm.getString(
                     "contextConfig.fixDocBase", context.getName()), e);
         }
-
+        // 若 antiResourceLocking 是 true 时, Tomcat 会将 当前的 Web 应用目录复制到 临时文件夹下, 以避免对源目录资源的加锁
         antiLocking();
     }
 
 
     /**
      * Process a "contextConfig" event for this Context.
+     * 解析 web.xml, 创建 Wrapper, Filter, ServletContextListener 等一系列 Web 容器相关的对象, 完成 Web 容器的初始化s
      */
     protected synchronized void configureStart() {
         // Called from StandardContext.start()
@@ -768,7 +775,7 @@ public class ContextConfig implements LifecycleListener {
 
         webConfig();
 
-        if (!context.getIgnoreAnnotations()) {
+        if (!context.getIgnoreAnnotations()) {  // 如果 ignoreAnnotations 为 false, 则解析应用程序注解配置, 添加相关的 JDNI 资源引用
             applicationAnnotationsConfig();
         }
         if (ok) {
@@ -1095,6 +1102,11 @@ public class ContextConfig implements LifecycleListener {
          *   those in JARs excluded from an absolute ordering) need to be
          *   scanned to check if they match.
          */
+
+        /**
+         * 1. 解析默认配置 生成 WebXml 对象
+         * 2. 解析 Web 应用的 web.xml 文件
+         */
         Set<WebXml> defaults = new HashSet<>();
         defaults.add(getDefaultWebXmlFragment());
 
@@ -1114,6 +1126,8 @@ public class ContextConfig implements LifecycleListener {
         // provided by the container. If any of the application JARs have a
         // web-fragment.xml it will be parsed at this point. web-fragment.xml
         // files are ignored for container provided JARs.
+
+        // 扫描 Web 应用所有的 JAR 包, 如果包含 META-INF/web-fragment.xml, 则解析文件并创建 WebXML 对象
         Map<String,WebXml> fragments = processJarsForWebFragments(webXml);
 
         // Step 2. Order the fragments.
@@ -1122,6 +1136,11 @@ public class ContextConfig implements LifecycleListener {
                 WebXml.orderWebFragments(webXml, fragments, sContext);
 
         // Step 3. Look for ServletContainerInitializer implementations
+        /**
+         *  找到 ServletContainerInitializer 实现, 并创建 实例, 查找范围分为两部分
+         *  1. Web应用下的 包, 如果是 javax.servlet.context.orderedLibs 不为空, 金搜索 该属性包含的包, 否则搜索 WEB-INF/lib下的所有的包
+         *  2. 容器包: 搜索所有包
+         */
         if (ok) {
             processServletContainerInitializers(sContext);
         }
@@ -1759,7 +1778,7 @@ public class ContextConfig implements LifecycleListener {
                 }
             }
             else {
-                stream = servletContext.getResourceAsStream
+                stream = servletContext.getResourceAsStream     // 获取 /WEB-INF/web.xml 的数据流
                     (Constants.ApplicationWebXml);
                 try {
                     url = servletContext.getResource(

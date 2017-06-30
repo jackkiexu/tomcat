@@ -100,8 +100,15 @@ final class StandardWrapperValve
         // This should be a Request attribute...
         long t1=System.currentTimeMillis();
         requestCount.incrementAndGet();             // 增加请求次数
+
+        // 得到 StandardWrapper 容器
+        // 每个请求都会对应相应的 StandardWrapper 及 StandardWrapperValve 对象
         StandardWrapper wrapper = (StandardWrapper) getContainer();
+
+        // 此次请求对应的 servlet
         Servlet servlet = null;
+
+        // 得到此次请求的 StandardContext 对象
         Context context = (Context) wrapper.getParent();
 
         // Check for the application being marked unavailable
@@ -132,6 +139,7 @@ final class StandardWrapperValve
         // Allocate a servlet instance to process this request
         try {
             if (!unavailable) {
+                // 从 StandardWrapper 容器获取一个 Servlet 对象, Servlet对象的创建及初始化init 都在这里执行
                 servlet = wrapper.allocate();       // 进行 servlet 的分配
             }
         } catch (UnavailableException e) {
@@ -177,10 +185,14 @@ final class StandardWrapperValve
         request.setAttribute(Globals.DISPATCHER_TYPE_ATTR,dispatcherType);
         request.setAttribute(Globals.DISPATCHER_REQUEST_PATH_ATTR,
                 requestPathMB);
+
         // Create the filter chain for this request
+        // 创建 ApplicationFilterFactory 对象
         ApplicationFilterFactory factory =
             ApplicationFilterFactory.getInstance();
+
         // 创建 ApplicationFilterChain
+        // 创建此次请求的 ApplicationFilterChain 对象, 包装了所有请求的 Servlet 对象及一些拦截的过滤器 Filter 对象
         ApplicationFilterChain filterChain =                        // 创建 FilterChain
             factory.createFilterChain(request, wrapper, servlet);
 
@@ -201,6 +213,9 @@ final class StandardWrapperValve
                             filterChain.doFilterEvent(request.getEvent());
                             request.setComet(true);
                         } else {
+                            // 调用 ApplicationFilterChain的 doFilter 方法
+                            // 传入 org.apache.catalina.connector.RequestFacade 及
+                            // org.apache.catalina.connector.ResponseFacade 对象, 开始进行请求处理
                             filterChain.doFilter(request.getRequest(),      // 执行 filterChain 链, 在链的末尾就是 servlet
                                     response.getResponse());
                         }
@@ -285,6 +300,7 @@ final class StandardWrapperValve
         // Deallocate the allocated servlet instance
         try {
             if (servlet != null) {
+                // 执行 完后把 Servlet 实例回收到 Servlet 实例池
                 wrapper.deallocate(servlet);
             }
         } catch (Throwable e) {

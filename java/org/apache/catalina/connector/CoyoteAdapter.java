@@ -471,14 +471,19 @@ public class CoyoteAdapter implements Adapter {
         Response response = (Response) res.getNote(ADAPTER_NOTES);
 
         if (request == null) {
-
+            // Tomcat 容器中传递的 Request 和 Response 都是这里创建的 Request 及 Response 对象
             // Create objects
+            // 通过 Connector 创建 org.apache.catalina.connector.Request对象
             request = connector.createRequest();
+            // 设置 org.apache.coyote.Request 对象
             request.setCoyoteRequest(req);
+            // 通过 Connector 创建 org.apache.catalina.connectorResponse 对象
             response = connector.createResponse();
+            // 设置 org.apache.coyote.Response 对象
             response.setCoyoteResponse(res);
 
             // Link objects
+            // 把 Resquest 及 Response 对象相互关联起来
             request.setResponse(response);
             response.setRequest(request);
 
@@ -500,15 +505,22 @@ public class CoyoteAdapter implements Adapter {
         boolean async = false;
 
         try {
+            // 解析 Http 协议
+            // 解析请求的 Cookie 和 SessionId 等信息
+            // 从 Connector 中映射此请求对应的 StandardHost 及 StandardContext 及 StandardWrapper
 
             // Parse and set Catalina and configuration specific
             // request parameters
             req.getRequestProcessor().setWorkerThreadName(THREAD_NAME.get());
+
+            // 下面的 postParseRequest 是用来处理请求映射
             boolean postParseSuccess = postParseRequest(req, request, res, response);
             if (postParseSuccess) {
                 //check valves if we support async
                 request.setAsyncSupported(connector.getService().getContainer().getPipeline().isAsyncSupported());
+
                 // Calling the container
+                // 开始调用 Tomcat 的容器, 首先调用 StandardEngine 容器中的管道PipeLine 中的第一个 Valve, 传入 connector.Request 与 connector.Response
                 connector.getService().getContainer().getPipeline().getFirst().invoke(request, response);
 
                 if (request.isComet()) {
@@ -549,7 +561,10 @@ public class CoyoteAdapter implements Adapter {
                     }
                 }
             } else if (!comet) {
+                // 完成此次请求
                 request.finishRequest();
+                // 完成此次请求, 并提交响应信息
+                // 如果 response 已经提交, 则直接返回, 否则提交 response
                 response.finishResponse();
                 if (postParseSuccess &&
                         request.getMappingData().context != null) {
@@ -652,6 +667,7 @@ public class CoyoteAdapter implements Adapter {
 
     /**
      * Parse additional request parameters.
+     * 处理 CoyotoAdapter 的请求映射
      */
     protected boolean postParseRequest(org.apache.coyote.Request req,
                                        Request request,
@@ -769,15 +785,17 @@ public class CoyoteAdapter implements Adapter {
             request.getMappingData().recycle();
         }
 
-        boolean mapRequired = true;
-        String version = null;
+        boolean mapRequired = true;                // 是否需要映射, 用于控制映射匹配循环, 初始化是 true
+        String version = null;                      // 需要匹配的版本号, 初始化为 空, 也就是匹配所有的版本
 
-        while (mapRequired) {
+        while (mapRequired) {                       // 通过 loop 来处理映射匹配, 因为只通过一次处理并不能确保得到正确的结果
             if (version != null) {
                 // Once we have a version - that is it
                 mapRequired = false;
             }
             // This will map the the latest version by default
+            // 调用 Mapper.map 方法按照请求路径进行匹配, 参数 ServerName, url, version
+            // MappingData.contexts 中存放着所有的结果
             connector.getService().getMapper().map(serverName, decodedURI,
                     version, request.getMappingData());
             request.setContext(request.getMappingData().context);
@@ -790,7 +808,7 @@ public class CoyoteAdapter implements Adapter {
 
             // If there is no context at this point, it is likely no ROOT context
             // has been deployed
-            if (request.getContext() == null) {
+            if (request.getContext() == null) {         // 若没有匹配, 则直接返回  404
                 res.setStatus(404);
                 res.setMessage("Not found");
                 // No context, so use host
@@ -805,6 +823,7 @@ public class CoyoteAdapter implements Adapter {
             // Now we have the context, we can parse the session ID from the URL
             // (if any). Need to do this before we redirect in case we need to
             // include the session id in the redirect
+            // 尝试从 URL, Cookie, SSL 回话中获取请求的 ID, 并将 mapRequired 设置为 false
             String sessionID = null;
             if (request.getServletContext().getEffectiveSessionTrackingModes()
                     .contains(SessionTrackingMode.URL)) {

@@ -531,6 +531,7 @@ public class Tomcat {
         ctx.addLifecycleListener(new DefaultWebXmlListener());
         ctx.setConfigFile(getWebappConfigFile(path, url));
 
+        // 添加 ContextConfig 监听器
         ContextConfig ctxCfg = new ContextConfig();
         ctx.addLifecycleListener(ctxCfg);
 

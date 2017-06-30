@@ -212,7 +212,9 @@ final class ApplicationFilterChain implements FilterChain, CometFilterChain {
         throws IOException, ServletException {
 
         // Call the next filter if there is one
+        // 如果还有 过滤器Filter, 则执行Filter
         if (pos < n) {
+            // 得到 过滤器 Filter
             ApplicationFilterConfig filterConfig = filters[pos++];
             Filter filter = null;
             try {
@@ -236,6 +238,7 @@ final class ApplicationFilterChain implements FilterChain, CometFilterChain {
                         ("doFilter", filter, classType, args, principal);
 
                 } else {
+                    // 执行过滤器 Filter的 doFilter(Request, Response, FilterChain) 方法
                     filter.doFilter(request, response, this);
                 }
 
@@ -301,6 +304,7 @@ final class ApplicationFilterChain implements FilterChain, CometFilterChain {
                     servlet.service(request, response);
                 }
             } else {
+                // 过滤器 Filter 全部执行完, 最终调用 servlet 的 service(request, response) 方法完成Web 应用的业务逻辑
                 servlet.service(request, response);
             }
             support.fireInstanceEvent(InstanceEvent.AFTER_SERVICE_EVENT,

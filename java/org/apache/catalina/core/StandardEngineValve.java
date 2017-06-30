@@ -66,12 +66,15 @@ final class StandardEngineValve extends ValveBase {
      *
      * @exception IOException if an input/output error occurred
      * @exception ServletException if a servlet error occurred
+     *
+     * StandardEngine 容器默认配置了 StandardEngineValve 阀门, 它主要做负责选择响应的 Host 去处理请求
      */
     @Override
     public final void invoke(Request request, Response response)
         throws IOException, ServletException {
 
         // Select the Host to be used for this Request
+        // 得到此次请求对应的 StandardHost 容器
         Host host = request.getHost();
         if (host == null) {
             response.sendError
@@ -85,6 +88,7 @@ final class StandardEngineValve extends ValveBase {
         }
 
         // Ask this Host to process this request
+        // 调用 StandardHost 容器中管道 Pipeline 中的第一个 Valve
         host.getPipeline().getFirst().invoke(request, response);
 
     }

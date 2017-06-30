@@ -102,12 +102,15 @@ final class StandardHostValve extends ValveBase {
      *
      * @exception IOException if an input/output error occurred
      * @exception ServletException if a servlet error occurred
+     *
+     * StandardHostValve 选择相应的 Context 容器
      */
     @Override
     public final void invoke(Request request, Response response)
         throws IOException, ServletException {
 
         // Select the Context to be used for this Request
+        // 获取此次请求对应的 StandardContext 容器
         Context context = request.getContext();
         if (context == null) {
             response.sendError
@@ -115,7 +118,7 @@ final class StandardHostValve extends ValveBase {
                  sm.getString("standardHost.noContext"));
             return;
         }
-
+        // 线程上下文类加载器切换成当前 WebApp 的类加载器
         context.bind(Globals.IS_SECURITY_ENABLED, MY_CLASSLOADER);
 
         if (request.isAsyncSupported()) {
@@ -133,6 +136,7 @@ final class StandardHostValve extends ValveBase {
 
             // Ask this Context to process this request
             try {
+                // 调用 StandardContext 容器中管道 Pipeline 中的第一个 Valve
                 context.getPipeline().getFirst().invoke(request, response);
             } catch (Throwable t) {
                 ExceptionUtils.handleThrowable(t);
@@ -179,7 +183,7 @@ final class StandardHostValve extends ValveBase {
         if (ACCESS_SESSION) {
             request.getSession(false);
         }
-
+        // 还原 类加载器
         context.unbind(Globals.IS_SECURITY_ENABLED, MY_CLASSLOADER);
     }
 

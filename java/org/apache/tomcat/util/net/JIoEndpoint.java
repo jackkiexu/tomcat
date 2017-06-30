@@ -323,6 +323,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                     // 让工作线程干活
                     if ((state != SocketState.CLOSED)) {
                         if (status == null) {
+                            // 通过 Http11Protocol$Http11ConnectionHandler 处理请求, 应用外部对象的成员 handler
                             state = handler.process(socket, SocketStatus.OPEN_READ);
                         } else {
                             state = handler.process(socket,status);
@@ -533,6 +534,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
     protected boolean processSocket(Socket socket) {
         // Process the request from this socket
         try {
+            // 将 Socket 包装成 SocketWrapper
             SocketWrapper<Socket> wrapper = new SocketWrapper<>(socket);
             wrapper.setKeepAliveLeft(getMaxKeepAliveRequests());
             wrapper.setSecure(isSSLEnabled());
@@ -540,6 +542,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
             if (!running) {
                 return false;
             }
+            // 包装成 SocketProcessor 交给线程池处理, 当前 Acceptor 线程不处理, 一遍收到下一个到达的请求
             getExecutor().execute(new SocketProcessor(wrapper));
         } catch (RejectedExecutionException x) {
             log.warn("Socket processing request was rejected for:"+socket,x);

@@ -1043,6 +1043,12 @@ public class StandardWrapper extends ContainerBase
      */
     @Override
     public synchronized void load() throws ServletException {
+        /**
+         * 1. 创建 Servlet 实例, 如果添加了JNDI 资源注解, 将进行依赖注入
+         * 2. 读取 MultipartConfig 注解的配置
+         * 3. 读取 ServletSecurity注解的配置, 添加 Servlet 安全
+         * 4. 调用 init 进行 Servlet 的初始化
+         */
         instance = loadServlet();                       // 加载 Servlet
 
         if (!instanceInitialized) {                  // 初始化 Servlet
