@@ -260,12 +260,15 @@ public class Catalina {
 
 
     /**
+     * 参考资料
+     * http://blog.csdn.net/fjslovejhl/article/details/21328347
+     *
      * Create and configure the Digester we will be using for startup.
      */
     protected Digester createStartDigester() {
         long t1=System.currentTimeMillis();
         // Initialize the digester
-        Digester digester = new Digester();
+        Digester digester = new Digester();                                 // 创建 digester 用于解析 xml
         digester.setValidating(false);
         digester.setRulesValidation(true);
         HashMap<Class<?>, List<String>> fakeAttributes = new HashMap<>();
@@ -273,12 +276,12 @@ public class Catalina {
         attrs.add("className");
         fakeAttributes.put(Object.class, attrs);
         digester.setFakeAttributes(fakeAttributes);
-        digester.setUseContextClassLoader(true);
+        digester.setUseContextClassLoader(true);                           // 将 useContextClassLoader 参数设置为 true,那么待会将会用预先保存的线程 classloader 来载入class, 这里其实就是 catalinaLoader
 
         // Configure the actions we will be using
         digester.addObjectCreate("Server",
                                  "org.apache.catalina.core.StandardServer",
-                                 "className");
+                                 "className");      // 创建一个创建 server 对象的规则
         digester.addSetProperties("Server");
         digester.addSetNext("Server",
                             "setServer",

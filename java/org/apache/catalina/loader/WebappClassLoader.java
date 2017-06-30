@@ -290,6 +290,7 @@ public class WebappClassLoader extends URLClassLoader
      * resources such as property files) and the mapping from binary name to
      * path is unambiguous but the reverse mapping is ambiguous.
      */
+    // 加载资源的时候会将 文件缓存在这个 Map 里面, 下次就可以根据 modifiedTime 来判断是否需要热部署
     protected final Map<String, ResourceEntry> resourceEntries =
             new ConcurrentHashMap<>();
 
@@ -731,16 +732,17 @@ public class WebappClassLoader extends URLClassLoader
      * Have one or more classes or resources been modified so that a reload
      * is appropriate?
      */
+    // 校验 WebappClassLoader 加载的资源是否有修改过, 若有文件修改过, 则进行热部署
     public boolean modified() {
 
         if (log.isDebugEnabled())
             log.debug("modified()");
-                                                        // 除了 classes, 还包括 web.xml
+                                                                                    // 除了 classes, 还包括 web.xml
         for (Entry<String,ResourceEntry> entry : resourceEntries.entrySet()) {
             long cachedLastModified = entry.getValue().lastModified;
             long lastModified = resources.getClassLoaderResource(
-                    entry.getKey()).getLastModified(); // 对比 file 的 lastModified的属性
-            if (lastModified != cachedLastModified) {
+                    entry.getKey()).getLastModified();                               // 对比 file 的 lastModified的属性
+            if (lastModified != cachedLastModified) {                               // 若修改时间不对
                 if( log.isDebugEnabled() )
                     log.debug(sm.getString("webappClassLoader.resourceModified",
                             entry.getKey(),
@@ -756,8 +758,8 @@ public class WebappClassLoader extends URLClassLoader
 
         int jarCount = 0;
         for (WebResource jar : jars) {
-            if (jar.getName().endsWith(".jar") && jar.isFile() && jar.canRead()) {
-                jarCount++;
+            if (jar.getName().endsWith(".jar") && jar.isFile() && jar.canRead()) {      // 比较 /WEB-INF/lib 下的 jar 包是否有修改/增加/减少
+                jarCount++;                                                              // 记录 /WEB-INF/lib 下的 jar 的个数
                 Long recordedLastModified = jarModificationTimes.get(jar.getName());
                 if (recordedLastModified == null) {
                     // Jar has been added
@@ -774,7 +776,7 @@ public class WebappClassLoader extends URLClassLoader
             }
         }
 
-        if (jarCount < jarModificationTimes.size()){
+        if (jarCount < jarModificationTimes.size()){                    // 判断 WebappClassloader文件是够有增加/减少
             log.info(sm.getString("webappClassLoader.jarsRemoved",
                     resources.getContext().getName()));
             return true;
@@ -1405,12 +1407,12 @@ public class WebappClassLoader extends URLClassLoader
         WebResource classes = resources.getResource("/WEB-INF/classes");
         if (classes.isDirectory() && classes.canRead()) {
             addURL(classes.getURL());
-        }                                                                   // 加入 /WEB_INF/lib 下面的 jar 的目录
+        }                                                                           // 加入 /WEB_INF/lib 下面的 jar 的目录
         WebResource[] jars = resources.listResources("/WEB-INF/lib");
         for (WebResource jar : jars) {
             if (jar.getName().endsWith(".jar") && jar.isFile() && jar.canRead()) {
-                addURL(jar.getURL());
-                jarModificationTimes.put(                                   // 放一下 jar 文件的 lastModified
+                addURL(jar.getURL());                                               // 这一步就是将 ClassLoader需要加载的 classPath 路径 加入到 URLClassLoader.URLClassPath 里面
+                jarModificationTimes.put(                                       // 放一下 jar 文件的 lastModified
                         jar.getName(), Long.valueOf(jar.getLastModified()));
             }
         }

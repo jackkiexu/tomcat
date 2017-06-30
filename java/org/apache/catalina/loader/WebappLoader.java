@@ -291,7 +291,7 @@ public class WebappLoader extends LifecycleMBeanBase
     public void backgroundProcess() {
         // reloadable 热部署开关
         // modified() 文件是否修改过
-        if (reloadable && modified()) {                         // 这个开关控制 监控 /WEB_INF/classes/ 与 /WEB-INF/lib 来自动加载, 起热部署的作用
+        if (reloadable && modified()) {                         // 这个开关控制 以及 监控 /WEB_INF/classes/ 与 /WEB-INF/lib 来决定是否需要 进行热部署
             try {
                 Thread.currentThread().setContextClassLoader
                     (WebappLoader.class.getClassLoader());
@@ -349,7 +349,7 @@ public class WebappLoader extends LifecycleMBeanBase
      */
     @Override
     public boolean modified() {
-        return classLoader != null ? classLoader.modified() : false ;
+        return classLoader != null ? classLoader.modified() : false ;   // 判断 classLoader 加载的文件是否有修改/增加/减少
     }
 
 
@@ -408,7 +408,7 @@ public class WebappLoader extends LifecycleMBeanBase
 
             setPermissions();
 
-            ((Lifecycle) classLoader).start();
+            ((Lifecycle) classLoader).start();                      // 启动 classloader, 里面主要是 classes 以及 lib 下面的代码
 
             String contextName = context.getName();
             if (!contextName.startsWith("/")) {
@@ -512,7 +512,7 @@ public class WebappLoader extends LifecycleMBeanBase
         WebappClassLoader classLoader = null;
 
         if (parentClassLoader == null) {
-            parentClassLoader = context.getParentClassLoader();
+            parentClassLoader = context.getParentClassLoader(); // 获取 context 的 parentClassLoader, 这里就是 shareLoader
         }
         Class<?>[] argTypes = { ClassLoader.class };
         Object[] args = { parentClassLoader };                  // 初始化 WebappClassLoader, 并将其的 parentClassLoader 设置为 Launcher.AppClassLoader

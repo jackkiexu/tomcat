@@ -848,7 +848,7 @@ public class StandardWrapper extends ContainerBase
                 }
             }
 
-            if (!instanceInitialized) {
+            if (!instanceInitialized) {    // 调用 Servlet 的初始化方法 init
                 initServlet(instance);
             }
 
@@ -1043,13 +1043,13 @@ public class StandardWrapper extends ContainerBase
      */
     @Override
     public synchronized void load() throws ServletException {
-        instance = loadServlet();       // 加载 Servlet
+        instance = loadServlet();                       // 加载 Servlet
 
-        if (!instanceInitialized) {     // 初始化 Servlet
+        if (!instanceInitialized) {                  // 初始化 Servlet
             initServlet(instance);
         }
 
-        if (isJspServlet) {
+        if (isJspServlet) {                          // 若是 JSP 的话, 直接注册到 JMX 里面
             StringBuilder oname = new StringBuilder(getDomain());
 
             oname.append(":type=JspMonitor");
@@ -1082,8 +1082,8 @@ public class StandardWrapper extends ContainerBase
     public synchronized Servlet loadServlet() throws ServletException {
 
         // Nothing to do if we already have an instance or an instance pool
-        if (!singleThreadModel && (instance != null))
-            return instance;        // 是不是 单例 Servlet
+        if (!singleThreadModel && (instance != null))       // 若是 singleThreadModel, 并且已经实例化后, 直接返回
+            return instance;
 
         PrintStream out = System.out;
         if (swallowOutput) {
@@ -1099,7 +1099,7 @@ public class StandardWrapper extends ContainerBase
                 throw new ServletException
                     (sm.getString("standardWrapper.notClass", getName()));
             }
-            // 通过 InstanceManager 来获取 Servlet
+            // 通过 InstanceManager 来获取 Servlet (InstanceManager 是 StandardContext 里面引用的)
             InstanceManager instanceManager = ((StandardContext)getParent()).getInstanceManager();
             try {
                 servlet = (Servlet) instanceManager.newInstance(servletClass);
@@ -1133,7 +1133,7 @@ public class StandardWrapper extends ContainerBase
                 }
             }
 
-            processServletSecurityAnnotation(servlet.getClass());
+            processServletSecurityAnnotation(servlet.getClass());   // 处理 Servlet 的安全注解
 
             // Special handling for ContainerServlet instances
             if ((servlet instanceof ContainerServlet) &&

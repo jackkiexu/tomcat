@@ -236,7 +236,7 @@ public class Cache {
         return objectMaxSize;
     }
 
-    void enforceObjectMaxSizeLimit() {
+    void enforceObjectMaxSizeLimit() {                  // 初始化 Cache 的限制 limit
         long limit = maxSize / OBJECT_MAX_SIZE_FACTOR;
         if (limit > Integer.MAX_VALUE) {
             return;

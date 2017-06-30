@@ -30,7 +30,7 @@
  *
  * 7. tomcat 里面各种 valve
  *
- * 8. tomcat 里面各种 filter, 装饰器, 过滤器(以及其他 设计模式)
+ * 8. tomcat 里面各种 filter, 装饰器, 过滤器， 适配器(以及其他 设计模式)
  *
  * 9. tomcat JMX 使用
  *

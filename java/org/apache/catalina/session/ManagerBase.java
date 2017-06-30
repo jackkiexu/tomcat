@@ -538,6 +538,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
     @Override
     protected void startInternal() throws LifecycleException {
 
+        // 初始化 tomcat 的 session 生成器
         // Ensure caches for timing stats are the right size by filling with
         // nulls.
         while (sessionCreationTiming.size() < TIMING_STATS_CACHE_SIZE) {

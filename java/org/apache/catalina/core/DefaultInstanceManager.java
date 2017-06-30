@@ -53,6 +53,10 @@ import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.res.StringManager;
 
+/**
+ * 参考资料
+ * http://blog.csdn.net/zhouzhiande/article/details/52136700
+ */
 public class DefaultInstanceManager implements InstanceManager {
 
     // Used when there are no annotations in a class
@@ -170,9 +174,20 @@ public class DefaultInstanceManager implements InstanceManager {
     private Object newInstance(Object instance, Class<?> clazz)
             throws IllegalAccessException, InvocationTargetException, NamingException {
         if (!ignoreAnnotations) { // 找到当前的 inject 点, 从 injectionMap 中查找出当前 Servlet 的 Inject集合
-            Map<String, String> injections = assembleInjectionsFromClassHierarchy(clazz);
+            /**
+             * 主要有
+             * @Resource
+             * @WebServiceRef
+             * @PersistenceContext
+             * @PersistenceUnit
+             * @PostConstruct
+             * @PreDestory
+             */
+            Map<String, String> injections = assembleInjectionsFromClassHierarchy(clazz);                       // 从 Servlet 类的继承树中收集 Servlet的注解
             populateAnnotationsCache(clazz, injections); // 将jndi的引用实例化为 annotationCache引用集合, 并进行缓存起来
+            // 根据注解说明, 调用 Servlet 的方法, 进行设置名称上下文的资源
             processAnnotations(instance, injections);
+            // 设置 @PostConstruct/@PreDestory 类型的资源依赖
             postConstruct(instance, clazz); // 实例化 Object
         }
         return instance;
@@ -467,6 +482,7 @@ public class DefaultInstanceManager implements InstanceManager {
      * @throws java.lang.reflect.InvocationTargetException
      *                                      if injection fails
      */
+    // 从名称上下文中取得需要注入的资源
     protected void processAnnotations(Object instance, Map<String, String> injections)
             throws IllegalAccessException, InvocationTargetException, NamingException {
 
@@ -483,8 +499,8 @@ public class DefaultInstanceManager implements InstanceManager {
                 annotations = annotationCache.get(clazz);
             }
             for (AnnotationCacheEntry entry : annotations) {
-                if (entry.getType() == AnnotationCacheEntryType.SETTER) {
-                    lookupMethodResource(context, instance,
+                if (entry.getType() == AnnotationCacheEntryType.SETTER) {           // 通过 setter的反射出来的注解
+                    lookupMethodResource(context, instance,                         // 调用 Servlet 的方法, 进行设置资源
                             getMethod(clazz, entry),
                             entry.getName(), clazz);
                 } else if (entry.getType() == AnnotationCacheEntryType.FIELD) {
@@ -507,7 +523,7 @@ public class DefaultInstanceManager implements InstanceManager {
         }
     }
 
-
+    // 通过 ClassLoader  来进行加载 class
     protected Class<?> loadClassMaybePrivileged(final String className,
             final ClassLoader classLoader) throws ClassNotFoundException {
         Class<?> clazz;
@@ -533,7 +549,7 @@ public class DefaultInstanceManager implements InstanceManager {
         checkAccess(clazz);
         return clazz;
     }
-
+    // 通过 classLoader 来实例化 Class对象
     protected Class<?> loadClass(String className, ClassLoader classLoader)
             throws ClassNotFoundException {
         if (className.startsWith("org.apache.catalina")) {
@@ -625,6 +641,7 @@ public class DefaultInstanceManager implements InstanceManager {
      * @throws java.lang.reflect.InvocationTargetException
      *                                      if setter call fails
      */
+    // 在 名称上下文中查找资源
     protected static void lookupMethodResource(Context context,
             Object instance, Method method, String name, Class<?> clazz)
             throws NamingException, IllegalAccessException, InvocationTargetException {
@@ -640,7 +657,7 @@ public class DefaultInstanceManager implements InstanceManager {
         String normalizedName = normalize(name);
 
         if ((normalizedName != null) && (normalizedName.length() > 0)) {
-            lookedupResource = context.lookup(normalizedName);
+            lookedupResource = context.lookup(normalizedName);                  // 在名称上下文中查找资源
         } else {
             lookedupResource = context.lookup(
                     clazz.getName() + "/" + Introspection.getPropertyName(method));
@@ -649,7 +666,7 @@ public class DefaultInstanceManager implements InstanceManager {
         synchronized (method) {
             accessibility = method.isAccessible();
             method.setAccessible(true);
-            method.invoke(instance, lookedupResource);
+            method.invoke(instance, lookedupResource);                         // 调用 Servlet 的方法, 进行资源的设置
             method.setAccessible(accessibility);
         }
     }

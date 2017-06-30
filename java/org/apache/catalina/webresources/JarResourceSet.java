@@ -82,7 +82,7 @@ public class JarResourceSet extends AbstractArchiveResourceSet {
     //-------------------------------------------------------- Lifecycle methods
     @Override
     protected void initInternal() throws LifecycleException {
-
+        // 将 war 包中的 jar 与 classes 目录罗列出来s
         try (JarFile jarFile = new JarFile(getBase())) {
             Enumeration<JarEntry> entries = jarFile.entries();
             while (entries.hasMoreElements()) {

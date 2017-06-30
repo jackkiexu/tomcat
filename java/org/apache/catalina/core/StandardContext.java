@@ -141,6 +141,8 @@ import org.apache.tomcat.util.scan.StandardJarScanner;
  *
  * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076096&idx=1&sn=d6ab83b803d0c68c1299c1acfc916c17&mpshare=1&scene=23&srcid=0620ceqNwF7WliSUOSnfT8jw#rd
  *
+ * https://my.oschina.net/douglas/blog/170048
+ *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
  */
@@ -155,6 +157,9 @@ public class StandardContext extends ContainerBase
 
     /**
      * Create a new StandardContext component with the default basic Valve.
+     * 这里的 StandardContextValve 是链接 Context 和 ServletWrapper 的工具. StandardContextValve 主要完成的功能
+     * 1. WEB-INF 与 META-INF 目录的访问选项的判断, tomcat 禁止访问这两个目录
+     * 2. 选定 Wrapper 处理请求
      */
     public StandardContext() {
 
@@ -175,6 +180,7 @@ public class StandardContext extends ContainerBase
 
     /**
      * Array containing the safe characters set.
+     * 根 URL 相关, 具有对 URL 编码的功能, 负责处理本地字符问题
      */
     protected static URLEncoder urlEncoder;
 
@@ -280,6 +286,7 @@ public class StandardContext extends ContainerBase
 
     /**
      * The Locale to character set mapper for this application.
+     * Context 支持的字符集, 负责处理本地字符问题
      */
     private CharsetMapper charsetMapper = null;
 
@@ -314,6 +321,7 @@ public class StandardContext extends ContainerBase
 
     /**
      * The ServletContext implementation associated with this Context.
+     * Tomcat 定义的 Servlet 上下文接口, 也即一个 webapp 的应用环境
      */
     protected ApplicationContext context = null;
 
@@ -386,6 +394,7 @@ public class StandardContext extends ContainerBase
     /**
      * The exception pages for this web application, keyed by fully qualified
      * class name of the Java exception.
+     * 错误页面信息匹配, 对于 404, 403 等 HTTP 错误码, tomcat通过映射页面来定制提示信息
      */
     private HashMap<String, ErrorPage> exceptionPages = new HashMap<>();
 
@@ -393,6 +402,7 @@ public class StandardContext extends ContainerBase
     /**
      * The set of filter configurations (and associated filter instances) we
      * have initialized, keyed by filter name.
+     * K/V 的方式保存 Filter 的配置信息, 在过滤请求信息时使用到
      */
     private HashMap<String, ApplicationFilterConfig> filterConfigs =
             new HashMap<>();
@@ -401,6 +411,7 @@ public class StandardContext extends ContainerBase
     /**
      * The set of filter definitions for this application, keyed by
      * filter name.
+     * KV 的方式保存 Filter 的定义的信息
      */
     // web.xml 中的 filter 和 filter-mapping
     private HashMap<String, FilterDef> filterDefs = new HashMap<>();
@@ -451,6 +462,7 @@ public class StandardContext extends ContainerBase
 
     /**
      * The naming context listener for this web application.
+     *
      */
     private NamingContextListener namingContextListener = null;
 
@@ -561,6 +573,7 @@ public class StandardContext extends ContainerBase
     /**
      * The servlet mappings for this web application, keyed by
      * matching pattern.
+     * URL 匹配与 Servlet 类的映射关系
      */
     private HashMap<String, String> servletMappings = new HashMap<>();
 
@@ -639,8 +652,10 @@ public class StandardContext extends ContainerBase
 
     /**
      * Java class name of the Wrapper class implementation we use.
+     * 用来处理 Servlet 包装的 Wrapper 类类名, 负责加载管理 Servlet
      */
     private String wrapperClassName = StandardWrapper.class.getName();
+
     private Class<?> wrapperClass = null;
 
 
@@ -1723,7 +1738,7 @@ public class StandardContext extends ContainerBase
     }
 
     @Override
-    public void setLoader(Loader loader) {
+    public void setLoader(Loader loader) {              // 将 WebappClassLoader 设置为 StandardContext 的类加载器
 
         Lock writeLock = loaderLock.writeLock();
         writeLock.lock();
@@ -2087,7 +2102,7 @@ public class StandardContext extends ContainerBase
             return (parentClassLoader);
         if (getPrivileged()) {
             return this.getClass().getClassLoader();
-        } else if (parent != null) {
+        } else if (parent != null) { // 一般使用的是 parentClassLoader, 也就是 host的, host将会设置为与 engine 一样, 也就是 shareLoader
             return (parent.getParentClassLoader());
         }
         return (ClassLoader.getSystemClassLoader());
@@ -3049,6 +3064,7 @@ public class StandardContext extends ContainerBase
      *
      * @exception IllegalArgumentException if the specified servlet name
      *  is not known to this Context
+     *  添加 servlet 与 url 模式映射关系. 从 web.xml 或者 注解中获取 Servlet 与 url的关系, 然后保存到 Context 中
      */
     @Override
     public void addServletMapping(String pattern, String name) {
@@ -3190,6 +3206,11 @@ public class StandardContext extends ContainerBase
      * the Java implementation class appropriate for this Context
      * implementation.  The constructor of the instantiated Wrapper
      * will have been called, but no properties will have been set.
+     * 实例化 Wrapper 类, 创建一个容纳 servlet 的容器, 并在 Wrapper 上注册监听器, 主要完成以下步骤
+     * 1. 创建 Wrapper 类实例
+     * 2. 在 Wrapper 类实例上注册组件实例化监听
+     * 3. 在 Wrapper 类实例上注册组件生命周期监听
+     * 4. 在 Wrapper 类实例上注册容器事件监听
      */
     @Override
     public Wrapper createWrapper() {
@@ -3733,6 +3754,16 @@ public class StandardContext extends ContainerBase
      *
      * @exception IllegalStateException if the <code>reloadable</code>
      *  property is set to <code>false</code>.
+     *
+     *  通常由 reload 开关 + modifiedTime 是否修改来决定
+     *  StandardContext 进行 reload
+     *
+     *  重新加载数据, 用于当类或者配置文件发生变化时重新加载, 从代码中可以看出来, tomcat 是通过重启来完成的
+     *  主要有下面几步:
+     *  1. 设置暂停标记
+     *  2. 停止 Context
+     *  3. 启动 Context
+     *  4. 清除暂停标记
      */
     @Override
     public synchronized void reload() {
@@ -4565,6 +4596,7 @@ public class StandardContext extends ContainerBase
      * Configure and initialize the set of filters for this Context.
      * Return <code>true</code> if all filter initialization completed
      * successfully, or <code>false</code> otherwise.
+     * 配置和初始化过滤 Servlet 的Filter 集合
      */
     public boolean filterStart() {
 
@@ -4603,6 +4635,7 @@ public class StandardContext extends ContainerBase
      * Finalize and release the set of filters for this Context.
      * Return <code>true</code> if all filter finalization completed
      * successfully, or <code>false</code> otherwise.
+     * 释放和清除 Filter 集合配置
      */
     public boolean filterStop() {
 
@@ -4643,6 +4676,10 @@ public class StandardContext extends ContainerBase
      * Configure the set of instantiated application event listeners
      * for this Context.  Return <code>true</code> if all listeners wre
      * initialized successfully, or <code>false</code> otherwise.
+     *
+     * 配置并实例化注册在 Context 上的监听器集合, 用于监听在 Context 上面触发的时间, 监听器用于监听 Context 事件和
+     * Servlet 事件, 分别有下面几个步骤
+     *
      */
     public boolean listenerStart() {
 
@@ -4654,13 +4691,14 @@ public class StandardContext extends ContainerBase
         Object results[] = new Object[listeners.length];
         boolean ok = true;
         Set<Object> noPluggabilityListeners = new HashSet<>();
+        // 遍历所有监听器, 并实例化到 results 列表中
         for (int i = 0; i < results.length; i++) {
             if (getLogger().isDebugEnabled())
                 getLogger().debug(" Configuring event listener class '" +
                     listeners[i] + "'");
             try {
                 ApplicationListener listener = listeners[i];
-                results[i] = instanceManager.newInstance(
+                results[i] = instanceManager.newInstance(                       // 实例化监听器
                         listener.getClassName());
                 if (listener.isPluggabilityBlocked()) {
                     noPluggabilityListeners.add(results[i]);
@@ -4682,6 +4720,7 @@ public class StandardContext extends ContainerBase
         // Sort listeners in two arrays
         ArrayList<Object> eventListeners = new ArrayList<>();
         ArrayList<Object> lifecycleListeners = new ArrayList<>();
+        // 遍历监听器, 区分ContextEvent监听器和 LifecycleEvent 监听器
         for (int i = 0; i < results.length; i++) {
             if ((results[i] instanceof ServletContextAttributeListener)
                 || (results[i] instanceof ServletRequestAttributeListener)
@@ -4704,6 +4743,7 @@ public class StandardContext extends ContainerBase
         for (Object eventListener: getApplicationEventListeners()) {
             eventListeners.add(eventListener);
         }
+        // 注册监听器
         setApplicationEventListeners(eventListeners.toArray());
         for (Object lifecycleListener: getApplicationLifecycleListeners()) {
             lifecycleListeners.add(lifecycleListener);
@@ -4843,13 +4883,14 @@ public class StandardContext extends ContainerBase
      * Allocate resources, including proxy.
      * Return <code>true</code> if initialization was successfull,
      * or <code>false</code> otherwise.
+     *
      */
     public void resourcesStart() throws LifecycleException {
 
         // May have been started (but not fully configured) in init() so no need
         // to start the resources if they are already available
         if (!resources.getState().isAvailable()) {
-            resources.start();
+            resources.start();              // 初始化 StandardRoot 并且加入到缓存中
         }
         // servlet 规范 > 3                  开关开启 WEB-INF/classes/META_INF/resources 下面的资源加载
         if (effectiveMajorVersion >=3 && addWebinfClassesResources) {
@@ -4895,6 +4936,11 @@ public class StandardContext extends ContainerBase
      *
      * @param children Array of wrappers for all currently defined
      *  servlets (including those not declared load on startup)
+     *
+     *  这个方法是用来处理在web.xml 中配置 loadonstartup 的Servlet
+     *  这个是在 Context 启动时加载实例化, 而不是等到 请求触发才实例化
+     *  原因: 主要是有些 Servlet 在第一次初始化时, 需要耗特别多的时间 + 资源
+     *  这样就提升了访问的速度
      */
     public void loadOnStartup(Container children[]) {
 
@@ -4938,6 +4984,10 @@ public class StandardContext extends ContainerBase
      *
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
+     *
+     *  负责启动 web app 应用, 在启动方法中要完成很多步骤
+     *  注册 JMX
+     *
      */
     @Override
     protected synchronized void startInternal() throws LifecycleException {
@@ -4952,13 +5002,13 @@ public class StandardContext extends ContainerBase
             broadcaster.sendNotification(notification);
         }
 
-        setConfigured(false);
+        setConfigured(false);                                           // 触发配置时间
         boolean ok = true;
 
         // Currently this is effectively a NO-OP but needs to be called to
         // ensure the NamingResources follows the correct lifecycle
         if (namingResources != null) {
-            namingResources.start();        // 开启 JMDI 树, 要调用后端的资源,
+            namingResources.start();                                  // 开启 JNDI 树, 要调用后端的资源,
         }
 
         // Add missing components as necessary
@@ -4993,7 +5043,7 @@ public class StandardContext extends ContainerBase
         // Validate required extensions
         boolean dependencyCheck = true;
         try {
-            dependencyCheck = ExtensionValidator.validateApplication
+            dependencyCheck = ExtensionValidator.validateApplication        // 校验目录文件的合法性
                 (getResources(), this);
         } catch (IOException ioe) {
             log.error("Error in dependencyCheck", ioe);
@@ -5035,7 +5085,7 @@ public class StandardContext extends ContainerBase
                 // Start our subordinate components, if any
                 Loader loader = getLoader();
                 if ((loader != null) && (loader instanceof Lifecycle))
-                    ((Lifecycle) loader).start();
+                    ((Lifecycle) loader).start();                 // 触发 WebappClassLoader 启动
 
                 // since the loader just started, the webapp classloader is now
                 // created.
@@ -5052,13 +5102,13 @@ public class StandardContext extends ContainerBase
 
                 // By calling unbindThread and bindThread in a row, we setup the
                 // current Thread CCL to be the webapp classloader
-                unbindThread(oldCCL);
-                oldCCL = bindThread();                              // 这里 oldCCL 又变成 Launcher.AppClassLoader 了
+                unbindThread(oldCCL);                                                           // 这里又将加载 StandardContext 的类加载器替换回来
+                oldCCL = bindThread();                                                          // 将当前线程的类加载器变成 WebappClassLoader (PS: 这两行有点感觉是多此一举 ???)
 
                 // Initialize logger again. Other components might have used it
                 // too early, so it should be reset.
                 logger = null;
-                getLogger();
+                getLogger();                                                                    // 初始化 logger 对象
 
                 Cluster cluster = getClusterInternal();
                 if ((cluster != null) && (cluster instanceof Lifecycle))
@@ -5206,7 +5256,7 @@ public class StandardContext extends ContainerBase
 
             // Load and initialize all "load on startup" servlets
             if (ok) {           // 如果配置了 load onStartUp 的servlet在这里进行启动
-                loadOnStartup(findChildren());
+                loadOnStartup(findChildren());                      // 这里的 findChildren 是查询 StandardContext 下面对应的 StandardWrapper, 其实就是 servlet
             }
 
             // Start ContainerBackgroundProcessor thread
@@ -5622,6 +5672,7 @@ public class StandardContext extends ContainerBase
      *
      * @param urlPattern The URL pattern to be adjusted (if needed)
      *  and returned
+     *
      */
     protected String adjustURLPattern(String urlPattern) {
 
@@ -5764,7 +5815,7 @@ public class StandardContext extends ContainerBase
 
     @Override
     public ClassLoader bind(boolean usePrivilegedAction, ClassLoader originalClassLoader) {
-        Loader loader = getLoader();
+        Loader loader = getLoader();                                                                    // 获取 StandardContext 的类加载器, 其实就是 WebappClassLoader
         ClassLoader webApplicationClassLoader = null;
         if (loader != null) {
             webApplicationClassLoader = loader.getClassLoader();
@@ -5775,7 +5826,7 @@ public class StandardContext extends ContainerBase
                 PrivilegedAction<ClassLoader> pa = new PrivilegedGetTccl();
                 originalClassLoader = AccessController.doPrivileged(pa);
             } else {
-                originalClassLoader = Thread.currentThread().getContextClassLoader();                   // 获取当前线程的 ClassLoader
+                originalClassLoader = Thread.currentThread().getContextClassLoader();                   // 获取当前线程的 ClassLoader(其实就是 加载 StandardContext 的类加载器)
             }
         }
 
@@ -5792,7 +5843,7 @@ public class StandardContext extends ContainerBase
             PrivilegedAction<Void> pa = new PrivilegedSetTccl(webApplicationClassLoader);
             AccessController.doPrivileged(pa);
         } else {
-            Thread.currentThread().setContextClassLoader(webApplicationClassLoader);
+            Thread.currentThread().setContextClassLoader(webApplicationClassLoader);                    // 将 WebappClassLoader 设置为当前线程的加载器
         }
         if (threadBindingListener != null) {
             try {
@@ -5804,7 +5855,7 @@ public class StandardContext extends ContainerBase
             }
         }
 
-        return originalClassLoader;
+        return originalClassLoader;                                                                    // 这里就是返回加载 StandardContext 的类加载器
     }
 
 
@@ -6131,6 +6182,8 @@ public class StandardContext extends ContainerBase
      * Validate the syntax of a proposed <code>&lt;url-pattern&gt;</code>
      * for conformance with specification requirements.
      *
+     * 验证 URL 是否合法
+     *
      * @param urlPattern URL pattern to be validated
      */
     private boolean validateURLPattern(String urlPattern) {
@@ -6220,6 +6273,7 @@ public class StandardContext extends ContainerBase
 
     /**
      * JSR77 servlets attribute
+     * 返回 Context 中的所有 Servlet
      *
      * @return list of all servlets ( we know about )
      */

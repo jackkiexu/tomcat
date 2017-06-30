@@ -466,11 +466,11 @@ public class StandardManager extends ManagerBase {
     @Override
     protected synchronized void startInternal() throws LifecycleException {
 
-        super.startInternal();
+        super.startInternal();              // 初始化 SessionGenerator 生成器
 
         // Load unloaded sessions, if any
         try {
-            load();
+            load();                         // 从 session 持久化文件中反序列化出 session
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
             log.error(sm.getString("standardManager.managerLoad"), t);

@@ -635,7 +635,7 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         if (!f.isAbsolute()) {
             f = new File(((Host)context.getParent()).getAppBaseFile(), f.getName());
         }
-        if (f.isDirectory()) {
+        if (f.isDirectory()) {                                      // 判断 f 是 Directory, 则构成一个 DirResourceSet
             main = new DirResourceSet(this, "/", f.getAbsolutePath(), "/");
         } else if(f.isFile() && docBase.endsWith(".war")) {
             main = new JarResourceSet(this, "/", f.getAbsolutePath(), "/");
@@ -648,7 +648,7 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         mainResources.clear();
         mainResources.add(main);
 
-        for (ArrayList<WebResourceSet> list : allResources) {
+        for (ArrayList<WebResourceSet> list : allResources) {           // 初始化 allResources 对应的所有的资源
             for (WebResourceSet webResourceSet : list) {
                 webResourceSet.start();
             }
