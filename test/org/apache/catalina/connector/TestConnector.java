@@ -52,6 +52,7 @@ public class TestConnector extends TomcatBaseTest {
         ByteChunk bc = new ByteChunk();
         int rc = getUrl("http://localhost:" + getPort() + "/", bc, null, null);
 
+        logger.info("rc :" + rc);
         assertEquals(200, rc);
         assertEquals("OK", bc.toString());
 

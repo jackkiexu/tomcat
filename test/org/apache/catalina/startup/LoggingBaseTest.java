@@ -26,6 +26,7 @@ import java.util.logging.LogManager;
 
 import static org.junit.Assert.fail;
 
+import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -51,6 +52,8 @@ import org.apache.juli.logging.LogFactory;
  * even if the tests do not use Tomcat.
  */
 public abstract class LoggingBaseTest {
+
+    public Logger logger = Logger.getLogger(getClass());
 
     protected Log log;
 
