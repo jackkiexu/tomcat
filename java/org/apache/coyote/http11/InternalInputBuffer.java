@@ -35,6 +35,17 @@ import org.apache.tomcat.util.net.SocketWrapper;
  * Implementation of InputBuffer which provides HTTP request header parsing as
  * well as transfer decoding.
  *
+ * 参考资料
+ * http://www.cnblogs.com/killbug/archive/2012/10/21/2733060.html
+ *
+ * 1. org.apache.coyote.Request 是tomcat内部使用用于存放 关于 request 消息的数据结构
+ * 2. oeg.apache.tomcat.util.buf.MessageBytes 用于存放消息, 在 org.apache.coyote.Request 中大量用于存放解析后的 byte 字符
+ * 3. org.apache.tomcat.util.buf.ByteChunk 真正用于存放数据的数据结构, 存放的是 byte[], org.apache.tomcat.util.buf.MessageBytes 使用它
+ *
+ * 大体流程:
+ * http 消息通过 InputBuffer 解析后放到 request 中, request 把它放到相应的 messageBytes, 最后 MessageBytes 把它存放到 ByteChunk 里
+ *
+ *
  * @author <a href="mailto:remm@apache.org">Remy Maucherat</a>
  */
 public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
@@ -89,6 +100,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
      * @throws IOException If an exception occurs during the underlying socket
      * read operations, or if the given buffer is not big enough to accommodate
      * the whole line.
+     * 用于读取请求行
      */
     @Override
     public boolean parseRequestLine(boolean useAvailableDataOnly)
@@ -99,6 +111,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
 
         //
         // Skipping blank lines
+        // 忽略空行
         //
 
         byte chr = 0;
@@ -122,7 +135,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
         //
         // Reading the method name
         // Method name is always US-ASCII
-        //
+        // space 类似于开关一样, 当为 false 时, 查内容, 为 true 时去除空行
 
         boolean space = false;
 
@@ -133,15 +146,17 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
                 if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
-
+            //
             // Spec says no CR or LF in method name
             if (buf[pos] == Constants.CR || buf[pos] == Constants.LF) {
                 throw new IllegalArgumentException(
                         sm.getString("iib.invalidmethod"));
             }
             // Spec says single SP but it also says be tolerant of HT
+            // 查出第一个空格, tab 居然也是允许的
             if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {
-                space = true;
+                space = true; // 跳出循环
+                // 把下标记录下来, 这里的 method() 得到一个 Request 的 MessageBytes: methodMB
                 request.method().setBytes(buf, start, pos - start);
             }
 
@@ -151,6 +166,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
 
 
         // Spec says single SP but also says be tolerant of multiple and/or HT
+        // 忽略空格后面的空格或 tab, 因为是忽略的内容, 所以不需要什么 start
         while (space) {
             // Read new bytes if needed
             if (pos >= lastValid) {
@@ -158,14 +174,14 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
             if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {
-                pos++;
+                pos++;  // 忽略的方式就是继续移动下标
             } else {
                 space = false;
             }
         }
 
         // Mark the current buffer position
-        start = pos;
+        start = pos;        // 出现 start了, 后面肯定是需要记录下标
         int end = 0;
         int questionPos = -1;
 
@@ -184,34 +200,38 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
             }
 
             // Spec says single SP but it also says be tolerant of HT
+            // 寻找第二个空格, 第一个空格和第二个空格之间就是传说中的 URI
             if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {
                 space = true;
                 end = pos;
             } else if ((buf[pos] == Constants.CR)
                        || (buf[pos] == Constants.LF)) {
                 // HTTP/0.9 style request
-                eol = true;
+                eol = true;     // 为了兼容 HTTP 0.9 格式
                 space = true;
                 end = pos;
-            } else if ((buf[pos] == Constants.QUESTION)
+            } else if ((buf[pos] == Constants.QUESTION) // 遇到 '?'
                        && (questionPos == -1)) {
-                questionPos = pos;
+                questionPos = pos; // 把问号的位置先记录下来
             }
 
             pos++;
 
         }
-
+        // 把可能包含问号的 URI 的起始位和结束位记录下来
         request.unparsedURI().setBytes(buf, start, end - start);
-        if (questionPos >= 0) {
+        if (questionPos >= 0) { // 有问号的情况
+            // 问号位置记录
             request.queryString().setBytes(buf, questionPos + 1,
                                            end - questionPos - 1);
+            // 将 URI 记录下来
             request.requestURI().setBytes(buf, start, questionPos - start);
         } else {
             request.requestURI().setBytes(buf, start, end - start);
         }
 
         // Spec says single SP but also says be tolerant of multiple and/or HT
+        // 这段算是重复代码, 就是忽略空格
         while (space) {
             // Read new bytes if needed
             if (pos >= lastValid) {
@@ -232,7 +252,10 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
         //
         // Reading the protocol
         // Protocol is always US-ASCII
-        //
+        ///
+        /**
+         * eol 标志位是为了标记是否是 HTTP 0.9
+         */
 
         while (!eol) {
 
@@ -241,7 +264,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
                 if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
-
+            // 查出 /r/n
             if (buf[pos] == Constants.CR) {
                 end = pos;
             } else if (buf[pos] == Constants.LF) {
@@ -253,7 +276,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
             pos++;
 
         }
-
+        // 至此把 head 分成 三部分, 放到 Request 定义好的 MessageBytes 中去了
         if ((end - start) > 0) {
             request.protocol().setBytes(buf, start, end - start);
         } else {
@@ -267,6 +290,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
 
     /**
      * Parse the HTTP headers.
+     * 读取请求头
      */
     @Override
     public boolean parseHeaders()
