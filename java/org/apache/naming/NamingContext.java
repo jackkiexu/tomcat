@@ -901,7 +901,7 @@ public class NamingContext implements Context {
             if (entry.type == NamingEntry.CONTEXT) {
                 if (rebind) {
                     ((Context) entry.value).rebind(name.getSuffix(1), obj);
-                } else {
+                } else {        // 这里就是将资源 通过 JNDI 绑定到 java 的 命名服务上
                     ((Context) entry.value).bind(name.getSuffix(1), obj);
                 }
             } else {

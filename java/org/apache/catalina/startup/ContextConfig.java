@@ -1315,7 +1315,7 @@ public class ContextConfig implements LifecycleListener {
         }
         // Name is just used for ordering
         for (ContextResourceEnvRef resource :
-                webxml.getResourceEnvRefs().values()) {
+                webxml.getResourceEnvRefs().values()) {  // 绑定到 JNDI 上
             context.getNamingResources().addResourceEnvRef(resource);
         }
         for (ContextResource resource : webxml.getResourceRefs().values()) {

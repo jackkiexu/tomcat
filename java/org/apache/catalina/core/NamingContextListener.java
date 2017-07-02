@@ -1066,7 +1066,7 @@ public class NamingContextListener
                              + resource.getName() + "  " + ref);
             }
             createSubcontexts(envCtx, resource.getName());
-            envCtx.bind(resource.getName(), ref);
+            envCtx.bind(resource.getName(), ref);               // 将资源绑定到 JNDI
         } catch (NamingException e) {
             logger.error(sm.getString("naming.bindFailed", e));
         }

@@ -615,7 +615,7 @@ public class DefaultInstanceManager implements InstanceManager {
 
         if ((normalizedName != null) && (normalizedName.length() > 0)) {
             lookedupResource = context.lookup(normalizedName);
-        } else {
+        } else {        // 这里就是 通过 JNDI 来进行查找类
             lookedupResource =
                 context.lookup(clazz.getName() + "/" + field.getName());
         }

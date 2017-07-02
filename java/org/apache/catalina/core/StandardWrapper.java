@@ -1084,6 +1084,8 @@ public class StandardWrapper extends ContainerBase
      * at least one initialized instance.  This can be used, for example, to
      * load servlets that are marked in the deployment descriptor to be loaded
      * at server startup time.
+     *
+     * Servlet 的实例化
      */
     public synchronized Servlet loadServlet() throws ServletException {
 
@@ -1105,9 +1107,13 @@ public class StandardWrapper extends ContainerBase
                 throw new ServletException
                     (sm.getString("standardWrapper.notClass", getName()));
             }
+
             // 通过 InstanceManager 来获取 Servlet (InstanceManager 是 StandardContext 里面引用的)
+            // 通过 InstanceManager 来对 Servlet 实例进行创建
             InstanceManager instanceManager = ((StandardContext)getParent()).getInstanceManager();
             try {
+                // servlet 的实例化不是通过 class.forname 来生成的
+                // 下面的方法就会涉及到 @inject 如何注入, 并且在其执行时候, 是怎么进行查找的
                 servlet = (Servlet) instanceManager.newInstance(servletClass);
             } catch (ClassCastException e) {
                 unavailable(null);

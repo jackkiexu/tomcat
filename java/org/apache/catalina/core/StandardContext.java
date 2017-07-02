@@ -5190,11 +5190,12 @@ public class StandardContext extends ContainerBase
                     (Globals.RESOURCES_ATTR, getResources());           // 将 Context 的 Web资源集合, 添加到 ApplicationContext 里面
 
             if (ok ) {
-                if (getInstanceManager() == null) {
+                if (getInstanceManager() == null) {         // 这里的 InstanceManager 其实就是通过 JNDI 来进行 Bean 的管理
                     javax.naming.Context context = null;    // 准备实例 Wrapper 的 InstanceMapper
                     if (isUseNaming() && getNamingContextListener() != null) {
                         context = getNamingContextListener().getEnvContext();
                     }
+                    // 这里的 injectionMap 是该应用下面的所有注入的节点， 如 @Inject, @Ejb 等各种资源的集合
                     Map<String, Map<String, String>> injectionMap = buildInjectionMap(
                             getIgnoreAnnotations() ? new NamingResourcesImpl(): getNamingResources());
 
@@ -5338,13 +5339,13 @@ public class StandardContext extends ContainerBase
     // 下面的 namingResources 就是 Tomcat 的 JNDI, 在 JDNI 中进行查找
     private Map<String, Map<String, String>> buildInjectionMap(NamingResourcesImpl namingResources) {
         Map<String, Map<String, String>> injectionMap = new HashMap<>();
-        for (Injectable resource: namingResources.findLocalEjbs()) {
+        for (Injectable resource: namingResources.findLocalEjbs()) {    // 本地 EJB 的引入
             addInjectionTarget(resource, injectionMap);
         }
-        for (Injectable resource: namingResources.findEjbs()) {
+        for (Injectable resource: namingResources.findEjbs()) {         // 远程 EJB
             addInjectionTarget(resource, injectionMap);
         }
-        for (Injectable resource: namingResources.findEnvironments()) {// 环境变量
+        for (Injectable resource: namingResources.findEnvironments()) {// 环境变量 (注册到 JNDI 的 env 上的)
             addInjectionTarget(resource, injectionMap);
         }
         for (Injectable resource: namingResources.findMessageDestinationRefs()) { // 消息驱动 Bean 资源
@@ -5361,11 +5362,15 @@ public class StandardContext extends ContainerBase
         }
         return injectionMap;
     }
-
+    // 增加注入的依赖
     private void addInjectionTarget(Injectable resource, Map<String, Map<String, String>> injectionMap) {
+        /**
+         * 上面的方法中一共存入 JNDI 7种资源
+         *
+         */
         List<InjectionTarget> injectionTargets = resource.getInjectionTargets();
         if (injectionTargets != null && injectionTargets.size() > 0) {
-            String jndiName = resource.getName();
+            String jndiName = resource.getName();                           // jndi 资源名
             for (InjectionTarget injectionTarget: injectionTargets) {
                 String clazz = injectionTarget.getTargetClass();
                 Map<String, String> injections = injectionMap.get(clazz);

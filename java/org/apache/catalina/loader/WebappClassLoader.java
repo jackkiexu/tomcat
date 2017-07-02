@@ -1417,7 +1417,7 @@ public class WebappClassLoader extends URLClassLoader
         for (WebResource jar : jars) {
             if (jar.getName().endsWith(".jar") && jar.isFile() && jar.canRead()) {
                 addURL(jar.getURL());                                               // 这一步就是将 ClassLoader需要加载的 classPath 路径 加入到 URLClassLoader.URLClassPath 里面
-                jarModificationTimes.put(                                       // 放一下 jar 文件的 lastModified
+                jarModificationTimes.put(                                           // 放一下 jar 文件的 lastModified
                         jar.getName(), Long.valueOf(jar.getLastModified()));
             }
         }
