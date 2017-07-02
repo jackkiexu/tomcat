@@ -70,11 +70,14 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
 
     /**
      * Construct a default instance of this class.
+     *
+     * StandardServer 中的全局 NamingResource 是从server.xml 配置文件中的
+     * GlobalNamingResource进行读取, 直接Digester实例化后, 通过 setter方法给 StandardServer 的属性赋值
      */
     public StandardServer() {
 
         super();
-
+        // 初始化全局的 JNDI
         globalNamingResources = new NamingResourcesImpl();
         globalNamingResources.setContainer(this);
 

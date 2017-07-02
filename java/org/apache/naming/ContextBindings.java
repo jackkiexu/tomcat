@@ -31,6 +31,9 @@ import javax.naming.NamingException;
  * </ul>
  *
  * @author Remy Maucherat
+ *
+ * 这个类相当关键
+ * 缓存的是 StandardContext, StandardServer 与 JNDI 树根入口 NamingContext 的一一对应的关系
  */
 public class ContextBindings {
 

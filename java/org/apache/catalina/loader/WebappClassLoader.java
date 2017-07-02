@@ -432,6 +432,7 @@ public class WebappClassLoader extends URLClassLoader
 
     /**
      * Set associated resources.
+     * WebappLoader 会将 StandardContext 里面的 StandardRoot 设置到这里
      */
     public void setResources(WebResourceRoot resources) {
         this.resources = resources;
@@ -1408,6 +1409,7 @@ public class WebappClassLoader extends URLClassLoader
      */
     @Override
     public void start() throws LifecycleException {
+        // 下面的 resources 其实就是  StandardRoot
         // WebappClassLoader 进行资源/类的加载操作 (/WEB-INF/classes  与 WEB-INF/lib 下面的资源)
         WebResource classes = resources.getResource("/WEB-INF/classes");
         if (classes.isDirectory() && classes.canRead()) {

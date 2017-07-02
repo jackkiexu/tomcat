@@ -46,6 +46,8 @@ import org.apache.naming.SelectorContext;
  * </ul>
  *
  * @author Remy Maucherat
+ *
+ * 对应的是 InitialiContextFactory 类
  */
 public class javaURLContextFactory
     implements ObjectFactory, InitialContextFactory {

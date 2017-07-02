@@ -75,6 +75,9 @@ import org.apache.tomcat.util.res.StringManager;
  * Helper class used to initialize and populate the JNDI context associated
  * with each context and server.
  *
+ * 在 Server Context 两个 容器中都加入这个监听器
+ * 主要就是监听 JNDI 树
+ *
  * @author Remy Maucherat
  */
 public class NamingContextListener
@@ -212,7 +215,7 @@ public class NamingContextListener
         container = event.getLifecycle();
 
         // 两个级别的 NamingResource
-        if (container instanceof Context) {
+        if (container instanceof Context) {     // 下面两个容器级别的 NamingResource
             namingResources = ((Context) container).getNamingResources();
             logger = log;
         } else if (container instanceof Server) {
@@ -249,7 +252,7 @@ public class NamingContextListener
             ContextAccessController.setWritable(getName(), container);
 
             try {
-                createNamingContext();
+                createNamingContext();  // 扫描 当前 Server Context bind 到 JNDI 树中
             } catch (NamingException e) {
                 logger.error
                     (sm.getString("naming.namingContextCreationFailed", e));
@@ -621,16 +624,18 @@ public class NamingContextListener
 
     /**
      * Create and initialize the JNDI naming context.
+     * 下面的构造中 通过 namingResources 将该 StandardContext 这一级的东西通过原注释或者 web.xml 配置文件
+     * 扫描出来, 并通过各种addXX 进行 JNDI 的绑定
      */
     private void createNamingContext()
         throws NamingException {
 
         // Creating the comp subcontext
         if (container instanceof Server) {
-            compCtx = namingContext;
+            compCtx = namingContext;    // 命名空间
             envCtx = namingContext;
         } else {
-            compCtx = namingContext.createSubcontext("comp");
+            compCtx = namingContext.createSubcontext("comp");   // 不同的 JNDI 树, 每一个应用一个 comp/env组件名空间
             envCtx = compCtx.createSubcontext("env");
         }
 
@@ -640,11 +645,12 @@ public class NamingContextListener
             log.debug("Creating JNDI naming context");
 
         if (namingResources == null) {
-            namingResources = new NamingResourcesImpl();
+            namingResources = new NamingResourcesImpl();    // namingResources 代表需要 JNDI 绑定注入的资源集合, 包含下面各种
             namingResources.setContainer(container);
         }
 
         // Resource links
+        // 资源链接
         ContextResourceLink[] resourceLinks =
             namingResources.findResourceLinks();
         for (i = 0; i < resourceLinks.length; i++) {
@@ -652,18 +658,21 @@ public class NamingContextListener
         }
 
         // Resources
+        // 在当前应用或全局定义的 resource 资源
         ContextResource[] resources = namingResources.findResources();
         for (i = 0; i < resources.length; i++) {
             addResource(resources[i]);
         }
 
         // Resources Env
+        // 资源的 env, 注意和上面的两个区别
         ContextResourceEnvRef[] resourceEnvRefs = namingResources.findResourceEnvRefs();
         for (i = 0; i < resourceEnvRefs.length; i++) {
             addResourceEnvRef(resourceEnvRefs[i]);
         }
 
         // Environment entries
+        // 环境变量
         ContextEnvironment[] contextEnvironments =
             namingResources.findEnvironments();
         for (i = 0; i < contextEnvironments.length; i++) {
@@ -671,18 +680,21 @@ public class NamingContextListener
         }
 
         // EJB references
+        // ejb 引用
         ContextEjb[] ejbs = namingResources.findEjbs();
         for (i = 0; i < ejbs.length; i++) {
             addEjb(ejbs[i]);
         }
 
         // WebServices references
+        // webServices 引用
         ContextService[] services = namingResources.findServices();
         for (i = 0; i < services.length; i++) {
             addService(services[i]);
         }
 
         // Binding a User Transaction reference
+        // 事务
         if (container instanceof Context) {
             try {
                 Reference ref = new TransactionRef();
@@ -707,7 +719,7 @@ public class NamingContextListener
 
         // Binding the resources directory context
         if (container instanceof Context) {
-            try {
+            try {   // 组件名空间的绑定
                 compCtx.bind("Resources",
                              ((Context) container).getResources());
             } catch (NamingException e) {

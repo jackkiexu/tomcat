@@ -640,6 +640,13 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         }
     }
 
+    /**
+     * StandardRoot 主要做了以下几步
+     * 1. 基于 War 部署或是目录部署, 初始化 DirResourceSet 或 FileResourceSet
+     * 2. 基于 web 应用的 根目录的路径, 会准备 JarResourceSet, 这个集合中都是 jar 包
+     * 3. classResource 可以通过自定义加入进来, 作为一个 web 应用 中需要引入的 class 集合
+     * 4. CacheResource 准备好, 为通过 StandardRoot 查找资源做准备
+     */
     @Override
     protected void startInternal() throws LifecycleException {
         String docBase = context.getDocBase();
@@ -648,9 +655,11 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         if (!f.isAbsolute()) {
             f = new File(((Host)context.getParent()).getAppBaseFile(), f.getName());
         }
+        // 1. 基于 War 部署或是目录部署, 初始化 DirResourceSet 或 FileResourceSet
         if (f.isDirectory()) {                                      // 判断 f 是 Directory, 则构成一个 DirResourceSet
             main = new DirResourceSet(this, "/", f.getAbsolutePath(), "/");
         } else if(f.isFile() && docBase.endsWith(".war")) {
+            // 2. 基于 web 应用的 根目录的路径, 会准备 JarResourceSet, 这个集合中都是 jar 包
             main = new JarResourceSet(this, "/", f.getAbsolutePath(), "/");
         } else {
             throw new IllegalArgumentException(
@@ -672,9 +681,11 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         processWebInfLib();
         // Need to start the newly found resources
         for (WebResourceSet classResource : classResources) {
+            // 3. classResource 可以通过自定义加入进来, 作为一个 web 应用 中需要引入的 class 集合
             classResource.start();
         }
 
+        // 4. CacheResource 准备好, 为通过 StandardRoot 查找资源做准备
         cache.enforceObjectMaxSizeLimit();
 
         setState(LifecycleState.STARTING);
