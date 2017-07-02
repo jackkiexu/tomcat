@@ -671,7 +671,7 @@ public class StandardContext extends ContainerBase
     private String namingContextName = null;
 
 
-    private WebResourceRoot resources;
+    private WebResourceRoot resources;          // 这里的 resources 其实就是 StandardRoot
     private final ReadWriteLock resourcesLock = new ReentrantReadWriteLock();
 
     private long startupTime;
@@ -2378,10 +2378,14 @@ public class StandardContext extends ContainerBase
     }
 
 
+    /**
+     * 这里的 setResources 因为要对 StandardRoot 进行替换
+     * 为了防止此时正好应用在请求, 所以加上锁
+     */
     @Override
     public void setResources(WebResourceRoot resources) {
 
-        Lock writeLock = resourcesLock.writeLock();
+        Lock writeLock = resourcesLock.writeLock(); // 对文件的操作加上  writeLock
         writeLock.lock();
         WebResourceRoot oldResources = null;
         try {
@@ -5030,7 +5034,7 @@ public class StandardContext extends ContainerBase
             }
         }
         if (ok) {
-            resourcesStart();       // 启动静态资源查找
+            resourcesStart();       // 启动资源 其实就是启动 StandardRoot
         }
 
         if (getLoader() == null) { // WebappLoader 启动

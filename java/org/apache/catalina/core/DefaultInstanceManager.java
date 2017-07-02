@@ -78,6 +78,8 @@ public class DefaultInstanceManager implements InstanceManager {
     private final Properties restrictedFilters = new Properties();
     private final Properties restrictedListeners = new Properties();
     private final Properties restrictedServlets = new Properties();
+
+    // 这里的 annotationCache 是 servlet 的注解上引用的资源的缓存
     private final Map<Class<?>, AnnotationCacheEntry[]> annotationCache =
         new WeakHashMap<>();
     private final Map<String, String> postConstructMethods;
@@ -92,6 +94,11 @@ public class DefaultInstanceManager implements InstanceManager {
         this.containerClassLoader = containerClassLoader;
         ignoreAnnotations = catalinaContext.getIgnoreAnnotations();
         StringManager sm = StringManager.getManager(Constants.Package);
+
+        /**
+         * 在初始化 DefaultInstanceManager 时加载的下面几个文件其实就是
+         * 对 servlet, Listener, filter 的访问起到限制的作用
+         */
         try {
             InputStream is =
                 this.getClass().getClassLoader().getResourceAsStream
@@ -169,8 +176,13 @@ public class DefaultInstanceManager implements InstanceManager {
             throws IllegalAccessException, InvocationTargetException, NamingException {
         newInstance(o, o.getClass());
     }
+
     // 自己的模板方法
-    //
+
+    /**
+     * 参考资料
+     * http://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076096&idx=1&sn=d6ab83b803d0c68c1299c1acfc916c17&mpshare=1&scene=23&srcid=07020bRDG57JR2VR6ZkE9mlQ#rd
+     */
     private Object newInstance(Object instance, Class<?> clazz)
             throws IllegalAccessException, InvocationTargetException, NamingException {
         if (!ignoreAnnotations) { // 找到当前的 inject 点, 从 injectionMap 中查找出当前 Servlet 的 Inject集合
@@ -183,12 +195,37 @@ public class DefaultInstanceManager implements InstanceManager {
              * @PostConstruct
              * @PreDestory
              */
+            /**
+             * 前面定义的应用拳击的注入集合 injectionMap, 是基于所有应用的, 而这里是基于特定的 Servlet 的
+             * ， 所以需要从 injectMap 中 get到自己的 Servlet 的inject集合
+             */
             Map<String, String> injections = assembleInjectionsFromClassHierarchy(clazz);                       // 从 Servlet 类的继承树中收集 Servlet的注解
+            /**
+             * 在前面我们得到 injectionMap 集合, 这个集合的 value 不是引用的本身, 而是
+             *  jndiName, 之所以没有将这些引用直接实例化是因为 对于这些引用非常占用内存, 并且初始化的时间非常长
+             *  我们是否想过一个好的办法, 假设每一次都引用, 是否将这些都缓存起来, 第一次虽然费点劲, 初始化时间长, 而
+             *  下一次就直接可以跳过初始化这一步, 具体操作在 populateAnnotationsCache
+             *  Tomcat 将每一个 Annotation 条目都做成了 AnnotationCacheEntry, 这一步主要是将这些
+             *  映射关系建立起来, 并没有直接把引用创建出来, 直接赋值到 AnnotationCacheEntry 中,
+             *  操作已经在 processAnnotations 完成
+             */
             populateAnnotationsCache(clazz, injections); // 将jndi的引用实例化为 annotationCache引用集合, 并进行缓存起来
-            // 根据注解说明, 调用 Servlet 的方法, 进行设置名称上下文的资源
-            processAnnotations(instance, injections);
-            // 设置 @PostConstruct/@PreDestory 类型的资源依赖
-            postConstruct(instance, clazz); // 实例化 Object
+
+            /**
+             * 将引用存入 AnnotationCacheEntry 中去
+             * 通过 tomcat 自身的 JNDI 系统进行查询, 如果是方法的化, 再进行
+             *  method.invoke, 如果是 field 的话, 直接返回 filed 即可,
+             *  当这一步操作完以后, AnnotationCacheEntry 就缓存完毕, 下一次再请求 Servlet的话
+             *  实例化就不需要这些步骤的
+             *  目前 Servlet 都是单实例多线程的
+             */
+            processAnnotations(instance, injections);    // 根据注解说明, 调用 Servlet 的方法, 进行设置名称上下文的资源
+
+            /**
+             * 对于 PostConstruct 的方法的回调,这个是为了 JAVA EE 规范的 Common Annotation 规范
+             * 整体的思路也是查询方法, 然后进行回调注入的方法
+             */
+            postConstruct(instance, clazz); // 实例化 Object // 设置 @PostConstruct/@PreDestory 类型的资源依赖
         }
         return instance;
     }
@@ -196,7 +233,7 @@ public class DefaultInstanceManager implements InstanceManager {
     private Map<String, String> assembleInjectionsFromClassHierarchy(Class<?> clazz) {
         Map<String, String> injections = new HashMap<>();
         Map<String, String> currentInjections = null;
-        while (clazz != null) {
+        while (clazz != null) {     // 递归的进行获取 servlet 的注入资源
             currentInjections = this.injectionMap.get(clazz.getName());
             if (currentInjections != null) {
                 injections.putAll(currentInjections);
@@ -571,15 +608,15 @@ public class DefaultInstanceManager implements InstanceManager {
             return;
         }
         if (Filter.class.isAssignableFrom(clazz)) {
-            checkAccess(clazz, restrictedFilters);
+            checkAccess(clazz, restrictedFilters);      // 检查clazz 是否在受限制的 Filter 里面
         } else if (Servlet.class.isAssignableFrom(clazz)) {
             if (ContainerServlet.class.isAssignableFrom(clazz)) {
                 throw new SecurityException("Restricted (ContainerServlet) " +
                         clazz);
             }
-            checkAccess(clazz, restrictedServlets);
+            checkAccess(clazz, restrictedServlets);    // 检查clazz 是否在受限制的 Servlet 里面
         } else {
-            checkAccess(clazz, restrictedListeners);
+            checkAccess(clazz, restrictedListeners);   // 检查clazz 是否在受限制的 Listener 里面
         }
     }
 

@@ -231,7 +231,7 @@ public abstract class AbstractArchiveResourceSet extends AbstractResourceSet {
                 if (jarEntry == null) {
                     jarEntry = jarFileEntries.get(pathInJar);
                 }
-                if (jarEntry == null) {
+                if (jarEntry == null) { // 若查出数据是 null, 那就直接返回一个 EmptyResource
                     return new EmptyResource(root, path);
                 } else {
                     return createArchiveResource(jarEntry, path, manifest);

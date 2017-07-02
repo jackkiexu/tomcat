@@ -24,6 +24,19 @@ import java.util.jar.Manifest;
 /**
  * Represents a file or directory within a web application. It borrows heavily
  * from {@link java.io.File}.
+ *
+ *  参考资料
+ *  http://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076194&idx=1&sn=fd9848eefd258dca2f9bdf061f5647e3&mpshare=1&scene=23&srcid=0702ji9L2W6vQtFqBOLrPsk8#rd
+ *
+ *  WebResource 接口时抽象的 web 应用对应的资源, 下面是其主要的实现
+ *  1. JarResource: 代表 jar 包的尸体资源, 一个 jar包对应一个资源
+ *  2. JarWarResource: 代表 jar 包中的尸体资源, 可以把 jar 包看成一个目录, 在这个 jar 包中还有很多的资源隐藏在 jar 包的里面
+ *  3. FileResource: 文件资源, 代表 Web 应用下面的一个 html, 图片等各种以文件形式各种格式存储的资源, 除此以外, 这个 FileResource也代表目录
+ *  4. CachedResource: 在 WebResourceRoot的实现类 StandardRoot 中, 有对应的 Cache类, 这个 Cache 类的作用在资源查找的过程中,
+ *      通过 Cache进行缓存, 当然前提是需要将 Cache 打开, 这么做是提高性能的好办法
+ *  5. EmptyResource: 作为一个实体占为的 Resource, 在 StandardRoot的 getResource方法中, 发现什么都没查出来
+ *      但还要返回一个 WebResource接口的实现类, 这时就用到 EmptyResource
+ *
  */
 public interface WebResource {
     /**

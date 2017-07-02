@@ -68,7 +68,7 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
     protected static final StringManager sm =
             StringManager.getManager(Constants.Package);
 
-    private Context context;
+    private Context context;                            // 这个 Context 代表的就是 StandardContext
     private boolean allowLinking = false;
 
     // 下面这些集合在应用初始化之后, 被添加到 allResources 中
@@ -225,7 +225,7 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
             path = validate(path);
         }
 
-        if (isCachingAllowed()) {       // 如果有缓存
+        if (isCachingAllowed()) {       // 如果启用缓存 对应的资源就是 CachedResource
             return cache.getResource(path, useClassLoaderResources);
         } else {                // 如果不能使用缓存
             return getResourceInternal(path, useClassLoaderResources);
@@ -266,6 +266,9 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         return RequestUtil.normalize(path);
     }
 
+    /**
+     * 通过 path 来进行查找对应的 资源
+     */
     protected final WebResource getResourceInternal(String path,
             boolean useClassLoaderResources) {
         WebResource result = null;
