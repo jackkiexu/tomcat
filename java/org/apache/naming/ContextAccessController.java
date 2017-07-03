@@ -33,6 +33,7 @@ public class ContextAccessController {
 
     /**
      * Catalina context names on which writing is not allowed.
+     * 当前应用是否可操作的 HashTable
      */
     private static final Hashtable<Object,Object> readOnlyContexts =
             new Hashtable<>();

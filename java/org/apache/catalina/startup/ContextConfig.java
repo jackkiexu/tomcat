@@ -470,7 +470,7 @@ public class ContextConfig implements LifecycleListener {
             defaultContextXml = Constants.DefaultContextXml;
         }
 
-        if (!context.getOverride()) {
+        if (!context.getOverride()) {       // 设置是否 overide 已经设置好的 属性
             File defaultContextFile = new File(defaultContextXml);
             if (!defaultContextFile.isAbsolute()) {
                 defaultContextFile =                // conf/context.xml
@@ -707,6 +707,7 @@ public class ContextConfig implements LifecycleListener {
             }
 
             // Cleanup just in case an old deployment is lying around
+            // 清除上一次的 antiLockingDocBase 临时文件
             ExpandWar.delete(antiLockingDocBase);
             if (ExpandWar.copy(docBaseFile, antiLockingDocBase)) {
                 // 清除上一次的 antiLockingDocBase 的临时文件
@@ -1260,12 +1261,16 @@ public class ContextConfig implements LifecycleListener {
         context.setEffectiveMinorVersion(webxml.getMinorVersion());
         // web.xml 中定义的 context 参数
         for (Entry<String, String> entry : webxml.getContextParams().entrySet()) {
-            context.addParameter(entry.getKey(), entry.getValue());
+            context.addParameter(entry.getKey(), entry.getValue());     // 将 web.xml 里面的定义的 parameters 加入到 StandardContext 的 parameters
         }
         context.setDenyUncoveredHttpMethods(
                 webxml.getDenyUncoveredHttpMethods());
         context.setDisplayName(webxml.getDisplayName());
         context.setDistributable(webxml.isDistributable());
+
+        /**
+         * StandardContext 和 StandardServer 类似, 也是通过 配置文件 web.xml 或原注解配置中解析出来的 NamingResources
+         */
         for (ContextLocalEjb ejbLocalRef : webxml.getEjbLocalRefs().values()) {
             context.getNamingResources().addLocalEjb(ejbLocalRef);
         }

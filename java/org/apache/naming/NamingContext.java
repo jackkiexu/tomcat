@@ -43,6 +43,8 @@ import javax.naming.spi.NamingManager;
 /**
  * Catalina JNDI Context implementation.
  *
+ * Tomcat 中JNDI 的 根 / 根茎 节点
+ *
  * @author Remy Maucherat
  */
 public class NamingContext implements Context {
@@ -838,7 +840,7 @@ public class NamingContext implements Context {
                 }
             } else if (entry.type == NamingEntry.REFERENCE) {
                 try {
-                    Object obj = NamingManager.getObjectInstance
+                    Object obj = NamingManager.getObjectInstance               // 调用 ObjectFactory 去实例化对应的引用
                         (entry.value, name, this, env);
                     if(entry.value instanceof ResourceRef) {
                         boolean singleton = Boolean.parseBoolean(
@@ -915,6 +917,7 @@ public class NamingContext implements Context {
             } else {
                 // Getting the type of the object and wrapping it within a new
                 // NamingEntry
+                // 叶子节点的绑定
                 Object toBind =
                     NamingManager.getStateToBind(obj, name, this, env);
                 if (toBind instanceof Context) {
@@ -951,6 +954,13 @@ public class NamingContext implements Context {
 
     /**
      * Throws a naming exception is Context is not writable.
+     * Tomcat JNDI 系统检查是否资源是 可写的
+     * 每一次 bind, close, createSubContext, destorySubContext, unbind 这种操作之前需要判断是否 isWrite 可写, 如果发现不可写的话
+     * 会根据 当前配置的 jndiExceptionOnFailedWrite 属性来决定是否 throw Exception
+     * 对于 应用是否可对 JNDI 树进行操作, 是通过 ContextAccessController的 HashTable 集合属性来判断的, 不同的应用可以随时切花自身对 JNDI 的树
+     * 操作的权限, 就是将当前应用加入到这个 HashTable
+     *
+     * 而应用是在 NamingContextListener 的 containerEvent 里面进行可读的状态切换
      */
     protected boolean checkWritable() throws NamingException {
         if (isWritable()) {

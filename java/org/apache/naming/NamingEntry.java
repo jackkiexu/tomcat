@@ -20,13 +20,25 @@ package org.apache.naming;
 /**
  * Represents a binding in a NamingContext.
  *
+ * 叶子抽象节点
+ *
  * @author Remy Maucherat
  */
 public class NamingEntry {
 
+    // 绑定的对象直接就能拿到值, 类型通常是 Java 基础类型或者 Java Collection类型, 总之该对象直接占这个 NamingEntry 的存储空间
     public static final int ENTRY = 0;
+    /**
+     * 引用类型, 这些数据类型的实例很大, 只能通过引用指向这个实例
+     */
     public static final int LINK_REF = 1;
+    /**
+     * 指的是一个映射, 还得 resolve 一下, 就像  resource-link-ref
+     */
     public static final int REFERENCE = 2;
+    /**
+     * Context 也是一种类型, 当 type 为 Context 的时候, 说明该节点为非叶子节点, 还得继续向下级查找
+     */
     public static final int CONTEXT = 10;
 
 

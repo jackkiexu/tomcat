@@ -1739,6 +1739,9 @@ public class WebappClassLoader extends URLClassLoader
         List<Thread> executorThreadsToStop = new ArrayList<>();
 
         // Iterate over the set of threads
+        /**
+         * getThreads 返回的是一个 JVM 实例中所有的线程数, 而我们处理的线程是 ClassLoader 上下文 和 该 webapp一致的, 则说明 该线程是本应用创建的
+         */
         for (Thread thread : threads) {
             if (thread != null) {
                 ClassLoader ccl = thread.getContextClassLoader();
@@ -1786,7 +1789,7 @@ public class WebappClassLoader extends URLClassLoader
                         continue;                   // 检测是 Timer 线程的话直接关闭
                     }
 
-                    if (isRequestThread(thread)) {  // 检测是请求线程的话保持不动
+                    if (isRequestThread(thread)) {  // 检测是请求线程的话保持不动 (如何判断出来呢, 呵呵 直接通过堆栈信息获取)
                         log.error(sm.getString("webappClassLoader.warnRequestThread",
                                 getContextName(), thread.getName()));
                     } else {
@@ -1939,7 +1942,9 @@ public class WebappClassLoader extends URLClassLoader
         // - queue.clear()
         // in IBM JDK, Apache Harmony:
         // - cancel() method (in java.util.Timer$TimerImpl)
-
+        /**
+         * TimerThread 线程里面有个 queue , 我们只要 调用这个 queue 的clear方法才能清空线程
+         */
         try {
 
             try {
@@ -2169,7 +2174,7 @@ public class WebappClassLoader extends URLClassLoader
             /**
              * 首先找出当前的 ThreadGroup, 然后
              * 不断的向上递归, 知道找到最父的线程组
-             * 这个旧市 JVM 的根线程组
+             * 这个就是 JVM 的根线程组
              */
             while (tg.getParent() != null) {
                 tg = tg.getParent();

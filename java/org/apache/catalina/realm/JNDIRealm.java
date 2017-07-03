@@ -168,6 +168,10 @@ import org.ietf.jgss.GSSCredential;
  *
  * @author John Holman
  * @author Craig R. McClanahan
+ *
+ *
+ * 这是 Tomcat 中, 特意为 JNDI 设置一个 JNDIRealm 就是利用 Tomcat 的自身 Realm 的机制来控制 JNDI 系统的访问权限
+ *
  */
 public class JNDIRealm extends RealmBase {
 

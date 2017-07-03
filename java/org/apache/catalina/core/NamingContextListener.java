@@ -351,7 +351,7 @@ public class NamingContextListener
             return;
 
         // Setting the context in read/write mode
-        // 先变成可写
+        // 先将当前应用变成可写
         ContextAccessController.setWritable(getName(), container);
 
         String type = event.getType();
@@ -470,7 +470,7 @@ public class NamingContextListener
         }
 
         // Setting the context in read only mode
-        // 变成只读
+        // // 再将当前应用变成只读
         ContextAccessController.setReadOnly(getName());
 
     }
@@ -626,6 +626,8 @@ public class NamingContextListener
      * Create and initialize the JNDI naming context.
      * 下面的构造中 通过 namingResources 将该 StandardContext 这一级的东西通过原注释或者 web.xml 配置文件
      * 扫描出来, 并通过各种addXX 进行 JNDI 的绑定
+     *
+     * 对于 StandardServer 这一级别, 实际上在 web.xml 中可以配置 GlobalNamingContext 的元素
      */
     private void createNamingContext()
         throws NamingException {
@@ -1060,13 +1062,14 @@ public class NamingContextListener
     public void addResource(ContextResource resource) {
 
         // Create a reference to the resource.
+        // 解析 Resource 通用属性
         Reference ref = new ResourceRef
             (resource.getType(), resource.getDescription(),
              resource.getScope(), resource.getAuth(),
              resource.getSingleton());
         // Adding the additional parameters, if any
         Iterator<String> params = resource.listProperties();
-        while (params.hasNext()) {
+        while (params.hasNext()) {  // 解析 Resource的特有属性
             String paramName = params.next();
             String paramValue = (String) resource.getProperty(paramName);
             StringRefAddr refAddr = new StringRefAddr(paramName, paramValue);
@@ -1088,7 +1091,7 @@ public class NamingContextListener
             try {
                 ObjectName on = createObjectName(resource);
                 Object actualResource = envCtx.lookup(resource.getName());
-                Registry.getRegistry(null, null).registerComponent(actualResource, on, null);
+                Registry.getRegistry(null, null).registerComponent(actualResource, on, null); // 发布 JMX
                 objectNames.put(resource.getName(), on);
             } catch (Exception e) {
                 logger.warn(sm.getString("naming.jmxRegistrationFailed", e));

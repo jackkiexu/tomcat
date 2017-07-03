@@ -1417,7 +1417,7 @@ public class StandardWrapper extends ContainerBase
         // (possibly more than once if non-STM)
         if (countAllocated.get() > 0) {
             int nRetries = 0;
-            long delay = unloadDelay / 20;
+            long delay = unloadDelay / 20;  // unloadDelay  container will wait for servlets to unload time 默认 2 秒
             while ((nRetries < 21) && (countAllocated.get() > 0)) {
                 if ((nRetries % 10) == 0) {
                     log.info(sm.getString("standardWrapper.waiting",

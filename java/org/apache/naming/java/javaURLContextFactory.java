@@ -47,7 +47,14 @@ import org.apache.naming.SelectorContext;
  *
  * @author Remy Maucherat
  *
+ * 它其实就是一个本地的 JNDI 调用
  * 对应的是 InitialiContextFactory 类
+ * 初始化上下文 initialContext 的生成工厂
+ *
+ * 我们可以想象 JNDI 树实际上就是一个存储设施,
+ * 当需要 lookup 的时候, 对象从 JNDI 获取对象 instance的时候, 对象从 JNDI 获取对象, 需要通过 ObjectFactory 进行转换
+ * 当bind 的时候, 需要将 对象 instance 存储到 JNDI 树中, 这种就需要 StateFactory 进行转化,
+ * 这两个工厂是相对应实现的
  */
 public class javaURLContextFactory
     implements ObjectFactory, InitialContextFactory {
@@ -95,6 +102,7 @@ public class javaURLContextFactory
 
     /**
      * Get a new (writable) initial context.
+     * 初始化一个 InitialContext
      */
     @SuppressWarnings("unchecked")
     @Override

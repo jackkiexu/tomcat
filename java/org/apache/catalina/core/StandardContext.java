@@ -212,6 +212,17 @@ public class StandardContext extends ContainerBase
     /**
      * Control whether remaining request data will be read
      * (swallowed) even if the request violates a data size constraint.
+     *
+     *  Set to false if Tomcat should not read any additional request body data for aborted uploads and instead abort the client connection
+     *  This setting is used in the following situations
+     *  1. the size of the request body is larger than the maxPostSize configure in the connector
+     *  2. the size limit of a MultiPart upload is readed
+     *  3. the servlet sets the response status to 403 (Request Entity Too Large)
+     *
+     *  带有文件上传的场景中, 如果文件附件非常大, 上传速度会非常慢, 链接会一直占据, 请求处理线程池一直处于比较满的状态, 线程不释放
+     *
+     *  从 StandardContext 中读出该属性, 然后基于每一个请求会有对应的 Buffer 缓冲区, 首先根据传入的 http 请求的条件进行判断, 若满足条件
+     *  则 将 swallowInput 属性设置为 false
      */
     private boolean swallowAbortedUploads = true;
 
@@ -272,7 +283,7 @@ public class StandardContext extends ContainerBase
     /**
      * The set of application parameters defined for this application.
      */
-    // server.xml 中 context 元素定义
+    // server.xml 中 context 的Parameter 元素定义
     private ApplicationParameter applicationParameters[] =
         new ApplicationParameter[0];
 
@@ -442,6 +453,17 @@ public class StandardContext extends ContainerBase
 
     /**
      * The Loader implementation with which this Container is associated.
+     *
+     * https://tomcat.apache.org/tomcat-8.0-doc/config/loader.html
+     * Tomcat 源码
+     *
+     * The Loader element represents the web application class loader that will be used to load java classes and resources for your web application. Such a class loader must follow the
+     * requirements of the Servlet Specification, and load classes from the following locations
+     * 1. From the /WEB-INF/classes directory inside your web application
+     * 2. From JAR files in the /WEB-INF/lib directory inside your web application
+     * 3. FROM resources made available by Catalina to all web applications globally
+     *
+     * 默认值  WebappLoader
      */
     private Loader loader = null;
     private final ReadWriteLock loaderLock = new ReentrantReadWriteLock();
@@ -455,6 +477,12 @@ public class StandardContext extends ContainerBase
 
     /**
      * The Manager implementation with which this Container is associated.
+     *
+     * The Manager element represents the session manager that will be used to create and maintain HTTP sessions as requested by the associated application
+     * A manager element MAY be nested inside a Context component, if it is not included, a default Manager configuration will be created automatically, which is sufficient for most
+     * requirements
+     *
+     * 默认值 StandardManager
      */
     protected Manager manager = null;
     private final ReadWriteLock managerLock = new ReentrantReadWriteLock();
@@ -488,6 +516,7 @@ public class StandardContext extends ContainerBase
     /**
      * The context initialization parameters for this web application,
      * keyed by name.
+     * 这里面的数据 (parameters) 是由 web.xml 中进行初始化的
      */
     private HashMap<String, String> parameters = new HashMap<>();
 
@@ -601,6 +630,7 @@ public class StandardContext extends ContainerBase
     /**
      * Set flag to true to cause the system.out and system.err to be redirected
      * to the logger when executing a servlet.
+     * 开启 swallowOutput 开关, 则 SystemLogHandler 就开始捕获日志信息, SystemLogHandler 实际上就是 PrintStream 的一个子类
      */
     private boolean swallowOutput = false;
 
@@ -613,6 +643,8 @@ public class StandardContext extends ContainerBase
 
     /**
      * The watched resources for this application.
+     * 默认监视的资源, 有改变的话就会触发重新部署
+     * The auto deployer will monitor the specified static resource of the web application for updated, and will reload the web application if it updated
      */
     private String watchedResources[] = new String[0];
 
@@ -646,6 +678,8 @@ public class StandardContext extends ContainerBase
     /**
      * The pathname to the work directory for this context (relative to
      * the server's home if not absolute).
+     *
+     * 这就是一个 work 的临时位置, 用以放置 jsp 等编译的临时 Servlet 的地方, 就是一个目录的 标志, 当然你也可以基于不同用用奇幻不同的 work 目录
      */
     private String workDir = null;
 
@@ -670,7 +704,11 @@ public class StandardContext extends ContainerBase
      */
     private String namingContextName = null;
 
-
+    /**
+     * The Resources element represents all the resources available to the web application, The includes classes  JAR files, HTML, JSPs and other files that contribute to the web
+     * application. Implementations are provided to use directories, JAR files and WARs as the source of these resources and the resources implementation may be extended to provide support for the files
+     * stored in other form such as in a database or a vesioned repository
+     */
     private WebResourceRoot resources;          // 这里的 resources 其实就是 StandardRoot
     private final ReadWriteLock resourcesLock = new ReentrantReadWriteLock();
 
@@ -719,6 +757,7 @@ public class StandardContext extends ContainerBase
 
     /**
      * The flag that indicates that session cookies should use HttpOnly
+     * 设置为 true 后 浏览器中的 document对象就拿不到 Cookie 了
      */
     private boolean useHttpOnly = true;
 
@@ -748,6 +787,9 @@ public class StandardContext extends ContainerBase
     /**
      * The Jar scanner to use to search for Jars that might contain
      * configuration information such as TLDs or web-fragment.xml files.
+     *
+     * Configure the jar Scanner that will be used to scan the web application for JAR files and directories of class files. It is typically used during web application start to
+     * identify configuration files such as TLDs o web-fragment.xml files that must be processed as pat of the web application initialisation
      */
     private JarScanner jarScanner = null;
 
@@ -795,6 +837,8 @@ public class StandardContext extends ContainerBase
      * is stopped to avoid memory leaks because of uncleaned ThreadLocal
      * variables. This also requires that the threadRenewalDelay property of the
      * StandardThreadExecutor of ThreadPoolExecutor be set to a positive value.
+     *
+     * ThreadLocalLeakPreventionListener
      */
     private boolean renewThreadsWhenStoppingContext = true;
 
@@ -813,6 +857,13 @@ public class StandardContext extends ContainerBase
 
     private String webappVersion = "";
 
+    /**
+     * 通常我们在 路由静态资源的时候, 都是默认从 WebRoot 的路径开始算起, 但基于 Servlet3规范开始
+     * 有一个可选开关, 即使可以从当前 classpath 的 jar 包中的 MATE-INF/resources
+     * 或当前应用下面的 WEB-INF/classes/META-INF/resources 下搜索资源
+     * 实现原理也很简单, StandardContext 在自身启动的时候, 会对应用的 Resource资源进行加载, 也就是 startResouce 方法,
+     * 这个属性就在加载的时候add到这个应用的 WebResource资源列表中去
+     */
     private boolean addWebinfClassesResources = false;
 
     private boolean fireRequestListenersOnForwards = false;
@@ -5073,6 +5124,9 @@ public class StandardContext extends ContainerBase
             useNaming = false;
         }
 
+        /**
+         * useNaming 是一个 JNDI 系统的开关,下面就是 JNDI 的启动过程
+         */
         if (ok && isUseNaming()) {              // 若当前使用 JNDI, 则为当前容器添加  NamingContextListener
             if (getNamingContextListener() == null) {
                 NamingContextListener ncl = new NamingContextListener();
@@ -5396,16 +5450,16 @@ public class StandardContext extends ContainerBase
      * the application parameters appropriately.
      */
     // 合并 Context 里面的配置的参数
-    // 下面是将好几个地方的参数合并在一起, 设置到 ApplicationContext
+    // 下面是将好几个地方的参数合并在一起, 设置到 ApplicationContext (主要是 server.xml 里面的 parameter, context.xml 里面的 parameter)
     private void mergeParameters() {
         Map<String,String> mergedParams = new HashMap<>();
 
-        String names[] = findParameters();
+        String names[] = findParameters();              // 获取 由 web.xml 中描述的 parameter
         for (int i = 0; i < names.length; i++) {
             mergedParams.put(names[i], findParameter(names[i]));
         }
 
-        ApplicationParameter params[] = findApplicationParameters();
+        ApplicationParameter params[] = findApplicationParameters();    // 获取 server.xml 中的 context.xml
         for (int i = 0; i < params.length; i++) {
             if (params[i].getOverride()) {
                 if (mergedParams.get(params[i].getName()) == null) {
@@ -5416,8 +5470,11 @@ public class StandardContext extends ContainerBase
                 mergedParams.put(params[i].getName(), params[i].getValue());
             }
         }
-
+        // 将 parameters(由 web.xml 描述) 与 applicationParameters (由 server.xml 定义) 进行合并到 ServletContext 中
         ServletContext sc = getServletContext();
+        /**
+         * 下面就是调用 ApplicationContextFacade.setInitParameter 最终还是设置到 ApplicationContext 的 parameters 里面
+         */
         for (Map.Entry<String,String> entry : mergedParams.entrySet()) {
             sc.setInitParameter(entry.getKey(), entry.getValue());
         }

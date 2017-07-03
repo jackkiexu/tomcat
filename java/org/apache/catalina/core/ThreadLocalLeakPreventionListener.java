@@ -51,6 +51,8 @@ import org.apache.tomcat.util.threads.ThreadPoolExecutor;
  *
  * This listener must be declared in server.xml to be active.
  *
+ * 防止 ThreadLocal 造成 Thread.ThreadLocalMap 里面的内存泄露 (内存泄露的终极原因是 ThreadLocalMap 的存活长度和 Thread 一样)
+ *
  */
 public class ThreadLocalLeakPreventionListener implements LifecycleListener,
         ContainerListener {
@@ -93,6 +95,10 @@ public class ThreadLocalLeakPreventionListener implements LifecycleListener,
 
             if (Lifecycle.AFTER_STOP_EVENT.equals(event.getType()) &&
                     lifecycle instanceof Context) {
+                /**
+                 * 当应用 stop 的时候, 会出发 stop_event 事件, 被 ThrealLocalLeakPreventionListener 所接收到, 然后就会调用线程池的 contextStopping 方法进行现成的 renew 工作
+                 * 在这一个 流程中, 如果当前配置了 renewThreadsWhenStoppingContext 的属性的话, 就直接 return
+                 */
                 stopIdleThreads((Context) lifecycle);           // 停止线程池中的线程
             }
         } catch (Exception e) {
@@ -192,7 +198,7 @@ public class ThreadLocalLeakPreventionListener implements LifecycleListener,
      *            of its parent Service.
      */
     private void stopIdleThreads(Context context) {
-        if (serverStopping) return;
+        if (serverStopping) return;                 // 如果没有配置该属性, 直接 return
 
         if (context instanceof StandardContext &&
             !((StandardContext) context).getRenewThreadsWhenStoppingContext()) {            // 判断是否配置 renewThreadsWhenStoppingContext 属性

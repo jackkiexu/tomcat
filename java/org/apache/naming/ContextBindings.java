@@ -34,6 +34,9 @@ import javax.naming.NamingException;
  *
  * 这个类相当关键
  * 缓存的是 StandardContext, StandardServer 与 JNDI 树根入口 NamingContext 的一一对应的关系
+ *
+ * 这样当我们在 JNDI 链调用时, 通过这个 ContextBindings 可以拿到 Tomcat 内部 StandardContext, StandardContext 对象
+ * 进而获取所有 JNDI 树, 并且可以轻松获取所有绑定的资源
  */
 public class ContextBindings {
 
@@ -50,6 +53,7 @@ public class ContextBindings {
 
     /**
      * Bindings thread - naming context. Keyed by thread id.
+     * 这是当前线程 与 Context 的对应关系
      */
     private static final Hashtable<Thread,Context> threadBindings =
             new Hashtable<>();
@@ -64,6 +68,7 @@ public class ContextBindings {
 
     /**
      * Bindings class loader - naming context. Keyed by CL id.
+     * 这是 classLoader 与 Context 的对应关系
      */
     private static final Hashtable<ClassLoader,Context> clBindings =
             new Hashtable<>();

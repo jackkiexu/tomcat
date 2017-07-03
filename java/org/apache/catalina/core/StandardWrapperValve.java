@@ -412,7 +412,7 @@ final class StandardWrapperValve
 
                 // Swallow output if needed
                 if (context.getSwallowOutput()) {
-                    try {
+                    try { // 开启
                         SystemLogHandler.startCapture();
                         filterChain.doFilterEvent(request.getEvent());
                     } finally {

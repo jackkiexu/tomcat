@@ -35,6 +35,8 @@ import org.xml.sax.SAXException;
 
 /**
  * Initializer for the Jasper JSP Engine.
+ *
+ * JasperInitializer 是 jasper 的一个启动器
  */
 public class JasperInitializer implements ServletContainerInitializer {
 
@@ -78,7 +80,7 @@ public class JasperInitializer implements ServletContainerInitializer {
             log.debug(Localizer.getMessage(MSG + ".onStartup", context.getServletContextName()));
         }
 
-        boolean validate = Boolean.parseBoolean(
+        boolean validate = Boolean.parseBoolean(        // 通过这里来判断是否开启 tld 校验
                 context.getInitParameter(Constants.XML_VALIDATION_TLD_INIT_PARAM));
         String blockExternalString = context.getInitParameter(
                 Constants.XML_BLOCK_EXTERNAL_INIT_PARAM);

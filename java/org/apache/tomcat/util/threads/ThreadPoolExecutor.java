@@ -209,7 +209,7 @@ public class ThreadPoolExecutor extends java.util.concurrent.ThreadPoolExecutor 
         }
 
         // setCorePoolSize(0) wakes idle threads
-        this.setCorePoolSize(0);                                        // 干掉核心线程数, 让其减少为 0 (看 ThreadPoolExecutor里面的代码)
+        this.setCorePoolSize(0);                                        // 干掉核心线程数, 让其减少为 0 (看 ThreadPoolExecutor里面的代码), setCorePoolSize(0) 会触发 interruptIdleWorkers
 
         // wait a little so that idle threads wake and poll the queue again,
         // this time always with a timeout (queue.poll() instead of
@@ -229,7 +229,7 @@ public class ThreadPoolExecutor extends java.util.concurrent.ThreadPoolExecutor 
             taskQueue.setForcedRemainingCapacity(null);
         }
         // 再设置回来, 这样虽然线程数没有变, 但
-        // 是线程池中的线程都是新的
+        // 是线程池中的线程都是新的 (为什么能, 因为上面有个 Thread.sleep(200L), 空闲的线程超过 idle 时间后就会 dead)
         this.setCorePoolSize(savedCorePoolSize);
     }
 

@@ -123,8 +123,8 @@ public class DigesterFactory {
                                        RuleSet rule,
                                        boolean blockExternal) {
         Digester digester = new Digester();
-        digester.setNamespaceAware(xmlNamespaceAware);
-        digester.setValidating(xmlValidation);
+        digester.setNamespaceAware(xmlNamespaceAware);  // 校验命名空间
+        digester.setValidating(xmlValidation);      // 这个参数 xmlValidation 就是判断 tld 是否进行校验
         digester.setUseContextClassLoader(true);
         EntityResolver2 resolver = new LocalResolver(SERVLET_API_PUBLIC_IDS,
                 SERVLET_API_SYSTEM_IDS, blockExternal);

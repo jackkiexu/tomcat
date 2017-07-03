@@ -156,7 +156,7 @@ public class ContextRuleSet extends RuleSetBase {
                                  "org.apache.tomcat.util.descriptor.web.ApplicationParameter");
         digester.addSetProperties(prefix + "Context/Parameter");
         digester.addSetNext(prefix + "Context/Parameter",
-                            "addApplicationParameter",
+                            "addApplicationParameter",      // digest 定义 入了，server.xml 里面 Context 标签下面的 Parameter
                             "org.apache.tomcat.util.descriptor.web.ApplicationParameter");
 
         digester.addRuleSet(new RealmRuleSet(prefix + "Context/"));

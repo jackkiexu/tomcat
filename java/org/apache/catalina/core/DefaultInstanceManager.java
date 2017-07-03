@@ -593,7 +593,7 @@ public class DefaultInstanceManager implements InstanceManager {
             return containerClassLoader.loadClass(className);
         }
         try {
-            Class<?> clazz = containerClassLoader.loadClass(className);
+            Class<?> clazz = containerClassLoader.loadClass(className); // 如果是 containerServlet 的话
             if (ContainerServlet.class.isAssignableFrom(clazz)) {
                 return clazz;
             }

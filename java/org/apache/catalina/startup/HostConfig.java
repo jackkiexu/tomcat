@@ -884,7 +884,7 @@ public class HostConfig
         boolean copyThisXml = false;
         if (deployXML) {
             if (host instanceof StandardHost) {
-                copyThisXml = ((StandardHost) host).isCopyXML();
+                copyThisXml = ((StandardHost) host).isCopyXML();  //
             }
 
             // If Host is using default value Context can override it.
@@ -955,6 +955,7 @@ public class HostConfig
 
         DeployedApplication deployedApp = new DeployedApplication(cn.getName(),
                 xml.exists() && deployXML && copyThisXml);
+        // 执行部署
 
         // Deploy the application in this WAR file
         if(log.isInfoEnabled())
@@ -1318,7 +1319,7 @@ public class HostConfig
                         app.redeployResources.put(resources[i],                 // 更新 war 包监视资源的lastModified
                                 Long.valueOf(resource.lastModified()));
                         app.timestamp = System.currentTimeMillis();
-                        if (unpackWARs) {
+                        if (unpackWARs) {                                       // 将 unpackWars 里面的资源加入 WatchResource 里面
                             addWatchedResources(app, context.getDocBase(), context);
                         } else {
                             addWatchedResources(app, null, context);

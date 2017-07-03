@@ -62,6 +62,8 @@ import org.apache.tomcat.util.res.StringManager;
  * Naming Context and their associated JNDI context.
  *
  * @author Remy Maucherat
+ *
+ * 对当前全局 JNDI 树和 StandardContextde 组件名空间的待绑定资源抽象, 主要方法就是 createNamingContext
  */
 public class NamingResourcesImpl extends LifecycleMBeanBase
         implements Serializable, NamingResources {

@@ -31,6 +31,9 @@ import javax.naming.NamingException;
 /**
  * Catalina JNDI Context implementation.
  *
+ * SelectorContext 实际上就是 Tomcat 的 JNDI 系统对 Context 的一个包装而已, 其主要解决的是基于
+ * ContextBindings 类这种映射的 JNDI 资源映射的路由查找
+ *
  * @author Remy Maucherat
  */
 public class SelectorContext implements Context {
