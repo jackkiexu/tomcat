@@ -110,6 +110,8 @@ public class StandardManager extends ManagerBase {
      * temporary working directory provided by our context, available via
      * the <code>javax.servlet.context.tempdir</code> context attribute.
      */
+    // session 持久化的文件该 pathname 代表着路径, 如果不写的话, 默认在 work 工作目录下的对应 context 文件夹下
+    // 该 文件在 tomcat 启动的时候回重新 load
     protected String pathname = "SESSIONS.ser";
 
 
@@ -201,6 +203,8 @@ public class StandardManager extends ManagerBase {
         sessions.clear();
 
         // Open an input stream to the specified pathname, if any
+
+        // 1. 寻找 session 持久化的文件 SESSIONS.er
         File file = file();                 // 获取 SESSIONS.ser 的文件路径
         if (file == null)
             return;
@@ -211,6 +215,7 @@ public class StandardManager extends ManagerBase {
         ObjectInputStream ois = null;
         Loader loader = null;
         ClassLoader classLoader = null;
+        // 通过 CustomeObjectInputStream 去读取这个 session.er 文件, 并且用当前的 classLoader 去加载
         try {
             fis = new FileInputStream(file.getAbsolutePath());
             bis = new BufferedInputStream(fis);
@@ -252,7 +257,7 @@ public class StandardManager extends ManagerBase {
         }
 
         // Load the previously unloaded active sessions
-        // 从数据流中解析除 session 的信息
+        // 3. 从数据流中解析除 session 的信息
         synchronized (sessions) {
             try {
                 Integer count = (Integer) ois.readObject();

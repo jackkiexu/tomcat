@@ -825,22 +825,25 @@ public class CoyoteAdapter implements Adapter {
             // include the session id in the redirect
             // 尝试从 URL, Cookie, SSL 回话中获取请求的 ID, 并将 mapRequired 设置为 false
             String sessionID = null;
+            /**
+             * 直接在 URL 中查找 jsessionId 的参数, 如果有的话, 就代表有 sessionId
+             */
             if (request.getServletContext().getEffectiveSessionTrackingModes()
                     .contains(SessionTrackingMode.URL)) {
 
-                // Get the session ID if there was one
+                // Get the session ID if there was one      // 如果 URL 重写中附带 sessionId
                 sessionID = request.getPathParameter(
                         SessionConfig.getSessionUriParamName(
                                 request.getContext()));
                 if (sessionID != null) {
-                    request.setRequestedSessionId(sessionID);
+                    request.setRequestedSessionId(sessionID); // 直接设置到当前的 request 中
                     request.setRequestedSessionURL(true);
                 }
             }
 
             // Look for session ID in cookies and SSL session
-            parseSessionCookiesId(req, request);
-            parseSessionSslId(request);
+            parseSessionCookiesId(req, request);        // 通过 cookie 里面获取 JSessionId 的值
+            parseSessionSslId(request);                 // 在 SSL 模式下获取 JSessionId 的值
 
             sessionID = request.getRequestedSessionId();
 
@@ -950,6 +953,8 @@ public class CoyoteAdapter implements Adapter {
      *
      * @param req
      * @param request
+     *
+     * 解析 URL 里面的参数
      */
     protected void parsePathParameters(org.apache.coyote.Request req,
             Request request) {
@@ -982,7 +987,7 @@ public class CoyoteAdapter implements Adapter {
             log.debug(sm.getString("coyoteAdapter.debug", "enc", enc));
         }
 
-        while (semicolon > -1) {
+        while (semicolon > -1) { // semicolon 分号
             // Parse path param, and extract it from the decoded request URI
             int start = uriBC.getStart();
             int end = uriBC.getEnd();

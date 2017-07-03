@@ -145,6 +145,8 @@ public abstract class PersistentManagerBase extends ManagerBase
     /**
      * Whether to save and reload sessions when the Manager <code>unload</code>
      * and <code>load</code> methods are called.
+     *
+     * 是否所有的 Session 在Tomcat正常关闭时, 被持久化, 在Tomcat 启动时, 被 reload, 默认值 true
      */
     protected boolean saveOnRestart = true;
 
@@ -152,6 +154,8 @@ public abstract class PersistentManagerBase extends ManagerBase
     /**
      * How long a session must be idle before it should be backed up.
      * -1 means sessions won't be backed up.
+     * 当前请求访问, 记录一下 session 访问的时间, session 空闲了多久, 这个时候不能总暂用内存
+     * 立即进行持久化, 而这个就是时间间隔
      */
     protected int maxIdleBackup = -1;
 
@@ -160,6 +164,8 @@ public abstract class PersistentManagerBase extends ManagerBase
      * Minimum time a session must be idle before it is swapped to disk.
      * This overrides maxActiveSessions, to prevent thrashing if there are lots
      * of active sessions. Setting to -1 means it's ignored.
+     *
+     * 该值是 minIdleSwap + session 从持久化状态变成内存状态的时间, 肯定比 maxIdleBackup 大
      */
     protected int minIdleSwap = -1;
 
@@ -167,6 +173,8 @@ public abstract class PersistentManagerBase extends ManagerBase
      * The maximum time a session may be idle before it should be swapped
      * to file just on general principle. Setting this to -1 means sessions
      * should not be forced out.
+     *
+     * 该值是 maxIdleSwap + session 从持久化状态变成内存状态的时间, 肯定比 maxIdleBackup 大
      */
     protected int maxIdleSwap = -1;
 
@@ -417,9 +425,9 @@ public abstract class PersistentManagerBase extends ManagerBase
                 expireHere++;
             }
         }
-        processPersistenceChecks();
+        processPersistenceChecks();     // 处理持久化检查
         if ((getStore() != null) && (getStore() instanceof StoreBase)) {
-            ((StoreBase) getStore()).processExpires();
+            ((StoreBase) getStore()).processExpires();  // 检查所有要检查的 session
         }
 
         long timeEnd = System.currentTimeMillis();
@@ -436,9 +444,9 @@ public abstract class PersistentManagerBase extends ManagerBase
      */
     public void processPersistenceChecks() {
 
-        processMaxIdleSwaps();
-        processMaxActiveSwaps();
-        processMaxIdleBackups();
+        processMaxIdleSwaps();      // 空闲的如 store
+        processMaxActiveSwaps();    // 活跃移除 store
+        processMaxIdleBackups();    // 备份
 
     }
 
@@ -892,6 +900,9 @@ public abstract class PersistentManagerBase extends ManagerBase
         long timeNow = System.currentTimeMillis();
 
         // Swap out all sessions idle longer than maxIdleSwap
+        /**
+         * 首先对 sessions 进行遍历,
+         */
         if (maxIdleSwap >= 0) {
             for (int i = 0; i < sessions.length; i++) {
                 StandardSession session = (StandardSession) sessions[i];
@@ -904,6 +915,9 @@ public abstract class PersistentManagerBase extends ManagerBase
                     } else {
                         timeIdle = (int) ((timeNow - session.getThisAccessedTime()) / 1000L);
                     }
+                    // 判断 session 中的 timeldtime 是否比 PersistManager 中的 minIdleSwap 还长
+                    // 若短, 说明session经常被更新时间戳, 从而代表其请求次数较多, 这种情况 processMaxActiveSwap 方法就会判断session是否应该从 Store 存储中解出来
+                    //
                     if (timeIdle > maxIdleSwap && timeIdle > minIdleSwap) {
                         if (session.accessCount != null &&
                                 session.accessCount.get() > 0) {

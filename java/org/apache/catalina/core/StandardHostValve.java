@@ -60,6 +60,10 @@ final class StandardHostValve extends ValveBase {
 
     protected static final boolean STRICT_SERVLET_COMPLIANCE;
 
+    /**
+     * 每一个 请求都会更新 session 的 lastAccessed 的时间, 而对于正常情况讲, 仅仅是在该请求 getSession 方法或者与
+     * session 相关的操作调用, 才会被算作 accessTime, 才会更新 last accessed time, 而当设置这个属性, 每一次请求都会更新这个时间
+     */
     protected static final boolean ACCESS_SESSION;
 
     static {

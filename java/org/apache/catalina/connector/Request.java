@@ -2142,7 +2142,7 @@ public class Request
      */
     @Override
     public HttpSession getSession() {
-        Session session = doGetSession(true);
+        Session session = doGetSession(true); // 这里就是 通过 managerBase.sessions 获取 Session
         if (session == null) {
             return null;
         }
@@ -2737,11 +2737,11 @@ public class Request
 
     // ------------------------------------------------------ Protected Methods
     // create 代表是否创建 StandardSession
-    protected Session doGetSession(boolean create) {
+    protected Session doGetSession(boolean create) {        // create: 是否创建 StandardSession
 
         // There cannot be a session if no context has been assigned yet
         if (context == null) {
-            return (null);      // 查找 StandardContext
+            return (null);                                  // 查找 StandardContext
         }
 
         // Return the current session if it exists and is valid
@@ -2762,7 +2762,11 @@ public class Request
             return (null);      // Sessions are not supported
         }
         if (requestedSessionId != null) {
-            try {
+            /**
+             * 通过 StandardContext 拿到对应的StandardManager， 查找缓存中是否有对应的客户端传递过来的 sessionId
+             * 如果有的话, 那么直接 session.access (计数器 + 1), 然后返回
+             */
+            try {                           // 通过 managerBase.sessions 获取 Session
                 session = manager.findSession(requestedSessionId);  // 通过客户端的 sessionId 来获取 服务端的 Session 对象
             } catch (IOException e) {
                 session = null;
@@ -2778,7 +2782,7 @@ public class Request
 
         // Create a new session if requested and the response is not committed
         if (!create) {
-            return (null);      // 根据标识是否创建 StandardSession
+            return (null);      // 根据标识是否创建 StandardSession ( false 直接返回)
         }
         if ((context != null) && (response != null) &&
             context.getServletContext().getEffectiveSessionTrackingModes().
@@ -2792,6 +2796,7 @@ public class Request
         // Do not reuse the session id if it is from a URL, to prevent possible
         // phishing attacks
         // Use the SSL session ID if one is present.
+        // 到这里其实是没有找到 session, 直接创建 Session 出来
         if (("/".equals(context.getSessionCookiePath())
                 && isRequestedSessionIdFromCookie()) || requestedSessionSSL ) {
             session = manager.createSession(getRequestedSessionId());       // 从客户端读取 sessionID
@@ -2815,7 +2820,7 @@ public class Request
             return null;
         }
 
-        session.access();
+        session.access();                                                 // session access 计数器 + 1s
         return session;
     }
 

@@ -89,6 +89,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
 
     /**
      * The session id length of Sessions created by this Manager.
+     * Session 的长度设置,
      */
     protected int sessionIdLength = 16;
 
@@ -99,6 +100,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      * class must be self-seeding and have a zero-argument constructor. If not
      * specified, an instance of {@link java.security.SecureRandom} will be
      * generated.
+     * 对于 SessionId 的规则, 需要一个随机数的计数器, 默认 java.security.SecureRandom
      */
     protected String secureRandomClass = null;
 
@@ -110,6 +112,8 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      * algorithm and/or provider is specified the SecureRandom instances will be
      * created using the defaults. If that fails, the SecureRandom instances
      * will be created using platform defaults.
+     *
+     * 随机数的算法,  用于创建随机数
      */
     protected String secureRandomAlgorithm = "SHA1PRNG";
 
@@ -121,6 +125,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      * will be created using the defaults. If that fails, the SecureRandom
      * instances will be created using platform defaults.
      */
+    // 随机数的 提供者,  用于创建随机数
     protected String secureRandomProvider = null;
 
     protected SessionIdGenerator sessionIdGenerator = null;
@@ -161,6 +166,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
 
     /**
      * The maximum number of active Sessions allowed, or -1 for no limit.
+     * 最大的 session 活动连接数, 这个属性其实很简单, 就是在创建时判断一下是否超限
      */
     protected int maxActiveSessions = -1;
 
@@ -188,6 +194,9 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      * Manager operations will be done once for the specified amount of
      * backgrondProcess calls (ie, the lower the amount, the most often the
      * checks will occur).
+     *
+     * StandardManager 会隔一段时间去 check 当前 session 的过期时间, 通常这个参数设置得越低, 检查就越频繁, 消耗的资源也就越多
+     *
      */
     protected int processExpiresFrequency = 6;
 
@@ -719,11 +728,16 @@ public abstract class ManagerBase extends LifecycleMBeanBase
         // If the session has expired - as opposed to just being removed from
         // the manager because it is being persisted - update the expired stats
         if (update) {
+            // 时间戳更新
             long timeNow = System.currentTimeMillis();
             int timeAlive =
                 (int) (timeNow - session.getCreationTimeInternal())/1000;
             updateSessionMaxAliveTime(timeAlive);
             expiredSessions.incrementAndGet();
+            /**
+             * SessionTiming 是一个标识 Session 创建时间和 经历多长时间的对象
+             * SessionTiming 是什么作用 ?
+             */
             SessionTiming timing = new SessionTiming(timeNow, timeAlive);
             synchronized (sessionExpirationTiming) {
                 sessionExpirationTiming.add(timing);

@@ -27,14 +27,30 @@ import javax.servlet.SessionTrackingMode;
  * deployment descriptor.
  */
 public class SessionConfig {
+    // Session 超时时间
     private Integer sessionTimeout;
+    // session 通过 cookie 存放的名字, 默认 JSessionId
     private String cookieName;
+    /**
+     * session 关联的 cookie 所在保存的域, 例如网站为 "www.job51.net/test/test.aspx", 那么 domain 默认为 www.jb51.net, 如果没有
+     * 定义这个属性, 默认和当前 Context 配置的一样
+     */
     private String cookieDomain;
+    /**
+     * cookieDomain 域名为前缀, cookiePath为后缀, 也是存储 Session 关联的 cookie所在保存的路径, 如果没有这个配置
+     * 默认和当前 Context 配置的一样
+      */
+
     private String cookiePath;
+    // cookie 的注释
     private String cookieComment;
+    // 就是不让 JS 读出 Cookie 的数据
     private Boolean cookieHttpOnly;
+    // 只有在 https 协议中才会传递到 服务端
     private Boolean cookieSecure;
+    // Session 以 cookie 形式存储的最大的时间
     private Integer cookieMaxAge;
+    // Session 跟踪的策略, 可以是 cookie 跟踪, 或 URL 重写, 甚至让该应用的 cookie 只能在 https 中传递
     private final EnumSet<SessionTrackingMode> sessionTrackingModes =
         EnumSet.noneOf(SessionTrackingMode.class);
 

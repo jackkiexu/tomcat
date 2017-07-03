@@ -91,8 +91,13 @@ public class StandardSession implements HttpSession, Session, Serializable {
 
     protected static final boolean STRICT_SERVLET_COMPLIANCE;
 
+    // 该属性可以总结为, 当前 session 的活跃请求在线统计值
     protected static final boolean ACTIVITY_CHECK;
 
+    /**
+     * 该属性可以总结为两次 last accessed time 之间间距计算, 当为 true, 间距起止是上一次请求开始到这一次请求开始
+     * 当为 false 是上一次请求结束到这一次请求开始
+     */
     protected static final boolean LAST_ACCESS_AT_START;
 
     static {
