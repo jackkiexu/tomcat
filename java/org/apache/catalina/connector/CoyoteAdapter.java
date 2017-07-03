@@ -853,7 +853,7 @@ public class CoyoteAdapter implements Adapter {
                     Context[] contexts = request.getMappingData().contexts;
                     for (int i = (contexts.length); i > 0; i--) {
                         Context ctxt = contexts[i - 1];
-                        if (ctxt.getManager().findSession(sessionID) != null) {
+                        if (ctxt.getManager().findSession(sessionID) != null) {        // 从 StandardManager 里面获取 Session
                             // Was the correct context already mapped?
                             if (ctxt.equals(request.getMappingData().context)) {
                                 mapRequired = false;
@@ -1076,7 +1076,7 @@ public class CoyoteAdapter implements Adapter {
         Context context = request.getMappingData().context;
         if (context != null && !context.getServletContext()
                 .getEffectiveSessionTrackingModes().contains(
-                        SessionTrackingMode.COOKIE)) {
+                        SessionTrackingMode.COOKIE)) {      // 当前运用不支持 通过 cookie 机制 跟踪 session
             return;
         }
 
@@ -1087,7 +1087,7 @@ public class CoyoteAdapter implements Adapter {
             return;
         }
 
-        String sessionCookieName = SessionConfig.getSessionCookieName(context);
+        String sessionCookieName = SessionConfig.getSessionCookieName(context); // 获取 sessionId 的名称 JSessionId
 
         for (int i = 0; i < count; i++) {
             ServerCookie scookie = serverCookies.getCookie(i);

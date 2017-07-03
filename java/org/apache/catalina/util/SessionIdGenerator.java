@@ -78,6 +78,9 @@ public class SessionIdGenerator {
 
 
     /** Node identifier when in a cluster. Defaults to the empty string. */
+    /**
+     *  tomcat 在 cluster 中的 的唯一标识
+     */
     private String jvmRoute = "";
 
 
@@ -138,6 +141,7 @@ public class SessionIdGenerator {
 
     /**
      * Generate and return a new session identifier.
+     * 产生一个新的 sessionId
      */
     public String generateSessionId() {
 

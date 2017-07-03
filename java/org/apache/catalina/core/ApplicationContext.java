@@ -1123,6 +1123,7 @@ public class ApplicationContext
     // 下面是标识 StandardContext 是否支持 URL, COOKIE 的方式来确认 session
     private void populateSessionTrackingModes() {
         // URL re-writing is always enabled by default
+        // cookie 默认支持的 跟踪方式
         defaultSessionTrackingModes = EnumSet.of(SessionTrackingMode.URL);
         supportedSessionTrackingModes = EnumSet.of(SessionTrackingMode.URL);
 

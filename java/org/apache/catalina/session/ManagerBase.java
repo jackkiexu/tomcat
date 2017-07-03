@@ -627,16 +627,18 @@ public abstract class ManagerBase extends LifecycleMBeanBase
         }
 
         // Recycle or create a Session instance
+        // 创建一个 空的 session
         Session session = createEmptySession();
 
         // Initialize the properties of the new session and return it
+        // 初始化空 session 的属性
         session.setNew(true);
         session.setValid(true);
         session.setCreationTime(System.currentTimeMillis());
         session.setMaxInactiveInterval(this.maxInactiveInterval);
         String id = sessionId;
         if (id == null) {
-            id = generateSessionId();
+            id = generateSessionId();   // 生成 sessionId
         }
         session.setId(id);
         sessionCounter++;

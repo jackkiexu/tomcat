@@ -18,6 +18,9 @@ package javax.servlet;
 
 /**
  * @since Servlet 3.0
+ * Session 的跟踪方式
+ *
+ * 1. 将 sessionId 写入 cookie 中, 客户端和服务端每一次交互的时候, 都从 cookie 中取出 JsessionId, 查看 JsessionId
  */
 public enum SessionTrackingMode {
     COOKIE,

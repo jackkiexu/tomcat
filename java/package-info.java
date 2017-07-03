@@ -45,6 +45,8 @@
  *
  * 14. Tomcat 的 keepalive 原理
  *
- * 14. request.getAttribute 触发什么动作
+ * 15. request.getAttribute 触发什么动作
+ *
+ * 16. Servlet, Session, Server, Service, Engine, Host, Context 的生命周期
  * Created by xjk on 5/31/17.
  */

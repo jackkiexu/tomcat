@@ -2763,7 +2763,7 @@ public class Request
         }
         if (requestedSessionId != null) {
             try {
-                session = manager.findSession(requestedSessionId);
+                session = manager.findSession(requestedSessionId);  // 通过客户端的 sessionId 来获取 服务端的 Session 对象
             } catch (IOException e) {
                 session = null;
             }
@@ -2805,10 +2805,10 @@ public class Request
                        getEffectiveSessionTrackingModes().contains(
                                SessionTrackingMode.COOKIE)) {
             Cookie cookie =
-                ApplicationSessionCookieConfig.createSessionCookie(
+                ApplicationSessionCookieConfig.createSessionCookie(         // 根据 sessionId 来创建一个 Cookie
                         context, session.getIdInternal(), isSecure());
 
-            response.addSessionCookieInternal(cookie);
+            response.addSessionCookieInternal(cookie);                    // 最后在响应体中写入 cookie
         }
 
         if (session == null) {

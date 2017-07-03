@@ -76,6 +76,14 @@ import org.apache.tomcat.util.res.StringManager;
  * @author Craig R. McClanahan
  * @author Sean Legassick
  * @author <a href="mailto:jon@latchkey.com">Jon S. Stevens</a>
+ *
+ * Session 的主要方法
+ * 1. 属性的获取 (里面必定存在一个 KV 的数据结构)
+ * 2. sessionId: 每一个 session 对应一个 sessionId, 该 Id 会跟随着 Cookie, URl 重写等方式, 在下一次同样的客户端请求中发挥作用
+ * 3. 时间: session 有超时时间, 相当于 session 实现中必定维护一个定时器, 记录上一次客户端登录的时间, 检验时间差是否大于 session 设置的过期时间
+ *      其次 每一个 session 创建时, session 的创建时间都会被记录下来
+ * 4. 有方法主动让 session 失效, 调用 invalidate 方法
+ *
  */
 public class StandardSession implements HttpSession, Session, Serializable {
 
@@ -150,6 +158,7 @@ public class StandardSession implements HttpSession, Session, Serializable {
 
     /**
      * The collection of user data attributes associated with this Session.
+     * 这里存放的就是 Session 里面的 KV 数据
      */
     protected Map<String, Object> attributes = new ConcurrentHashMap<>();
 
@@ -221,6 +230,8 @@ public class StandardSession implements HttpSession, Session, Serializable {
      * The maximum time interval, in seconds, between client requests before
      * the servlet container may invalidate this session.  A negative time
      * indicates that the session should never time out.
+     *
+     * 默认值就是 ManagerBase.maxInactiveInterval
      */
     protected int maxInactiveInterval = -1;
 
@@ -656,18 +667,27 @@ public class StandardSession implements HttpSession, Session, Serializable {
     @Override
     public boolean isValid() {
 
-        if (!this.isValid) {
+        if (!this.isValid) {    // 对应 HttpSession 的 invalidate, 无论 session 有无过期, 若这个值是 false, 则直接 return
             return false;
         }
 
-        if (this.expiring) {
+        if (this.expiring) {  // 这个属性由后台线程来改变 session 是否过期
             return true;
         }
-
+        /**
+         * 参考地址
+         * http://tomcat.apache.org/tomcat-8.5-doc/config/systemprops.html
+         * 当设置这个属性后, Tomcat 会对 session 进行请求计数, 其实就是 accessCount, 也就是说 在 session 的范围内, 有几个 有效的 链接是起作用的
+         * 当 request 过来 accessCount + 1, 关闭 request, accessCount - 1, accessCount 实际上就是针对单个 Session 的在线活跃统计
+         * 所以说 accessCount.get() > 0 则 session 一定有效
+         */
         if (ACTIVITY_CHECK && accessCount.get() > 0) {
             return true;
         }
 
+        /**
+         * maxInactiveInterval 标志的是最多再过多久, 客户端再次发送请求过来, Session 还会存活着
+         */
         if (maxInactiveInterval > 0) {
             long timeNow = System.currentTimeMillis();
             int timeIdle;
