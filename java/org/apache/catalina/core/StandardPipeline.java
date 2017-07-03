@@ -87,18 +87,28 @@ public class StandardPipeline extends LifecycleBase
 
     /**
      * The basic Valve (if any) associated with this Pipeline.
+     * 每个容器都由其基础的 Valve
+     * StandardServer  -> StandardServerValve
+     * StandardService -> StandardServiceValve
+     * StandardEngine  -> StandardEngineValve
+     * StandardHost    -> StandardHostValve
+     * StandardContext -> StandardContextValve
+     * StandardWrapper -> StandardWrapperValve
      */
     protected Valve basic = null;
 
 
     /**
      * The Container with which this Pipeline is associated.
+     * 指 Pipeline 关联的 Container, 比如 StandardContextValve 关联的就是 StandardContext
      */
     protected Container container = null;
 
 
     /**
      * The first valve associated with this Pipeline.
+     * Pipeline 中的第一个 Valve
+     * 在通过 getFirst() 方法拿到 Pipeline 中的第一个 Valve 时, 若 first 是 null, 直接返回 basic
      */
     protected Valve first = null;
 

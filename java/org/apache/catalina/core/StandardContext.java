@@ -4992,7 +4992,7 @@ public class StandardContext extends ContainerBase
      * @param children Array of wrappers for all currently defined
      *  servlets (including those not declared load on startup)
      *
-     *  这个方法是用来处理在web.xml 中配置 loadonstartup 的Servlet
+     *  这个方法是用来处理在web.xml 中配置 load－on－startup 的Servlet
      *  这个是在 Context 启动时加载实例化, 而不是等到 请求触发才实例化
      *  原因: 主要是有些 Servlet 在第一次初始化时, 需要耗特别多的时间 + 资源
      *  这样就提升了访问的速度
@@ -5002,7 +5002,7 @@ public class StandardContext extends ContainerBase
         // Collect "load on startup" servlets that need to be initialized
         TreeMap<Integer, ArrayList<Wrapper>> map = new TreeMap<>();
         for (int i = 0; i < children.length; i++) {
-            Wrapper wrapper = (Wrapper) children[i];
+            Wrapper wrapper = (Wrapper) children[i];            // 这里的 Wrapper 其实就是 StandardWrapper
             int loadOnStartup = wrapper.getLoadOnStartup();
             if (loadOnStartup < 0)
                 continue;
@@ -5333,7 +5333,7 @@ public class StandardContext extends ContainerBase
             // Load and initialize all "load on startup" servlets
             // 对于 loadOnStartUp >= 0 的 Wrapper, 调用 Wrapper.load() 实例化 Servlet, 并调用 init 进行初始化
             if (ok) {           // 如果配置了 load onStartUp 的servlet在这里进行启动
-                loadOnStartup(findChildren());                      // 这里的 findChildren 是查询 StandardContext 下面对应的 StandardWrapper, 其实就是 servlet
+                loadOnStartup(findChildren());                      // 这里的 findChildren 是查询 StandardContext 下面对应的 StandardWrapper, 其实就是 配置了 load-on-start-up 的 servlet
             }
 
             // Start ContainerBackgroundProcessor thread

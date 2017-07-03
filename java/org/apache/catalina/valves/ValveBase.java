@@ -43,6 +43,9 @@ import org.apache.tomcat.util.res.StringManager;
  * management and lifecycle support.
  *
  * @author Craig R. McClanahan
+ *
+ * 继承 LifecycleMBeanBase, 说明 Valve 也可通过 JMX 监控
+ * 继承 Contained, 说明 Valve 也是容器
  */
 public abstract class ValveBase extends LifecycleMBeanBase
     implements Contained, Valve {

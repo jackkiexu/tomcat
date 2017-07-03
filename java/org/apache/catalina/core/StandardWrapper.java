@@ -730,7 +730,7 @@ public class StandardWrapper extends ContainerBase
     public void addInitParameter(String name, String value) {
 
         try {
-            parametersLock.writeLock().lock();
+            parametersLock.writeLock().lock();  // 这里用到了 JUC 中的 ReadWriteLock 来保证数据的正确修改
             parameters.put(name, value);
         } finally {
             parametersLock.writeLock().unlock();
@@ -818,13 +818,18 @@ public class StandardWrapper extends ContainerBase
         boolean newInstance = false;
 
         // If not SingleThreadedModel, return the same instance every time
-        if (!singleThreadModel) {       // 是否是单例的模型
+        if (!singleThreadModel) {       // 是否是 单个线程单个实例 的模型
             // 这里的 Servlet 若是已经实例化了, 则说明 在 load-on-startup 时已经实例化了
 
+            /**
+             * 若 instance 存在的话, 说明要么
+             * 1. 在 web.xml 中的 load-on-startup 已经实例化过
+             * 2. 要么这个实例化的流程已经走过了一遍
+             */
             // Load and initialize our instance if necessary
-            if (instance == null) {             // double check lock
+            if (instance == null) {             // double check lock 通过 double check lock 来实例化
                 synchronized (this) {
-                    if (instance == null) {
+                    if (instance == null) { // 说明 Servlet 没有实例化过
                         try {
                             if (log.isDebugEnabled())
                                 log.debug("Allocating non-STM instance");
@@ -874,12 +879,12 @@ public class StandardWrapper extends ContainerBase
         }
 
         synchronized (instancePool) {
-
+            // 下面的这段代码可以用 Semaphore 之类的来进行取代 (个人还是比较喜欢 JUC 里面的代码)
             while (countAllocated.get() >= nInstances) {
                 // Allocate a new instance if possible, or else wait
-                if (nInstances < maxInstances) {
+                if (nInstances < maxInstances) {        // 这里的 maxInstances = 20 表示在 一个线程一个 Servlet 的模式下, 对象池中最多只能有 20 个Servlet
                     try {
-                        instancePool.push(loadServlet());
+                        instancePool.push(loadServlet());   // 将加载好的 Servlet 放入对象池里面
                         nInstances++;
                     } catch (ServletException e) {
                         throw e;
@@ -890,7 +895,7 @@ public class StandardWrapper extends ContainerBase
                     }
                 } else {
                     try {
-                        instancePool.wait();
+                        instancePool.wait();            // 在 Servlet.deallocate 中会进行 instancePool.notify 通知唤醒
                     } catch (InterruptedException e) {
                         // Ignore
                     }
@@ -1049,7 +1054,7 @@ public class StandardWrapper extends ContainerBase
          * 3. 读取 ServletSecurity注解的配置, 添加 Servlet 安全
          * 4. 调用 init 进行 Servlet 的初始化
          */
-        instance = loadServlet();                       // 加载 Servlet
+        instance = loadServlet();                    // 加载 Servlet
 
         if (!instanceInitialized) {                  // 初始化 Servlet
             initServlet(instance);
@@ -1090,6 +1095,9 @@ public class StandardWrapper extends ContainerBase
     public synchronized Servlet loadServlet() throws ServletException {
 
         // Nothing to do if we already have an instance or an instance pool
+        /**
+         * 若不是 singleThreadModel 模式, 说明Servlet 是单例, 如果当前的单例已经创建好, 则直接返回 (PS: 下面的 singleThreadModel, instance 都加了 volatile)
+         */
         if (!singleThreadModel && (instance != null))       // 若是 singleThreadModel, 并且已经实例化后, 直接返回
             return instance;
 
@@ -1226,7 +1234,7 @@ public class StandardWrapper extends ContainerBase
 
     private synchronized void initServlet(Servlet servlet)
             throws ServletException {
-
+            // 若初始化已经完成, 并且不是 singleThreadModel 模式, 则直接返回
         if (instanceInitialized && !singleThreadModel) return;
 
         // Call the initialization method of this servlet
@@ -1238,6 +1246,7 @@ public class StandardWrapper extends ContainerBase
                 boolean success = false;
                 try {
                     Object[] args = new Object[] { facade };
+                    // 若带有安全管理器, 则执行权限相关的操作, 没有的话直接调用 servlet.init
                     SecurityUtil.doAsPrivilege("init",
                                                servlet,
                                                classType,

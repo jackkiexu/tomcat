@@ -115,7 +115,7 @@ final class StandardHostValve extends ValveBase {
 
         // Select the Context to be used for this Request
         // 获取此次请求对应的 StandardContext 容器
-        Context context = request.getContext();
+        Context context = request.getContext(); // 这里的 Context 是通过 Mapper 路由获取到的
         if (context == null) {
             response.sendError
                 (HttpServletResponse.SC_INTERNAL_SERVER_ERROR,

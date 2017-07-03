@@ -63,6 +63,7 @@ final class StandardWrapperValve
     // Some JMX statistics. This valve is associated with a StandardWrapper.
     // We expose the StandardWrapper as JMX ( j2eeType=Servlet ). The fields
     // are here for performance.
+    // 这些属性是 用来监控 Servlet 的
     private volatile long processingTime;
     private volatile long maxTime;
     private volatile long minTime = Long.MAX_VALUE;
@@ -138,7 +139,7 @@ final class StandardWrapperValve
 
         // Allocate a servlet instance to process this request
         try {
-            if (!unavailable) {
+            if (!unavailable) { // 判断 Servlet 是否存在
                 // 从 StandardWrapper 容器获取一个 Servlet 对象, Servlet对象的创建及初始化init 都在这里执行
                 servlet = wrapper.allocate();       // 进行 servlet 的分配
             }
