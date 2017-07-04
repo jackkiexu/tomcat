@@ -40,28 +40,40 @@ import java.lang.annotation.Target;
  * HttpServlet ... } </code><br />
  *
  * @since Servlet 3.0
+ *
+ * MultipartConfig 使用的建议
+ * 1. 若是上传一个文件, 仅仅需要设置 maxFileSize
+ * 2. 上传多个文件, 可能需要设置 maxRequestSize, 设定一次上传数据的最大量
+ * 3. 上传过程中无论单个文件超过 maxFileSize, 或者上传总的数量大于 maxRequestSize 值都会抛出 IllegalStateExceprion 异常
+ * 4. location 既是保存路径, 又是上传过程中临时文件的保存路径, 一旦 执行 Part.write方法之后, 临时文件将被自动清除
+ * 5. Servlet 3.0 规范中指明不提供 获取文件名的方法, 但我们可以通过 part.getHeader("content-disposition") 方法间接获取到
+ * 6. 如何读取 MultipartConfig 注解属性值, API
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface MultipartConfig {
 
     /**
+     * 存放的文件的地址
      * @return location in which the Container stores temporary files
      */
     String location() default "";
 
     /**
+     * 允许上传文件的最大值
      * @return the maximum size allowed for uploaded files (in bytes)
      */
     long maxFileSize() default -1L;
 
     /**
+     * 请求的最大数量
      * @return the maximum size of the request allowed for {@code
      *         multipart/form-data}
      */
     long maxRequestSize() default -1L;
 
     /**
+     * 当数据大于这个值, 数据将会被写入磁盘
      * @return the size threshold at which the file will be written to the disk
      */
     int fileSizeThreshold() default 0;

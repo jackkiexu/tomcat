@@ -2565,6 +2565,10 @@ public class Request
             return;
         }
         // 解析 Servlet 上的 @MultipartConfig 注解
+        /**
+         * 解析 Servlet中定义的, @MultipartConfig 的配置,这些配置 可以通过 原注解, 也可以是配置文件
+         * 配置文件: ContextConfig 对 web.xml 的解析, 最终将会解析成为 StandardWrapper 的一个属性 MultipartConfigElement
+         */
         MultipartConfigElement mce = getWrapper().getMultipartConfigElement();
 
         if (mce == null) {
@@ -2624,7 +2628,9 @@ public class Request
                 return;
             }
             factory.setSizeThreshold(mce.getFileSizeThreshold());
-
+            /**
+             * 将 FileItemFactory 传入 ServletFileUpload 中, 然后实例化 FileItem
+             */
             ServletFileUpload upload = new ServletFileUpload();
             upload.setFileItemFactory(factory);
             upload.setFileSizeMax(mce.getMaxFileSize());
@@ -2634,7 +2640,7 @@ public class Request
             try {
                 // 将上述创建的 FileItemFactory 传入ServletFileUpload 中, 用以根据调用 Tomcat 文件系统的结果, 然后实例化 FileItem
                 List<FileItem> items =
-                        upload.parseRequest(new ServletRequestContext(this));
+                        upload.parseRequest(new ServletRequestContext(this));       // 这里的 parseRequest 就是调用 Tomcat 文件系统的代码
                 int maxPostSize = getConnector().getMaxPostSize();
                 int postSize = 0;
                 String enc = getCharacterEncoding();
@@ -2950,7 +2956,7 @@ public class Request
                 contentType = contentType.trim();
             }
 
-            // 解析上传的文件
+            // 解析上传的文件, 直接对 http 请求的数据进行 part 解析, 这便是 上传, 下载 的一个入口
             if ("multipart/form-data".equals(contentType)) {
                 parseParts(false);
                 success = true;

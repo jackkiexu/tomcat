@@ -64,11 +64,11 @@ final class StandardWrapperValve
     // We expose the StandardWrapper as JMX ( j2eeType=Servlet ). The fields
     // are here for performance.
     // 这些属性是 用来监控 Servlet 的
-    private volatile long processingTime;
-    private volatile long maxTime;
-    private volatile long minTime = Long.MAX_VALUE;
-    private final AtomicInteger requestCount = new AtomicInteger(0);
-    private final AtomicInteger errorCount = new AtomicInteger(0);
+    private volatile long processingTime;                               // 请求处理的时间 (这个值在每次请求时都会进行计算处理)
+    private volatile long maxTime;                                       // 请求处理的最大时间 (这个值会动态的变化)
+    private volatile long minTime = Long.MAX_VALUE;                    // 请求处理的最小时间 (这个值会动态的变化)
+    private final AtomicInteger requestCount = new AtomicInteger(0);    // Servlet 请求处理数
+    private final AtomicInteger errorCount = new AtomicInteger(0);      // Servlet 请求处理失败数
 
 
     /**
@@ -99,8 +99,8 @@ final class StandardWrapperValve
         boolean unavailable = false;
         Throwable throwable = null;
         // This should be a Request attribute...
-        long t1=System.currentTimeMillis();
-        requestCount.incrementAndGet();             // 增加请求次数
+        long t1=System.currentTimeMillis();                                       // 开始记录请求处理时间
+        requestCount.incrementAndGet();                                          // 增加请求次数
 
         // 得到 StandardWrapper 容器
         // 每个请求都会对应相应的 StandardWrapper 及 StandardWrapperValve 对象
@@ -141,7 +141,12 @@ final class StandardWrapperValve
         try {
             if (!unavailable) { // 判断 Servlet 是否存在
                 // 从 StandardWrapper 容器获取一个 Servlet 对象, Servlet对象的创建及初始化init 都在这里执行
-                servlet = wrapper.allocate();       // 进行 servlet 的分配
+                /**
+                 * Servlet 的分配操作,
+                 * 在 !SingleThreadModel 模式下, 多线程共享一个 Servlet
+                 * 在  SingleThreadModel 模式下, Servlet 放到一个共享的对象池里面(池里面最多放 20 个 Servlet)
+                 */
+                servlet = wrapper.allocate();                                       // 进行 servlet 的分配
             }
         } catch (UnavailableException e) {
             container.getLogger().error(
@@ -208,7 +213,7 @@ final class StandardWrapperValve
                 if (context.getSwallowOutput()) {
                     try {
                         SystemLogHandler.startCapture();
-                        if (request.isAsyncDispatching()) {
+                        if (request.isAsyncDispatching()) {     // 判断是否是 异步 dispath, 如果是的话, 直接调用 AsyncContextImpl 缓存的 dispatch 线程
                             ((AsyncContextImpl)request.getAsyncContext()).doInternalDispatch();
                         } else if (comet) {
                             filterChain.doFilterEvent(request.getEvent());

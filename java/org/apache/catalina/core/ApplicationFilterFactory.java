@@ -65,11 +65,14 @@ public final class ApplicationFilterFactory {
      *
      * @param request The servlet request we are processing
      * @param servlet The servlet instance to be wrapped
+     *
+     *  在创建 ApplicationFilterChain 的过程中, 会遍历 filterMaps, 将符合 URL 请求的 Filter 加入到 filterChain 里面
      */
     public ApplicationFilterChain createFilterChain
         (ServletRequest request, Wrapper wrapper, Servlet servlet) {
 
         // get the dispatcher type 根据 request
+        // 根据 Request 获取 请求的类型
         DispatcherType dispatcher = null;
         if (request.getAttribute(Globals.DISPATCHER_TYPE_ATTR) != null) {
             dispatcher = (DispatcherType) request.getAttribute(
@@ -92,6 +95,7 @@ public final class ApplicationFilterFactory {
         boolean comet = false;
 
         // Create and initialize a filter chain object
+        // 初始化 filterChain, 并将 Servlet 设置到 filterChain 的最后
         ApplicationFilterChain filterChain = null;
         if (request instanceof Request) {
             Request req = (Request) request;
@@ -121,7 +125,7 @@ public final class ApplicationFilterFactory {
 
         // Acquire the filter mappings for this Context
         StandardContext context = (StandardContext) wrapper.getParent();
-        FilterMap filterMaps[] = context.findFilterMaps(); // 从 context 中拿到所有 filter
+        FilterMap filterMaps[] = context.findFilterMaps();                  // 从 context 中拿到 context 对应的所有 filter
 
         // If there are no filter mappings, we are done
         if ((filterMaps == null) || (filterMaps.length == 0))
@@ -133,9 +137,9 @@ public final class ApplicationFilterFactory {
         // Add the relevant path-mapped filters to this filter chain
         for (int i = 0; i < filterMaps.length; i++) {
             if (!matchDispatcher(filterMaps[i] ,dispatcher)) {
-                continue; // 首先过滤  dispatcher 是否一致
+                continue;                                               // 首先过滤  dispatcher 是否一致
             }
-            if (!matchFiltersURL(filterMaps[i], requestPath)) // 判断 uri 是否匹配
+            if (!matchFiltersURL(filterMaps[i], requestPath))           // 判断 uri 是否匹配
                 continue;
             ApplicationFilterConfig filterConfig = (ApplicationFilterConfig)
                 context.findFilterConfig(filterMaps[i].getFilterName());
@@ -167,7 +171,7 @@ public final class ApplicationFilterFactory {
             if (!matchDispatcher(filterMaps[i] ,dispatcher)) {
                 continue;
             }
-            if (!matchFiltersServlet(filterMaps[i], servletName))
+            if (!matchFiltersServlet(filterMaps[i], servletName))               // 通过 Servlet 的 name 进行匹配
                 continue;
             ApplicationFilterConfig filterConfig = (ApplicationFilterConfig)
                 context.findFilterConfig(filterMaps[i].getFilterName());
@@ -208,6 +212,8 @@ public final class ApplicationFilterFactory {
      *
      * @param filterMap Filter mapping being checked
      * @param requestPath Context-relative request path of this request
+     * 通过请求的 URI 来进行匹配 Filter
+     *                    就是 对照 Servlet规范, 对规范 一模一样的解析
      */
     private boolean matchFiltersURL(FilterMap filterMap, String requestPath) {
 
@@ -248,11 +254,11 @@ public final class ApplicationFilterFactory {
             return (false);
 
         // Case 1 - Exact Match
-        if (testPath.equals(requestPath))
+        if (testPath.equals(requestPath))                                               // 精确匹配
             return (true);
 
         // Case 2 - Path Match ("/.../*")
-        if (testPath.equals("/*"))
+        if (testPath.equals("/*"))                                                     // 路径匹配 相当于 /*... 这种
             return (true);
         if (testPath.endsWith("/*")) {
             if (testPath.regionMatches(0, requestPath, 0,
@@ -267,7 +273,7 @@ public final class ApplicationFilterFactory {
         }
 
         // Case 3 - Extension Match
-        if (testPath.startsWith("*.")) {
+        if (testPath.startsWith("*.")) {                                            // 尾缀匹配 如 ...jsp
             int slash = requestPath.lastIndexOf('/');
             int period = requestPath.lastIndexOf('.');
             if ((slash >= 0) && (period > slash)
@@ -292,6 +298,8 @@ public final class ApplicationFilterFactory {
      *
      * @param filterMap Filter mapping being checked
      * @param servletName Servlet name being checked
+     *
+     *  有的 Servlet 配置中并没有提供 URI, 也就是你要访问 Servlet, 只能通过 包名 + 类名的 方式进行查找
      */
     private boolean matchFiltersServlet(FilterMap filterMap,
                                         String servletName) {

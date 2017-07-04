@@ -94,6 +94,8 @@ import org.apache.tomcat.util.res.StringManager;
  *     |                                                  complete()                |
  *     |----------------------------------------------------------------------------|
  * </pre>
+ *
+ * Servlet 异步状态机
  */
 public class AsyncStateMachine<S> {
 

@@ -1090,7 +1090,7 @@ public class StandardWrapper extends ContainerBase
      * load servlets that are marked in the deployment descriptor to be loaded
      * at server startup time.
      *
-     * Servlet 的实例化
+     * Servlet 的实例化过程 (其中涉及 JNDI, field 组装)
      */
     public synchronized Servlet loadServlet() throws ServletException {
 

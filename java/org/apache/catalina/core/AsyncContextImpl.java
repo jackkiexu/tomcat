@@ -77,6 +77,9 @@ public class AsyncContextImpl implements AsyncContext, AsyncContextCallback {
         this.request = request;
     }
 
+    /**
+     * 这里是 调用 AsyncContext.complete() 方法
+     */
     @Override
     public void complete() {
         if (log.isDebugEnabled()) {
@@ -139,7 +142,7 @@ public class AsyncContextImpl implements AsyncContext, AsyncContextCallback {
     @Override
     public void dispatch() {
         check();
-        String path;
+        String path;             // 组装请求的 path
         String pathInfo;
         ServletRequest servletRequest = getRequest();
         if (servletRequest instanceof HttpServletRequest) {
@@ -315,7 +318,7 @@ public class AsyncContextImpl implements AsyncContext, AsyncContextCallback {
         this.request.getCoyoteRequest().action(
                 ActionCode.ASYNC_START, this);
 
-        this.context = context;
+        this.context = context;                 // 初始化赋值
         this.servletRequest = request;
         this.servletResponse = response;
         this.hasOriginalRequestAndResponse = originalRequestResponse;
@@ -348,7 +351,7 @@ public class AsyncContextImpl implements AsyncContext, AsyncContextCallback {
         try {
             Runnable runnable = dispatch;
             dispatch = null;
-            runnable.run();
+            runnable.run();                         // 执行异步 dispatch 线程
             if (!request.isAsync()) {
                 fireOnComplete();
             }

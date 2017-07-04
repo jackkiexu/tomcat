@@ -283,11 +283,11 @@ public abstract class FileUploadBase {
             if (fac == null) {
                 throw new NullPointerException("No FileItemFactory has been set.");
             }
-            while (iter.hasNext()) { // 进行迭代
+            while (iter.hasNext()) { // 进行迭代遍历
                 final FileItemStream item = iter.next();
                 // Don't use getName() here to prevent an InvalidFileNameException.
                 final String fileName = ((FileItemIteratorImpl.FileItemStreamImpl) item).name;
-                // 通过 FileItem工厂创建 FileItem
+                // 通过 FileItem 工厂创建 FileItem
                 FileItem fileItem = fac.createItem(item.getFieldName(), item.getContentType(),
                                                    item.isFormField(), fileName);
                 items.add(fileItem); // 加入到迭代器中
@@ -302,7 +302,7 @@ public abstract class FileUploadBase {
                 final FileItemHeaders fih = item.getHeaders();
                 fileItem.setHeaders(fih);   // 最后对 FileItem 设置一下 header
             }
-            successful = true;
+            successful = true;             // 完成
             return items;
         } catch (FileUploadIOException e) {
             throw (FileUploadException) e.getCause();
@@ -616,8 +616,8 @@ public abstract class FileUploadBase {
                 final ItemInputStream itemStream = multi.newInputStream();
                 InputStream istream = itemStream;
                 if (fileSizeMax != -1) {
-                    if (pContentLength != -1
-                            &&  pContentLength > fileSizeMax) {
+                    if (pContentLength != -1                         // 真心失望, 这里文件的大小是通过 Http Header 中的值来进行判断的(假如我这里伪造了 http header 中的信息, 这里就很危险)
+                            &&  pContentLength > fileSizeMax) {     // 判断文件的大小是否超过了限制的 size
                         FileSizeLimitExceededException e =
                             new FileSizeLimitExceededException(
                                 String.format("The field %s exceeds its maximum permitted size of %s bytes.",
@@ -790,7 +790,7 @@ public abstract class FileUploadBase {
          *   parsing the request.
          * @throws IOException An I/O error occurred.
          */
-        FileItemIteratorImpl(RequestContext ctx)
+        FileItemIteratorImpl(RequestContext ctx)                    // RequestContext 是 HTTP 请求的数据流
                 throws FileUploadException, IOException {
             if (ctx == null) {
                 throw new NullPointerException("ctx parameter");
@@ -834,12 +834,12 @@ public abstract class FileUploadBase {
                 charEncoding = ctx.getCharacterEncoding();
             }
 
-            boundary = getBoundary(contentType);
+            boundary = getBoundary(contentType);                        // 解析 http 请求流中的  boundary 属性
             if (boundary == null) {
                 throw new FileUploadException("the request was rejected because no multipart boundary was found");
             }
 
-            notifier = new MultipartStream.ProgressNotifier(listener, requestSize);
+            notifier = new MultipartStream.ProgressNotifier(listener, requestSize); // 对于客户端注册的每一个 part 的 ProgressNotifer
             multi = new MultipartStream(input, boundary, notifier);
             multi.setHeaderEncoding(charEncoding);
 
@@ -879,6 +879,9 @@ public abstract class FileUploadBase {
                     currentFieldName = null;
                     continue;
                 }                           // 读取每一个 part 的 header 的内容
+                /**
+                 * 读取 header 并进行解析, 将 该 part 的 header neirong 解析出来 设置到 FilteItemHeaderImpl 中
+                 */
                 FileItemHeaders headers = getParsedHeaders(multi.readHeaders());
                 if (currentFieldName == null) {
                     // We're parsing the outer multipart

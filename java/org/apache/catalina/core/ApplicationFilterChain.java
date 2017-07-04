@@ -239,7 +239,7 @@ final class ApplicationFilterChain implements FilterChain, CometFilterChain {
 
                 } else {
                     // 执行过滤器 Filter的 doFilter(Request, Response, FilterChain) 方法
-                    filter.doFilter(request, response, this);
+                    filter.doFilter(request, response, this);                               // 这里的 filter 的执行 有点递归的感觉, 只是通过 pos 来控制从 filterChain 里面拿出那个 filter 来进行操作
                 }
 
                 support.fireInstanceEvent(InstanceEvent.AFTER_FILTER_EVENT,
@@ -271,6 +271,7 @@ final class ApplicationFilterChain implements FilterChain, CometFilterChain {
             return;
         }
 
+        // 程序运行到这里, 其实就是 Filter 已经运行完成了
         // We fell off the end of the chain -- call the servlet instance
         try {
             if (ApplicationDispatcher.WRAP_SAME_OBJECT) {

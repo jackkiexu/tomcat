@@ -367,10 +367,10 @@ public class Http11Processor extends AbstractHttp11Processor<Socket> {
                     log.warn(sm.getString("http11processor.socket.ssl"), e);
                 }
             }
-        } else if (actionCode == ActionCode.ASYNC_COMPLETE) {
+        } else if (actionCode == ActionCode.ASYNC_COMPLETE) {           // 推动 异步状态机
             socketWrapper.clearDispatches();
             if (asyncStateMachine.asyncComplete()) {
-                ((JIoEndpoint) endpoint).processSocket(this.socketWrapper,
+                ((JIoEndpoint) endpoint).processSocket(this.socketWrapper,  // connector 重启工作线程去处理
                         SocketStatus.OPEN_READ, true);
             }
         } else if (actionCode == ActionCode.ASYNC_SETTIMEOUT) {
