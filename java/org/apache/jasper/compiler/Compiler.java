@@ -48,6 +48,10 @@ import org.apache.tomcat.util.scan.JarFactory;
  * @author Kin-man Chung
  * @author Remy Maucherat
  * @author Mark Roth
+ *
+ * 作用:
+ * 实现 generateJava 方法: 从 jsp到 servlet 的 java 生成都是这个 Compiler 来做的
+ *
  */
 public abstract class Compiler {
 
@@ -108,6 +112,9 @@ public abstract class Compiler {
             t1 = System.currentTimeMillis();
         }
 
+        /**
+         * 设置 PageInfo PageInfo 就是对当前 jsp 生成 java 文件的附加一些属性, 其主要属性来自 web.xml 的 jsp-property
+         */
         // Setup page info area
         pageInfo = new PageInfo(new BeanRepository(ctxt.getClassLoader(),
                 errDispatcher), ctxt.getJspFile(), ctxt.isTagFile());
@@ -189,12 +196,18 @@ public abstract class Compiler {
              * TODO There are some possible optimisations of this process.
              */
             // Parse the file
+            /**
+             * 使用 ParserController 进行 jsp 文件和指令的解析准备
+             * Pagenodes 为解析成为 jsp 编译的单元, 一个节点一个节点的形成一个链表的结构
+             * 我们可以看到 ParseController 的解析方式, 一种如果当前 jsp 满足 xml DTD 的话, 那么直接通过 JSPDocumentParse 进行解析, 很简单, 如果不是 xml 格式的话, 那么需要符合 JSP 的语法
+             * 采用 Parser 类进行解析
+             */
             ParserController parserCtl = new ParserController(ctxt, this);
 
             // Pass 1 - the directives
             Node.Nodes directives =
                 parserCtl.parseDirectives(ctxt.getJspFile());
-            Validator.validateDirectives(this, directives);
+            Validator.validateDirectives(this, directives); // 对PageNodes 单元进行校验
 
             // Pass 2 - the whole translation unit
             pageNodes = parserCtl.parse(ctxt.getJspFile());
@@ -227,7 +240,7 @@ public abstract class Compiler {
 
             // Compile (if necessary) and load the tag files referenced in
             // this compilation unit.
-            tfp = new TagFileProcessor();
+            tfp = new TagFileProcessor();               // taglib 处理s
             tfp.loadTagFiles(this, pageNodes);
 
             if (log.isDebugEnabled()) {
@@ -249,7 +262,7 @@ public abstract class Compiler {
 
             // generate servlet .java file
             writer = setupContextWriter(javaFileName);
-            Generator.generate(writer, this, pageNodes);
+            Generator.generate(writer, this, pageNodes);        // 最后就是调用 Generator 进行 Java 文件的生成
             writer.close();
             writer = null;
 

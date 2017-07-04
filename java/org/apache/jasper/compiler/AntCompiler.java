@@ -44,6 +44,8 @@ import org.apache.tools.ant.types.PatternSet;
  * @author Kin-man Chung
  * @author Remy Maucherat
  * @author Mark Roth
+ *
+ * Compiler 将 jsp 页面生成 servlet 的 java 文件, AntCompiler 就是调用 Ant 的相关的 task 进行 jsp servlet 的 class 编译, 使用 javac 任务
  */
 public class AntCompiler extends Compiler {
 
@@ -142,10 +144,19 @@ public class AntCompiler extends Compiler {
         SystemLogHandler.setThread();
 
         // Initializing javac task
+        /**
+         * 下面的 project 就是一个 ant 的build.xml
+         * task 就是文件中的 一个 任务, javac 就是编译任务
+         */
         getProject();
-        Javac javac = (Javac) project.createTask("javac");
+        Javac javac = (Javac) project.createTask("javac");      // 使用 javac 任务
 
         // Initializing classpath
+        /**
+         * 设置 ant 的 path, 一共是两个
+         * srcPath
+         * classPath
+         */
         Path path = new Path(project);
         path.setPath(System.getProperty("java.class.path"));
         info.append("    cp=" + System.getProperty("java.class.path") + "\n");
@@ -192,6 +203,7 @@ public class AntCompiler extends Compiler {
             }
         }
 
+        // 将属性设置到 javac 里面
         // Configure the compiler object
         javac.setEncoding(javaEncoding);
         javac.setClasspath(path);
@@ -226,6 +238,9 @@ public class AntCompiler extends Compiler {
 
         BuildException be = null;
 
+        /**
+         * javac 执行任务, 将 AntCompiler 生成的 Servlet 的 java 文件, 通过 Ant 任务 javac 编译成最终的 servlet 的 class 文件
+         */
         try {
             if (ctxt.getOptions().getFork()) {
                 javac.execute();

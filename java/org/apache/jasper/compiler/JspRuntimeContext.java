@@ -56,6 +56,8 @@ import org.apache.juli.logging.LogFactory;
  * Only used if a web application context is a directory.
  *
  * @author Glenn L. Nielsen
+ *
+ * JSP 运行时的一个上下文类, 这个类的最大的作用就是提供 JSP 运行期间的一些缓存, 如对应每一个 JSP 页面的 JSPServletWrapper
  */
 public final class JspRuntimeContext {
 
@@ -165,6 +167,10 @@ public final class JspRuntimeContext {
 
     /**
      * Keeps JSP pages ordered by last access.
+     * queue 作用: 控制队列的长度, 时刻对 JSPServletWrapper 的缓存进行瘦身, 当 JSPServlet 解析 uri 发现没有 JSPServletWrapper 得到时候,
+     * 就创建一个 JSPServletWrapper, 缓存在 JSPRuntimeContext 里面,同时 push 到 FastRemovalDequeue 的队列里面
+     *
+     * FastRemovalDequeue 是 Tomcat 封装的数据结构, 其主要的作用是保持一定数量的Queue, 当 push 元素超出最大的 maxSize 的时候,  pop 掉 最末端的 JSPServletWrapper
      */
     private FastRemovalDequeue<JspServletWrapper> jspQueue = null;
 

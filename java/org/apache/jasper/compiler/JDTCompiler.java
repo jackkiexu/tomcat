@@ -59,6 +59,10 @@ import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
  * Based on code from Cocoon2.
  *
  * @author Remy Maucherat
+ *
+ * AntCompiler通过 javac 进行类的编译, 在编译的过程中, 会大量引入 dependency， 如果需要 import 的比较多的话, 那么有时候内存就会被耗光
+ *
+ * 因此为了利用好 Tomcat 的 classLoader, Tomcat 自己搞了一个 Jasper 的编译器 JDTCompiler
  */
 public class JDTCompiler extends org.apache.jasper.compiler.Compiler {
 
@@ -68,7 +72,8 @@ public class JDTCompiler extends org.apache.jasper.compiler.Compiler {
      * Compile the servlet from .java file to .class file
      */
     @Override
-    protected void generateClass(String[] smap)
+    protected void
+    generateClass(String[] smap)
         throws FileNotFoundException, JasperException, Exception {
 
         long t1 = 0;
@@ -214,7 +219,7 @@ public class JDTCompiler extends org.apache.jasper.compiler.Compiler {
                         }
                         String resourceName =
                             className.replace('.', '/') + ".class";
-                        is = classLoader.getResourceAsStream(resourceName);
+                        is = classLoader.getResourceAsStream(resourceName);             // 之所以 JDTCompiler 比 AntCompiler 效率高, 主要是在 类加载的时候用了 Tomcat 自带的 ClassLoader
                         if (is != null) {
                             byte[] classBytes;
                             byte[] buf = new byte[8192];
@@ -344,6 +349,7 @@ public class JDTCompiler extends org.apache.jasper.compiler.Compiler {
         }
 
         // Target JVM
+        // 准备 JDK 版本
         if(ctxt.getOptions().getCompilerTargetVM() != null) {
             String opt = ctxt.getOptions().getCompilerTargetVM();
             if(opt.equals("1.1")) {
@@ -449,6 +455,7 @@ public class JDTCompiler extends org.apache.jasper.compiler.Compiler {
         }
         CompilerOptions cOptions = new CompilerOptions(settings);
         cOptions.parseLiteralExpressionsAsConstants = true;
+        // 编译单元, 环境信息, 编译请求的对象
         Compiler compiler = new Compiler(env,
                                          policy,
                                          cOptions,

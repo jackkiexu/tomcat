@@ -3471,6 +3471,9 @@ class Generator {
      *            The compiler
      * @param page
      *            The input page
+     *
+     *  这个方法其实就是使用一个 Java 文件的模板, 根据前面的 PathInfo 配置和 PageNodes 单元的内容信息
+     *   对这个模板进行具体化和组装
      */
     public static void generate(ServletWriter out, Compiler compiler,
             Node.Nodes page) throws JasperException {

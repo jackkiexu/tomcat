@@ -386,7 +386,7 @@ public final class Mapper {
             } else if (path.equals("/")) {                                 // default 资源匹配
                 // Default wrapper
                 newWrapper.name = "";
-                context.defaultWrapper = newWrapper;
+                context.defaultWrapper = newWrapper;                     // 这里的 defaultWrapper 就是 DefaultServlet
             } else {                                                        // 精确匹配
                 // Exact wrapper
                 if (path.length() == 0) {
@@ -886,6 +886,11 @@ public final class Mapper {
             internalMapExtensionWrapper(extensionWrappers, path, mappingData,
                     true);
         }
+
+        /**
+         * 在 HTTP 请求调用应用的过程中, 请求从Tomcat 前端进入 Tomcat 后端容器后, Mapper类中会基于 URL 进行各种配置
+         * 当发现 该路径是静态资源的话, 那么就会判断该资源是否存在, 如果存在的话, Mapper 类就会认为对于该请求需要使用前面配置的 context
+         */
 
         // Rule 4 -- Welcome resources processing for servlets          // 欢迎页面也是servlet规范来进行匹配
         if (mappingData.wrapper == null) {
@@ -1486,7 +1491,7 @@ public final class Mapper {
     protected static final class ContextVersion extends MapElement<Context> {
         public String path = null;                                              // contextpath 请求 path
         public String[] welcomeResources = new String[0];
-        public WebResourceRoot resources = null;                               // 当前应用的静态资源
+        public WebResourceRoot resources = null;                               // 当前应用的静态资源(其实就是 StandardRoot 类)
         public MappedWrapper defaultWrapper = null;
         public MappedWrapper[] exactWrappers = new MappedWrapper[0];          // 基于 servlet-mapping 的精确匹配, 粗滤匹配, 扩展匹配
         public MappedWrapper[] wildcardWrappers = new MappedWrapper[0];

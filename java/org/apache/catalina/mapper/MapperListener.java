@@ -181,7 +181,7 @@ public class MapperListener extends LifecycleMBeanBase
             String hostName = context.getParent().getName();
             String wrapperName = wrapper.getName();
             String mapping = (String) event.getData();
-            boolean jspWildCard = ("jsp".equals(wrapperName)
+            boolean jspWildCard = ("jsp".equals(wrapperName)        // 当请求的后缀是 jsp, 则直接在 Wrapper 中加上 jspWrapper 的角色, 这就意味着请求会定位到 JSPServlet
                     && mapping.endsWith("/*"));
             mapper.addWrapper(hostName, contextPath, version, mapping, wrapper,
                     jspWildCard, context.isResourceOnlyServlet(wrapperName));

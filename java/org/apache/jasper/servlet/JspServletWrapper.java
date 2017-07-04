@@ -66,6 +66,12 @@ import org.apache.tomcat.util.scan.Jar;
  * @author Kin-man Chung
  * @author Glenn Nielsen
  * @author Tim Fennell
+ *
+ *
+ * 和自定义的 Servlet 流程之前要经过 StandardWrapper 一样, 每一个 jsp 编译成 xxxServlet, 之前也要经过 JSPServletWrapper,
+ * 这个 JSPServletWrapper 是每一个 jsp 生成一个, 而 standardWrapper 是对应 n 个自定义 Servlet的
+ * 因此 这也就是前面讲的, 为什么 JSPRuntimeContext 中搞了一个缓存还不够, 还要改一个 队列去控制 JSPServletWrapper的实例树
+ *
  */
 
 @SuppressWarnings("deprecation") // Have to support SingleThreadModel
@@ -349,12 +355,18 @@ public class JspServletWrapper {
             /*
              * (1) Compile
              */
+            /**
+             * 下面编译的条件
+             * 1. 开发者模式
+             * 2. 生产模式: JSP 不能被修改, 随着 Tomcat 启动就会被编译, 编译OK后, firstTime 变成 false
+             */
             if (options.getDevelopment() || firstTime ) {
                 synchronized (this) {
                     firstTime = false;
 
                     // The following sets reload to true, if necessary
-                    ctxt.compile();
+                    ctxt.compile();     // 首先就是调用 JSPCompilationContext 进行编译, 编译的条件是要么是开发者模式, 要么是第一次 firstTime
+
                 }
             } else {
                 if (compileException != null) {
@@ -366,6 +378,7 @@ public class JspServletWrapper {
             /*
              * (2) (Re)load servlet class file
              */
+            // 通过 InstanceManager 与 JasperLoader 加载 servlet
             servlet = getServlet();
 
             // If a page is to be precompiled only, return.
@@ -402,6 +415,7 @@ public class JspServletWrapper {
 
             /*
              * (3) Handle limitation of number of loaded Jsps
+             * 更新 FastRemovalDequeue
              */
             if (unloadAllowed) {
                 synchronized(this) {
@@ -428,7 +442,7 @@ public class JspServletWrapper {
                synchronized (this) {
                    servlet.service(request, response);
                 }
-            } else {
+            } else {        // 调用 servlet 的 service 方法
                 servlet.service(request, response);
             }
         } catch (UnavailableException ex) {

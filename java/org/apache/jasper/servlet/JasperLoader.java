@@ -32,6 +32,9 @@ import org.apache.jasper.Constants;
  *
  * @author Anil K. Vijendran
  * @author Harish Prabandham
+ *
+ * 当 Compiler 将 JSP 编译为 servlet 之后, 通过这个 JasperLoader 进行加载, 这个 JasperLoader 其实没有什么太多的功能, 主要就是继承
+ *  URLClassLoader, 因为 jsp 编译之后的 servlet 是有位置的, JasperLoader 就会将 对应位置下的 class 进行加载
  */
 public class JasperLoader extends URLClassLoader {
 

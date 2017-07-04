@@ -54,6 +54,10 @@ import org.apache.tomcat.util.scan.Jar;
  * @author Pierre Delisle
  * @author Costin Manolache
  * @author Kin-man Chung
+ *
+ * JspCompilationContext 是一种预编译, 也就是 Tomcat 启动的时候, 所有部署的应用中的 jsp 都会进行编译, 另外一种是当第一次访问
+ * 的时候对该jsp进行编译, 无论哪一种, JSPCompilationContext 都是编译的上下文, 通过 JSPCompilationWrapper 通过
+ * JSPCompilationContext 进行加载 jsp 源文件, 然后调用 Compiler 进行编译为 servlet 的 class, 并通过 JasperLoader 进行加载
  */
 public class JspCompilationContext {
 
@@ -200,6 +204,12 @@ public class JspCompilationContext {
      * Create a "Compiler" object based on some init param data. This
      * is not done yet. Right now we're just hardcoding the actual
      * compilers that are created.
+     *
+     * 创建对应的 Compiler
+     *
+     * 1. AntCompiler : Tomcat 默认的编译器, 它有很多的脚本, 其中一个就是将 jsp 编译成 Servlet 的 class
+     * 2. JDTCompiler : AntCompiler 在编译的过程中会将很多在 Tomcat 中已经存在的类重新加载一遍, 而 JDTCompiler 不会
+     *
      */
     public Compiler createCompiler() {
         if (jspCompiler != null ) {

@@ -105,6 +105,10 @@ import org.apache.tomcat.util.res.StringManager;
  * </p>
  * @author Craig R. McClanahan
  * @author Remy Maucherat
+ *
+ * 用途
+ * 1. 当接收到客户端对静态资源的请求时, 它负责直接找到被请求的静态资源, 取出内容, 发送出去
+ * 2. 当用户的 HTTP 请求无法匹配任何一个 Servlet 的时候, 该Servlet被执行
  */
 public class DefaultServlet
     extends HttpServlet {
@@ -122,6 +126,7 @@ public class DefaultServlet
 
     /**
      * The input buffer size to use when serving resources.
+     * 读取服务器端的资源流的缓冲区设置大小
      */
     protected int input = 2048;
 
@@ -134,6 +139,8 @@ public class DefaultServlet
 
     /**
      * Read only flag. By default, it's set to true.
+     * 请求的资源是只读类型
+     * 但请求的类型时 DELETE 时, 不能对资源进行修改
      */
     protected boolean readOnly = true;
 
@@ -146,6 +153,7 @@ public class DefaultServlet
 
     /**
      * The output buffer size to use when serving resources.
+     * Response 流的输出缓冲区
      */
     protected int output = 2048;
 
@@ -157,25 +165,32 @@ public class DefaultServlet
 
 
     /**
+     * 下面几个属性是当 listings = true 时, 给目录的展现的 xsl 转化的配置
+     */
+    /**
      * Allow customized directory listing per directory.
+     * 每一个目录一个 xslt 文件, 可以对每一个目录的展现页面进行定制化
      */
     protected String localXsltFile = null;
 
 
     /**
      * Allow customized directory listing per context.
+     * 对应的每一个应用, 一个应用一个展现方法
      */
     protected String contextXsltFile = null;
 
 
     /**
      * Allow customized directory listing per instance.
+     * 对应全局
      */
     protected String globalXsltFile = null;
 
 
     /**
      * Allow a readme file to be included.
+     * 对于每一个目录 都有一个 readMe 的介绍
      */
     protected String readmeFile = null;
 
@@ -263,6 +278,7 @@ public class DefaultServlet
 
 
     /**
+     * 通过 ServletConfig 来获取 Servlet d的默认参数
      * Initialize this servlet.
      */
     @Override
@@ -690,7 +706,7 @@ public class DefaultServlet
         boolean serveContent = content;
 
         // Identify the requested resource path
-        String path = getRelativePath(request);
+        String path = getRelativePath(request);                                 // 通过 Request 来获取相对路径
         if (debug > 0) {
             if (serveContent)
                 log("DefaultServlet.serveResource:  Serving resource '" +
@@ -699,10 +715,10 @@ public class DefaultServlet
                 log("DefaultServlet.serveResource:  Serving resource '" +
                     path + "' headers only");
         }
-
+        // 基于相对路径 path, 通过 StandardRoot 来对 静态资源进行查找
         WebResource resource = resources.getResource(path);
 
-        if (!resource.exists()) {
+        if (!resource.exists()) {   // 资源是否存在
             // Check if we're included so we can return the appropriate
             // missing resource name in the error
             String requestUri = (String) request.getAttribute(
@@ -722,7 +738,7 @@ public class DefaultServlet
             return;
         }
 
-        if (!resource.canRead()) {
+        if (!resource.canRead()) {  // 资源是否可读
             // Check if we're included so we can return the appropriate
             // missing resource name in the error
             String requestUri = (String) request.getAttribute(
@@ -778,7 +794,7 @@ public class DefaultServlet
         }
 
         // Find content type.
-        String contentType = resource.getMimeType();
+        String contentType = resource.getMimeType();        // 资源类型
         if (contentType == null) {
             contentType = getServletContext().getMimeType(resource.getName());
             resource.setMimeType(contentType);
@@ -813,7 +829,7 @@ public class DefaultServlet
         ArrayList<Range> ranges = null;
         long contentLength = -1L;
 
-        if (resource.isDirectory()) {
+        if (resource.isDirectory()) {   // 当资源是目录时, 通过 下面的 "listings" 来判断, 是否可以展现对应目录中的文件和文件夹
             // Skip directory listings if we have been configured to
             // suppress them
             if (!listings) {
@@ -921,7 +937,7 @@ public class DefaultServlet
             if (serveContent) {
                 if (resource.isDirectory()) {
                     // Serve the directory browser
-                    renderResult = render(getPathPrefix(request), resource);
+                    renderResult = render(getPathPrefix(request), resource);        // 若请求的是目录, 则通过 render 方式进行渲染
                 } else {
                     renderResult = resource.getInputStream();
                 }
@@ -950,7 +966,7 @@ public class DefaultServlet
 
             response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
 
-            if (ranges.size() == 1) {
+            if (ranges.size() == 1) {                               // 若请求的是文件, 直接通过 Response 流进行输出就行了
 
                 Range range = ranges.get(0);
                 response.addHeader("Content-Range", "bytes "

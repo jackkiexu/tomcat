@@ -59,6 +59,12 @@ import org.apache.tomcat.PeriodicEventListener;
  * @author Remy Maucherat
  * @author Kin-man Chung
  * @author Glenn Nielsen
+ *
+ * JSP 在服务器端被编译为 servlet, 然后通过类加载器加载 servlet, 最后执行这个 xxx_jsp
+ *
+ * 这个 也是一个 Servlet, 当后缀是 *.jsp 等, Tomcat 会路由到这个 JSPServlet 中进行 jspuri 的处理, 它起到的作用是当发现 uri 是 jso 为后缀的, 基于 http 的请求参数, 从
+ * JSPRuntimeContext 的缓存中, 找到有个合适的 JSPServletWrapper, 继续进行处理, 这个类是  JSP处理类的边界类, 有点像 DefaultServlet 类
+ * 所有的 jsp 都会从 JSPServlet 中进行路由, 并分配到合适的 JSPServletWrapper
  */
 public class JspServlet extends HttpServlet implements PeriodicEventListener {
 
@@ -376,6 +382,9 @@ public class JspServlet extends HttpServlet implements PeriodicEventListener {
 
     // -------------------------------------------------------- Private Methods
 
+    /**
+     * 对于 每一个 JSP 都需要分配一个 JSPServletWrapper 实例, 当发现 是一次请求这个 jspuri 的话, 会创建一个 JSPServletWrapper, 然后加入到 JSPRuntimeContext 运行时缓存中
+     */
     private void serviceJspFile(HttpServletRequest request,
                                 HttpServletResponse response, String jspUri,
                                 boolean precompile)
@@ -399,7 +408,7 @@ public class JspServlet extends HttpServlet implements PeriodicEventListener {
             }
         }
 
-        try {
+        try { // 最后调用 wrapper 的 service 方法
             wrapper.service(request, response, precompile);
         } catch (FileNotFoundException fnfe) {
             handleMissingResource(request, response, jspUri);
