@@ -99,6 +99,10 @@ public class Http11Processor extends AbstractHttp11Processor<Socket> {
     }
 
 
+    /**
+     * 当工作线程数超过 阀值, 则将 keepalive 禁止
+     * @return
+     */
     @Override
     protected boolean disableKeepAlive() {
         int threadRatio = -1;

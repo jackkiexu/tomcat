@@ -305,6 +305,9 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
             boolean launch = false;
             synchronized (socket) {
                 try {
+                    /**
+                     * state 标志着当前 socket 的状态, 这也是 为什么 AbstractHttp11Processor 会设置这个 SocketState 的原因了
+                     */
                     SocketState state = SocketState.OPEN;       // 初始化 Socket 的状态位 OPEN
                     handler.beforeHandshake(socket);
                     // 若是 SSL 则先握手
@@ -322,7 +325,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
                     // 让工作线程干活
                     if ((state != SocketState.CLOSED)) {
-                        if (status == null) {
+                        if (status == null) {   // 调用 AbstractHttp11Protocol 最后进入 Tomcat 后端容器
                             // 通过 Http11Protocol$Http11ConnectionHandler 处理请求, 应用外部对象的成员 handler
                             state = handler.process(socket, SocketStatus.OPEN_READ);
                         } else {
@@ -330,6 +333,10 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                         }
                     }
                     // 收尾工作
+                    /**
+                     * state = CLOSED 直接关闭 socket 就可以了, 这也意味着, 当前 RCP 的连接关闭, 产生 TIME_WAIT 了
+                     * 如果 是 OPEN, 说明该请求后续可能还有请求利用这个 socket
+                     */
                     if (state == SocketState.CLOSED) {
                         // Close socket
                         if (log.isTraceEnabled()) {
@@ -341,6 +348,9 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                         } catch (IOException e) {
                             // Ignore
                         }
+                        /**
+                         * 当发现 SocketState 重置为 Open 了, 说明 在 Http11Processor中Keepalive 模式下, 后续的请求还没有处理完
+                         */
                     } else if (state == SocketState.OPEN ||     // 若是 OPEN  则说明是 Keepalive 在工作
                             state == SocketState.UPGRADING  ||
                             state == SocketState.UPGRADED){
@@ -352,7 +362,12 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                         waitingRequests.add(socket);
                     }
                 } finally {
-                    if (launch) {
+                    /**
+                     * keepalive 总结:
+                     * 下面的代码说明: 在 keepalive 模式下, 好不容易 SocketProcessor 执行完了, 当前工作线程退出, 但在工作线程退出之前, 有新启动一个工作线程, 使用的还是原来的 socket
+                     * 意味着: 在 KeepAlive 模式下, 只要页面的 request 请求没有完成, 那么工作线程一直就会占据着, 工作线程基本不会释放
+                     */
+                    if (launch) {   // lauch 属性 = true, 说明这个事 KeepAlive, 重新利用这个 socket 创建一个工作线程
                         try {
                             getExecutor().execute(new SocketProcessor(socket, SocketStatus.OPEN_READ));
                         } catch (RejectedExecutionException x) {

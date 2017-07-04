@@ -904,7 +904,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
         // Flags
         error = false;
-        keepAlive = true;
+        keepAlive = true;                                   // keepalive 的默认值 都是 true
         comet = false;
         openSocket = false;
         sendfileInProgress = false;
@@ -912,13 +912,18 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         if (endpoint.getUsePolling()) {
             keptAlive = false;
         } else {
-            keptAlive = socketWrapper.isKeptAlive();
+            keptAlive = socketWrapper.isKeptAlive();        // socket 的 keepalive 的属性
         }
 
         if (disableKeepAlive()) {
             socketWrapper.setKeepAliveLeft(0);
         }
 
+        /**
+         * 首先开启一个大的循环, 然后判断请求是否是该 keepalive 期间的最后一个请求, 如果是的话, 那么在这里直接就进行 break掉, 释放掉该工作线程
+         * 因为活已经都干完了, 如果发现不是最后一个请求, 或者后续还有可能有请求, 那么这里务必需要将 keepalive 的模式的状态还要保持住, 这些属性如 openSocket 和
+         * readComplete 等状态, 来保证下一次请求还能正常工作
+         */
         while (!error && keepAlive && !comet && !isAsync() &&
                 httpUpgradeHandler == null && !endpoint.isPaused()) {
 
@@ -1041,7 +1046,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
                     if (!response.isCommitted()) {
                         response.reset();
                         response.setStatus(500);
-                        response.setHeader("Connection", "close");
+                        response.setHeader("Connection", "close");      // 若在 上面 getAdapter().service(request, response); 中出现了异常, 则将 keepalive 至于 close 状态
                     }
                 } catch (Throwable t) {
                     ExceptionUtils.handleThrowable(t);
@@ -1103,7 +1108,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
             rp.setStage(org.apache.coyote.Constants.STAGE_KEEPALIVE);
 
-            if (breakKeepAliveLoop(socketWrapper)) {
+            if (breakKeepAliveLoop(socketWrapper)) {                // 查看变量是否符合 跳出大循环
                 break;
             }
         }

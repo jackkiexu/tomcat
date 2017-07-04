@@ -656,7 +656,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
             // 从 SocketProcessor 的缓存队列取出一个来处理 socket
             SocketProcessor sc = processorCache.pop();
             if ( sc == null ) sc = new SocketProcessor(socket,status);              // SocketProcessor 是工作线程池中的 Runnable
-            else sc.reset(socket,status);
+            else sc.reset(socket,status);                                           // 若是从池中拿出来的, 则 reset 一下
             Executor executor = getExecutor();
             // 若有事件发生的 socket交给 Worker处理
             if (dispatch && executor != null) { // 若配置了 ThreadPoolExecutor, 则让它来执行
@@ -1602,6 +1602,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
 
         @Override
         public void run() {
+            // 拿到 Poller 线程轮询出来的 Key
             SelectionKey key = socket.getIOChannel().keyFor(
                     socket.getPoller().getSelector());
             KeyAttachment ka = null;
@@ -1630,6 +1631,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
             try {
                 int handshake = -1;
 
+                // 如果有 ssl 配置那么先进行握手
                 try {
                     if (key != null) {
                         // For STOP there is no point trying to handshake as the
@@ -1682,7 +1684,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                         }
                     } else if (state == SocketState.LONG && ka != null && ka.isAsync() && ka.interestOps() > 0) {
                         //we are async, and we are interested in operations
-                        ka.getPoller().add(socket, ka.interestOps());
+                        ka.getPoller().add(socket, ka.interestOps()); // 如果是 KeepAlive 的话, 那么下一次, Poller 轮询, 这个 Socket 还需要参与
                     }
                 } else if (handshake == -1 ) {
                     if (key != null) {
@@ -1725,6 +1727,17 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                     socket.getPoller().cancelledKey(key,SocketStatus.ERROR);
                 }
             } finally {
+                /**
+                 * KeepAlive总结:
+                 * 整体的 SocketProcessor 流程与 BIO 差不多, 只不过因为 NIO 通道中多了一个 Poller 线程,
+                 * 所以针对 Socket 的直接操作, 变成对 socket 的事件key 的关注或者取消, 例如关闭连接, 就是告知 Poller 线程
+                 * cancelledKey,
+                 * 当 handler.process 返回的SocketState.keepalive 的时候, 可以看代码, Poller 线程 add socket也就是重新将 该socket 的读写事件作为 Poller 关注事项了
+                 *
+                 * 到这里, 我们其实可以总结出, NIO 模式下, 因为多了一个 POller线程, 它把 socket 感兴趣的事件注册上去, 当有感兴趣的 key 到时, 才会把 keepalive 模式下的 SocketProcessor 工作线程 run 起来, 这相当于
+                 * 工作线程 SocketProcessor 并不是 一直阻塞着(BIO是阻塞的), 只有读写事件时, 工作线程才重新 run 起来, 这是就是为什么在 NIO 模式下, 当加上 KeepAlive(默认是 true) 会占用很少的线程的实质原因
+                 *
+                 */
                 if (launch) {
                     try {
                         getExecutor().execute(new SocketProcessor(socket, SocketStatus.OPEN_READ));
@@ -1739,7 +1752,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                 status = null;
                 //return to cache
                 if (running && !paused) {
-                    processorCache.push(this);  // 将 SocketProcessor 缓存起来
+                    processorCache.push(this);  // 将 SocketProcessor 缓存起来, 但该工作线程会退出
                 }
             }
         }
