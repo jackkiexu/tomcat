@@ -32,6 +32,9 @@ import org.apache.juli.logging.LogFactory;
 /**
  * 参考资料
  * http://gearever.iteye.com/blog/1844203
+ * 资料 (推荐)
+ * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650075890&idx=1&sn=ae57162a5d557bbadcbc9fb0ea1d44e3&mpshare=1&scene=23&srcid=0705tg52LlZLagHCuEqzygqB#rd
+ *
  * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650075890&idx=1&sn=ae57162a5d557bbadcbc9fb0ea1d44e3&mpshare=1&scene=23&srcid=06125QjgxvOSnhUYwDe2fMWN#rd
  * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650075890&idx=1&sn=ae57162a5d557bbadcbc9fb0ea1d44e3&mpshare=1&scene=23&srcid=06203XK7llXuAWHiKFO3bYRc#rd
  *
@@ -54,8 +57,10 @@ public class NioSelectorPool {
 
     protected volatile Selector SHARED_SELECTOR;
 
+    // 以减少选择器的争用, 在池中使用的最大选择器的个数
     protected int maxSelectors = 200;
     protected long sharedSelectorTimeout = 30000;
+    // 以减少选择器的争用, 在池中使用的最大备用选择器的个数, 当  selector 返回池中, 就又这个参数决定 selector 是否还需要继续存在
     protected int maxSpareSelectors = -1;
     protected boolean enabled = true;
     protected AtomicInteger active = new AtomicInteger(0);
@@ -84,11 +89,13 @@ public class NioSelectorPool {
     /**
      * 在每一次新增 selector 的时候, 需要考虑看看啊池中目前有多少个, 如果没有超出的话, 可以新建 selector, 否则
      * 只能使用池中现有的 selector
+     *
+     * 下面的 active 与 space 是原子变量 作用是实现 自增, 自减 来实现 selector 控制
      */
     @SuppressWarnings("resource") // s is closed in put()
     public Selector get() throws IOException{
         if ( SHARED ) {
-            return getSharedSelector();
+            return getSharedSelector();             // 若配置 SHARED = true, 则 就共享一个 selector
         }
         if ( (!enabled) || active.incrementAndGet() >= maxSelectors ) {
             if ( enabled ) active.decrementAndGet();
@@ -97,7 +104,7 @@ public class NioSelectorPool {
         Selector s = null;
         try {
             s = selectors.size()>0?selectors.poll():null;
-            if (s == null) {
+            if (s == null) {                                        // 若没有超出 maxSelectors 则直接新建一个
                 synchronized (Selector.class) {
                     // Selector.open() isn't thread safe
                     // http://bugs.sun.com/view_bug.do?bug_id=6427854
@@ -124,7 +131,9 @@ public class NioSelectorPool {
     }
 
 
-
+    /**
+     * 下面通过 maxSelectors 与 maxSpaceSelectors 来控制 selector 对象池里面的对象
+     */
     public void put(Selector s) throws IOException {
         if ( SHARED ) return;
         if ( enabled ) active.decrementAndGet();
@@ -178,8 +187,13 @@ public class NioSelectorPool {
      */
     public int write(ByteBuffer buf, NioChannel socket, Selector selector,
                      long writeTimeout, boolean block) throws IOException {
+        /**
+         * 若 SHARED = true, 则 新开启的 selector 仅仅只有 1 个, 而当前的这次写入操作在 Tomcat 中调用的是 block 的话,
+         * 直接调用 NioBlovckingSelector 来写入
+         * 若 SHARED != true maxSelectors 与 maxSpaceSelectors 才起作用
+         */
         if ( SHARED && block ) {
-            return blockingSelector.write(buf,socket,writeTimeout);                            // 若 block 是 true
+            return blockingSelector.write(buf,socket,writeTimeout);                            // 若 block 是 true, 阻塞写入模式, 为什么要这里是阻塞的呢? Servlet 规范给规定的
         }
         SelectionKey key = null;
         int written = 0;
@@ -200,7 +214,11 @@ public class NioSelectorPool {
                     }
                     if (cnt==0 && (!block)) break; //don't block
                 }
-                // 如果写数据返回值 cnt = 0, 通常是网络不稳定造成写数据失败
+                /**
+                 * 基于低并发来讲, 一次 SocketChannel 写入就会成功 ， guoru 是高并发, 非组赛模式的写入, 需要开启一个 NIO 通道
+                 * 将 SocketChannel 注册到新开启的Selector 上, 这样的好处就是不占用 Poller 线程中的 Selector
+                 */
+                // 如果写数据返回值 cnt = 0, 通常是网络不稳定造成写数据失败, 这时候 将要写的 SocketChannel 注册到新的 selector 上, 等候 WRITE 事件的产生
                 if ( selector != null ) {                                                          // 写入不成功
                     //register OP_WRITE to the selector                                             // 将 OP_WRITE 事件注册到 selector 上
                     if (key==null) key = socket.getIOChannel().register(selector, SelectionKey.OP_WRITE);

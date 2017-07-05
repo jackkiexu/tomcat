@@ -1386,7 +1386,8 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
 
     // ----------------------------- Inner classes used with start/stop Executor
-
+    // 下面一个 call 就是启动子容器
+    // 使用的是 StartStopExecutor
     private static class StartChild implements Callable<Void> {
 
         private Container child;

@@ -138,7 +138,7 @@ public class Cache {
 
         long targetSize =
                 maxSize * (100 - TARGET_FREE_PERCENT_BACKGROUND) / 100;
-        long newSize = evict(targetSize, iter);                     // 基于配置的目标 size 进行清除
+        long newSize = evict(targetSize, iter);                     // 基于配置的目标 size 进行清除 (evict 驱逐的意思)
 
         if (newSize > targetSize) {
             log.info(sm.getString("cache.backgroundEvictFail",
@@ -169,7 +169,7 @@ public class Cache {
             CachedResource resource = iter.next();
 
             // Don't expire anything that has been checked within the TTL
-            if (resource.getNextCheck() > now) {
+            if (resource.getNextCheck() > now) {                // 在 Time To Live (TTL) 之内
                 continue;
             }
 

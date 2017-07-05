@@ -109,13 +109,19 @@ public class NioBlockingSelector {
                     written += cnt;
                     if (cnt > 0) {
                         time = System.currentTimeMillis(); //reset our timeout timer
-                        continue; //we successfully wrote, try again without a selector
+                        continue; //we successfully wrote, try again without a selector             // 写入成功
                     }
                 }
-                try {
+                /**
+                 * 从这里可以看出 NioBlockingSelector 的 write 与 NioSelectorPool 的 write
+                 * 方法差不多, 一次写入 SocketChannel 成功最好, 不成功 则做下面两件事
+                 * 1. 通过 一个Latch 在主线程进行 wait, 可以看到 这个同步机制通过 Java 的 CountDownLatch
+                 * 2. 使用一个 BlockPoller 的子线程, 将这个 socketChannel 关注的 可以加入到 BlockPoller 的子线程, 由主线程轮询 ("poller.add(att,SelectionKey.OP_WRITE,reference);")
+                 */
+                try {               // 写入不成功
                     if ( att.getWriteLatch()==null || att.getWriteLatch().getCount()==0) att.startWriteLatch(1);
-                    poller.add(att,SelectionKey.OP_WRITE,reference);
-                    if (writeTimeout < 0) {
+                    poller.add(att,SelectionKey.OP_WRITE,reference);                // 这一步就是就是将事件交由子线程进行处理
+                    if (writeTimeout < 0) { // 进行一段时间的 wait
                         att.awaitWriteLatch(Long.MAX_VALUE,TimeUnit.MILLISECONDS);
                     } else {
                         att.awaitWriteLatch(writeTimeout,TimeUnit.MILLISECONDS);
@@ -216,7 +222,12 @@ public class NioBlockingSelector {
         return read;
     }
 
-
+    /**
+     * NIO 通道的 Servlet 的输入与输出最终都是通过 NioBlockingPoll 来完成的, 而 NioBlockingPool 又根据Tomcat 的使用场景可以分成 阻塞
+     * 与 非阻塞, 对于阻塞来讲, 为了等待网络发出, 需要启动一个线程实时监测网络 SocketChannel 是否可以发出包, 而如果不这么做的话, 就需要使用一个 while
+     * 空转, 这样会让线程一直损耗
+     * 只要是阻塞模式, 并且在 Tomcat 启动的时候, 添加了 -D=org.apache.tomcat.util.net.NioSelectorShared 的话, 那么就启动这个线程
+     */
     protected static class BlockPoller extends Thread {
         protected volatile boolean run = true;
         protected Selector selector = null;
@@ -275,7 +286,7 @@ public class NioBlockingSelector {
                     }
                 }
             };
-            events.offer(r);
+            events.offer(r);                        // 加入的子线程最后被加入到 同步队列里面
             wakeup();
         }
 

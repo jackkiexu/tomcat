@@ -37,6 +37,9 @@ import java.util.logging.LogRecord;
  * </ul>
  *
  * <p>See the System Properties page in the configuration reference of Tomcat.</p>
+ *
+ * 该线程用于异步文件处理的, 它的作用是在 Tomcat 级别架构出一个输出框架, 然后不同的日志系统都可以对接这个框架,
+ * 因为日志对于服务器来说, 是非常重要的功能
  */
 public class AsyncFileHandler extends FileHandler {
 
@@ -130,6 +133,9 @@ public class AsyncFileHandler extends FileHandler {
         super.publish(record);
     }
 
+    /**
+     * 下面这个线程的作用是通过一个 event queue 来与 log 系统对接
+     */
     protected static class LoggerThread extends Thread {
         protected final boolean run = true;
         public LoggerThread() {
