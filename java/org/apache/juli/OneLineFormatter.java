@@ -97,15 +97,15 @@ public class OneLineFormatter extends Formatter {
         StringBuilder sb = new StringBuilder();
 
         // Timestamp
-        addTimestamp(sb, record.getMillis());
+        addTimestamp(sb, record.getMillis());               // 日期
 
         // Severity
         sb.append(' ');
-        sb.append(record.getLevel());
+        sb.append(record.getLevel());                       // 级别
 
         // Thread
         sb.append(' ');
-        sb.append('[');
+        sb.append('[');                                     // [
         if (Thread.currentThread() instanceof AsyncFileHandler.LoggerThread) {
             // If using the async handler can't get the thread name from the
             // current thread.
@@ -113,13 +113,13 @@ public class OneLineFormatter extends Formatter {
         } else {
             sb.append(Thread.currentThread().getName());
         }
-        sb.append(']');
+        sb.append(']');                                     // ]
 
         // Source
         sb.append(' ');
-        sb.append(record.getSourceClassName());
+        sb.append(record.getSourceClassName());             // 类名
         sb.append('.');
-        sb.append(record.getSourceMethodName());
+        sb.append(record.getSourceMethodName());            // 方法名
 
         // Message
         sb.append(' ');
@@ -130,13 +130,13 @@ public class OneLineFormatter extends Formatter {
             sb.append(ST_SEP);
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
-            record.getThrown().printStackTrace(pw);
+            record.getThrown().printStackTrace(pw);         // 如果有异常抛出, 打出堆栈
             pw.close();
             sb.append(sw.getBuffer());
         }
 
         // New line for next record
-        sb.append(LINE_SEP);
+        sb.append(LINE_SEP);                                // \n 换行符
 
         return sb.toString();
     }

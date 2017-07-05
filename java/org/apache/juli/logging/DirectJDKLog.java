@@ -25,6 +25,8 @@ import java.util.logging.Logger;
 
 /**
  * Hardcoded java.util.logging commons-logging implementation.
+ *
+ * jdk log 的封装代理类, 所有的方法都是 delegate 到 jdk log
  */
 class DirectJDKLog implements Log {
     // no reason to hide this - but good reasons to not hide

@@ -131,15 +131,18 @@ public class ClassLoaderLogManager extends LogManager {
 
         final String loggerName = logger.getName();
 
+        // 一个 ClassLoader 对应一个 ClassLoaderLogInfo 对象
         ClassLoader classLoader =
             Thread.currentThread().getContextClassLoader();
         ClassLoaderLogInfo info = getClassLoaderInfo(classLoader);
         if (info.loggers.containsKey(loggerName)) {
             return false;
         }
+        // 存储 logger 对象到当前应用的 ClassLoaderLogInfo 中
         info.loggers.put(loggerName, logger);
 
         // Apply initial level for new logger
+        // 读出 logging.properties 中的 level 级别
         final String levelString = getProperty(loggerName + ".level");
         if (levelString != null) {
             try {
@@ -160,14 +163,14 @@ public class ClassLoaderLogManager extends LogManager {
         int dotIndex = loggerName.lastIndexOf('.');
         if (dotIndex >= 0) {
             final String parentName = loggerName.substring(0, dotIndex);
-            Logger.getLogger(parentName);
+            Logger.getLogger(parentName);       // 以 . 作为分隔, 递归初始化上一级的 logger
         }
 
         // Find associated node
         LogNode node = info.rootNode.findNode(loggerName);
         node.logger = logger;
 
-        // Set parent logger
+        // Set parent logger 设置 父 logger 层级关系
         Logger parentLogger = node.findParentLogger();
         if (parentLogger != null) {
             doSetParentLogger(logger, parentLogger);
@@ -178,6 +181,9 @@ public class ClassLoaderLogManager extends LogManager {
 
         // Add associated handlers, if any are defined using the .handlers property.
         // In this case, handlers of the parent logger(s) will not be used
+        /**
+         * 从 logging.properties 中读取 handlers 的配置, 然后递归父类 handler, 直到初始化完对应 Logger 的 handler 列表
+         */
         String handlers = getProperty(loggerName + ".handlers");
         if (handlers != null) {
             logger.setUseParentHandlers(false);
@@ -418,14 +424,14 @@ public class ClassLoaderLogManager extends LogManager {
      * @param classLoader
      * @throws IOException Error
      */
-    protected void readConfiguration(ClassLoader classLoader)
+    protected void readConfiguration(ClassLoader classLoader)   // 这里传入的是当前线程的 classloader
         throws IOException {
 
         InputStream is = null;
         // Special case for URL classloaders which are used in containers:
         // only look in the local repositories to avoid redefining loggers 20 times
         try {
-            if (classLoader instanceof URLClassLoader) {
+            if (classLoader instanceof URLClassLoader) {        // 通过当前线程上下文的 ClassLoader 去找 logging.properties (其实就是 WebappClassLoader )
                 URL logConfig = ((URLClassLoader)classLoader).findResource("logging.properties");
 
                 if(null != logConfig) {
@@ -461,6 +467,9 @@ public class ClassLoaderLogManager extends LogManager {
                 }
             }
         }
+        /**
+         * 如果当前应用下找不到配置, 就在 系统类加载器下的 logging.properties, 这也是 Tomcat_HOME/conf/logging.properties
+         */
         if ((is == null) && (classLoader == ClassLoader.getSystemClassLoader())) {
             String configFileStr = System.getProperty("java.util.logging.config.file");
             if (configFileStr != null) {
@@ -471,6 +480,9 @@ public class ClassLoaderLogManager extends LogManager {
                 }
             }
             // Try the default JVM configuration
+            /**
+             * 如果还是找不到, 那就只好在 jre下面 找 logging.properties
+             */
             if (is == null) {
                 File defaultFile = new File(new File(System.getProperty("java.home"), "lib"),
                     "logging.properties");

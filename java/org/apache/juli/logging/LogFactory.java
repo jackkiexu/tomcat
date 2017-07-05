@@ -59,6 +59,8 @@ import java.util.logging.LogManager;
  * @author Craig R. McClanahan
  * @author Costin Manolache
  * @author Richard A. Sitze
+ *
+ * LogFactory 实质就是一个 Log 单例工厂, 他负责通过 DirectJDKLog 类生产 logger
  */
 public class LogFactory {
 

@@ -100,7 +100,7 @@ public class AsyncFileHandler extends FileHandler {
         LogEntry entry = new LogEntry(record,this);
         boolean added = false;
         try {
-            while (!added && !queue.offer(entry)) {
+            while (!added && !queue.offer(entry)) { // publish 是 压 log 到 queue 中
                 switch (OVERFLOW_DROP_TYPE) {
                     case OVERFLOW_DROP_LAST: {
                         //remove the last added element
