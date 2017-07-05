@@ -65,6 +65,9 @@ public class ConnectorCreateRule extends Rule {
         digester.push(con);
     }
 
+    /**
+     * 这样写 有什么好处呢, 主要是程序不需要考虑 con.getProtocolHandler().getClass() 到底是什么类, 只要它有对应的 setExecutor 方法就可以
+     */
     public void _setExecutor(Connector con, Executor ex) throws Exception {
         Method m = IntrospectionUtils.findMethod(con.getProtocolHandler().getClass(),"setExecutor",new Class[] {java.util.concurrent.Executor.class});
         if (m!=null) {

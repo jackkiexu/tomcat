@@ -175,6 +175,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
     /**
      * Maximum number of Keep-Alive requests to honor.
+     * 在
      */
     protected int maxKeepAliveRequests = -1;
 
@@ -544,9 +545,9 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         // Check if sufficient length to trigger the compression
         long contentLength = response.getContentLengthLong();
         if ((contentLength == -1)
-            || (contentLength > compressionMinSize)) {
+            || (contentLength > compressionMinSize)) {                  // 超过可压缩的最小的尺寸
             // Check for compatible MIME-TYPE
-            if (compressableMimeTypes != null) {
+            if (compressableMimeTypes != null) {                      // 查看数据类型 是否在 可压缩的 数据文件格式的列表里面
                 return (startsWithStringArray(compressableMimeTypes,
                                               response.getContentType()));
             }
@@ -564,7 +565,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
         // Check if browser support gzip encoding
         MessageBytes acceptEncodingMB =
-            request.getMimeHeaders().getValue("accept-encoding");
+            request.getMimeHeaders().getValue("accept-encoding");           // 通过 Request 来查找 客户端浏览器是否支持压缩
 
         if ((acceptEncodingMB == null)
             || (acceptEncodingMB.indexOf("gzip") == -1)) {
@@ -679,7 +680,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
         // Create and add the chunked filters.
         //getInputBuffer().addFilter(new GzipInputFilter());
-        getOutputBuffer().addFilter(new GzipOutputFilter());
+        getOutputBuffer().addFilter(new GzipOutputFilter());                // 数据流压缩过滤器
 
         pluggableFilterIndex = getInputBuffer().getFilters().length;
     }
@@ -740,6 +741,11 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             }
 
             // Validate and write response headers
+            /**
+             * 下面主要分成 2步:
+             * 1. 准备一个 response, 就是通过 Tomcat 的配置, 对响应头进行解析并设置,
+             * 2. 电泳 OutputBuffer  进行 commit
+             */
             try {
                 prepareResponse();
                 getOutputBuffer().commit();
@@ -1349,6 +1355,11 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
     /**
      * When committing the response, we have to validate the set of headers, as
      * well as setup the response filters.
+     *
+     * Response 压缩:
+     * 1. 标识 isCompressable, 这个标识对应的方法是 isCompressable 方法, 该方法主要是解析 Tomcat 上的几个配置, 判断当前的响应是否满足压缩的条件
+     * 2. 标识 useCompression, 这个标识对应的方法也是 useCompression 方法, 该方法主要是通过 Request 来查找 accept-encoding, use-agent 等几个属性, 来判断浏览器端是否支持压缩
+     *      若这两个条件都满足的话, 可以看到, OutBuffer 加入 GzipOutputFilter, 然后设置响应头的 Content-Encoding 为 gzip
      */
     private void prepareResponse() {
 
@@ -1389,7 +1400,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         }
 
         // Check for compression
-        boolean isCompressable = false;
+        boolean isCompressable = false;                             // 下面这几步 就是基于配置信息 判断是否可以压缩
         boolean useCompression = false;
         if (entityBody && (compressionLevel > 0) && !sendingWithSendfile) {
             isCompressable = isCompressable();
@@ -1441,7 +1452,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             }
         }
 
-        if (useCompression) {
+        if (useCompression) {                                               // 若使用压缩, 则加入 压缩的过滤器
             getOutputBuffer().addActiveFilter(outputFilters[Constants.GZIP_FILTER]);
             headers.setValue("Content-Encoding").setString("gzip");
         }

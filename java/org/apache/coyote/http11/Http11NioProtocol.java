@@ -66,7 +66,11 @@ public class Http11NioProtocol extends AbstractHttp11JsseProtocol<NioChannel> {
         return cHandler;
     }
 
-
+    /**
+     * Http11nioProtocol 作为协议的实现者, 它持有两大组件:
+     * 1. EndPoint: 默认就是 NioEndPoint, 这个类是 线程池 socket 的转接类, 将 NIO 通道中的 socket 组包, 交给 handler 来进行处理
+     * 2. Handler, 也就是 Http11ConnectionHandler, 设置给 EndPoint, 这个 Http11ConnectionHandler 类主要的作用是将前面的组包 socket 包, 转换成内部的 Request 对象, 最后发给 Tomcat 的后端
+     */
     public Http11NioProtocol() {
         endpoint=new NioEndpoint();
         cHandler = new Http11ConnectionHandler(this);
@@ -287,7 +291,7 @@ public class Http11NioProtocol extends AbstractHttp11JsseProtocol<NioChannel> {
             }
         }
 
-        // 这里创建的 Http11NioProcessor 是进行 HTTP1.1版本的信息处理
+        // 这里创建的 Http11NioProcessor 是进行 HTTP1.1版本的 NIO 信息处理
         @Override
         public Http11NioProcessor createProcessor() {
             Http11NioProcessor processor = new Http11NioProcessor(

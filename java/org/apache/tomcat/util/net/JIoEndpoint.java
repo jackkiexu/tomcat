@@ -193,6 +193,9 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
     /**
      * The background thread that listens for incoming TCP/IP connections and
      * hands them off to an appropriate processor.
+     *
+     * 在没有网络 IO 数据时, 该线程会一直 在 serverSocketFactory.acceptSocket 上阻塞
+     * 如果有数据, 则首先将 socket 数据设置 Connector 配置的一些属性, 然后交给 工作线程池处理
      */
     protected class Acceptor extends AbstractEndpoint.Acceptor {
 
@@ -221,7 +224,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
                 try {
                     //if we have reached max connections, wait
-                    countUpOrAwaitConnection();
+                    countUpOrAwaitConnection();                 // 通过 CountDownLatch 来控制连接处理数, 所以 BIO 情况下的 tomcat 并发请求数 = backlog + LimitLatch.maxConnection
 
                     Socket socket = null;
                     try {
@@ -412,7 +415,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
         }
 
         if (serverSocketFactory == null) {
-            if (isSSLEnabled()) {
+            if (isSSLEnabled()) {               // 若是 基于 SSL 的
                 serverSocketFactory =
                     handler.getSslImplementation().getServerSocketFactory(this);
             } else {

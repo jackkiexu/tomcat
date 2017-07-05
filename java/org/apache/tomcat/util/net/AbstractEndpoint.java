@@ -265,6 +265,7 @@ public abstract class AbstractEndpoint<S> {
 
     /**
      * Keepalive timeout, if not set the soTimeout is used.
+     * Http 1.1 中的 keepAlive 的超时时间
      */
     private Integer keepAliveTimeout = null;
     public int getKeepAliveTimeout() {
@@ -358,6 +359,7 @@ public abstract class AbstractEndpoint<S> {
 
     /**
      * Max keep alive requests
+     * 在一个 KeepAlive 的周期中, 对多循环的请求数
      */
     private int maxKeepAliveRequests=100; // as in Apache HTTPD server
     public int getMaxKeepAliveRequests() {

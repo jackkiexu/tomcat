@@ -64,7 +64,7 @@ public class SetAllPropertiesRule extends Rule {
             String value = attributes.getValue(i);
             if ( !excludes.containsKey(name)) {
                 if (!digester.isFakeAttribute(digester.peek(), name)
-                        && !IntrospectionUtils.setProperty(digester.peek(), name, value)
+                        && !IntrospectionUtils.setProperty(digester.peek(), name, value)                // 这里就是调用反射, 对指定名 name 设置指定的值 value
                         && digester.getRulesValidation()) {
                     digester.getLogger().warn("[SetAllPropertiesRule]{" + digester.getMatch() +
                             "} Setting property '" + name + "' to '" +

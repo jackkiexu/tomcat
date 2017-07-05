@@ -30,6 +30,23 @@ import org.apache.tomcat.util.buf.ByteChunk;
  * Gzip output filter.
  *
  * @author Remy Maucherat
+ *
+ * 这里的 Filter 不是容器端的 filter, 而是在 Response 进行 commit 提交的时候, 基于响应头的 Tomcat 的配置, 是否执行相关的处理,
+ * 下面就是 compression 的例子,
+ * 原理: 下面其实就是基于流的包装机制, 使用 GzipOutputStream 来在对当前的数据流包装一下
+ * 在 outputBuffer 最终 commit 的时候, 调用这个 filter 执行 doWrite 方法, 让输出的字节流进行一次压缩
+ *
+ * Tomcat 压缩设置 ：
+ * 1. compressibleMimeType: The value is a comma separated list of MIME types for which HTTP compression may be used. The default value is
+ *      text/html. text/xml, text/plain, text/css, text/javascript, application/javascript
+ *
+ * 2. compression; The Connector may use HTTP/1.1 GZIP compression in an attempt to save bandwidth, The acceptable values for the parameter is "off"
+ *      (disable compression), "on"(allow compression, which causes test data to be compressed), "force" (forces compression in all cases), or a numerial
+ *      integer value (which is equivalent to "on", but specifies the minimum amount of data before the output is compressed). If the content-length is
+ *      not known and compression is set to "on" or more aggressive, the output will also be compressed, if not specified, this attribute is set
+ *      to "off"
+ * 3. compressionMinSize: If compression set to "on" then this attribute may be used to specify the minimum amount of data before the output is compressed, if not
+ *      specified, this attribute is default to "2048" (2k)
  */
 public class GzipOutputFilter implements OutputFilter {
 

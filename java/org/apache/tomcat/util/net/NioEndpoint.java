@@ -80,6 +80,13 @@ import org.apache.tomcat.util.net.jsse.NioX509KeyManager;
  *
  * @author Mladen Turk
  * @author Remy Maucherat
+ *
+ * NioEndPoint 类包含以下组件:
+ * 1. socket acceptor 线程池
+ * 2. PollerEvent 数组
+ * 3. socket poller 线程池
+ * 4. 工作线程池
+ *
  */
 public class NioEndpoint extends AbstractEndpoint<NioChannel> {
 
@@ -535,6 +542,10 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
 
     /**
      * Process the specified connection.
+     * Accepter 首先根据 是否是 SSL配置, 使用 Tomcat 自身扩展的 NioChannel 来包装 SocketChannel, 之所以包装的目的是要给
+     * NIO 的 channel 加很多的功能, NioChannel 持有 socketChannel 的一个 引用, 如果是 SSL 配置的话, 那么就启动的是
+     * SecurityNioChannel 类包装一下,
+     * 接下来 Accepter 将 这个包装的 NioChannel 直接扔给 Poller 线程, 以 addEvent 的方式, 加一个 PollerEvent 事件
      */
     protected boolean setSocketOptions(SocketChannel socket) {
         // Process the connection
@@ -646,6 +657,9 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
         return true;
     }
 
+    /**
+     * SocketProcessor 是工作线程池中的工作方法
+     */
     protected boolean processSocket(NioChannel socket, SocketStatus status, boolean dispatch) {
         try {
             KeyAttachment attachment = (KeyAttachment)socket.getAttachment(false);
@@ -662,7 +676,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
             if (dispatch && executor != null) { // 若配置了 ThreadPoolExecutor, 则让它来执行
                 executor.execute(sc);
             } else {
-                sc.run();
+                sc.run();           // 执行运行 run 方法
             }
         } catch (RejectedExecutionException ree) {
             log.warn(sm.getString("endpoint.executor.fail", socket), ree);
@@ -805,6 +819,10 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
     /**
      *
      * PollerEvent, cacheable object for poller events to avoid GC
+     * PollerEvent 是 poller线程池处理的任务单元, 这个类也是一个 Runnable
+     * PollerEvent 不单单还有前面包装的 NioChannel, 还持有 NioEndPoint.KeyAttachment 类的一个引用
+     * KeyAttachment 类的作用主要是 对 Connector 中的一些 socket 属性进行解析, 然后设置到对应的 socketChannel 通道中
+     * 因为 Tomcat 作为前端的服务器, 网络请求很多, 所以对于一个 Poller 线程池, 上述的 从Acceptor 过来的 PollerEvent 时间会很多, 因此这里采用一个 队列 SynchronizeQueue events
      */
     public static class PollerEvent implements Runnable {
 
@@ -1160,7 +1178,9 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                     // Walk through the collection of ready keys and dispatch
                     // any active event.
                     // 根据向 selector 中注册的 key 遍历 channel 中已经就绪的 keys, 并处理这些 key
-
+                    /**
+                     * 将  SocketChannel 遍历出来的事件 SelectionKey 和 KeyAttachment 一起交给工作线程继续处理
+                     */
                     while (iterator != null && iterator.hasNext()) {                            // 遍历 SelectionKey 事件
                         SelectionKey sk = iterator.next();
                         // 这里的 KeyAttachment 是在 #register() 方法中注册的

@@ -276,7 +276,7 @@ public class Connector extends LifecycleMBeanBase  {
         if (replacements.get(name) != null) {
             repl = replacements.get(name);
         }
-        return IntrospectionUtils.setProperty(protocolHandler, repl, value);
+        return IntrospectionUtils.setProperty(protocolHandler, repl, value);            // 最终是交由反射来进行 set 值
     }
 
     /**
@@ -567,6 +567,7 @@ public class Connector extends LifecycleMBeanBase  {
      */
     public void setProtocol(String protocol) {
 
+        // 根据 Connector 的参数,来设置不同的协议处理器, 进行处理
         if (AprLifecycleListener.isAprAvailable()) {
             if ("HTTP/1.1".equals(protocol)) {
                 setProtocolHandlerClassName
