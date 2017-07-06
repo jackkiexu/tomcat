@@ -60,7 +60,7 @@ public abstract class LifecycleBase implements Lifecycle {
      */
     @Override
     public void addLifecycleListener(LifecycleListener listener) {
-        lifecycle.addLifecycleListener(listener);
+        lifecycle.addLifecycleListener(listener);                   // 添加容器生命周期监听器
     }
 
 

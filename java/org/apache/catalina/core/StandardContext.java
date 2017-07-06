@@ -164,8 +164,8 @@ public class StandardContext extends ContainerBase
     public StandardContext() {
 
         super();
-        pipeline.setBasic(new StandardContextValve());
-        broadcaster = new NotificationBroadcasterSupport();
+        pipeline.setBasic(new StandardContextValve());          // 构建 Pipeline 与 StandardContextValve(路由到对应的 Wrapper)
+        broadcaster = new NotificationBroadcasterSupport();    // 构建 JMX 消息通知
         // Set defaults
         if (!Globals.STRICT_SERVLET_COMPLIANCE) {
             // Strict servlet compliance requires all extension mapped servlets

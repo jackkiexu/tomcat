@@ -90,7 +90,7 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
         super.setUp();
 
         // Trigger loading of catalina.properties
-        CatalinaProperties.getProperty("foo");
+        String value = CatalinaProperties.getProperty("foo");
 
         File appBase = new File(getTemporaryDirectory(), "webapps");
         if (!appBase.exists() && !appBase.mkdir()) {
@@ -102,16 +102,16 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
         // (PS: 这时若 Tomcat 有父类, 则父类也会一级一级的从上至下进行加载, 父类的成员变量不进行 ClassLoader 加载)
         tomcat = new TomcatWithFastSessionIDs();
 
-        String protocol = getProtocol();                                    // org.apache.coyote.http11.Http11NioProtocol
-        Connector connector = new Connector(protocol);
+        String protocol = getProtocol();                                                    // 默认连接协议获取 org.apache.coyote.http11.Http11NioProtocol
+        Connector connector = new Connector(protocol);                                      // 构建 Connector, 在构建的过程中会生成 protocolHandler
         // Listen only on localhost
-        connector.setAttribute("address",
+        connector.setAttribute("address",                                                  // 设置连接的地址, 里面是通过 反射工具类 IntrospectionUtils 来进行生成的(IntrospectionUtils 是一个非常强大的类)
                 InetAddress.getByName("localhost").getHostAddress());
         // Use random free port
         connector.setPort(0);
         // Mainly set to reduce timeouts during async tests
         connector.setAttribute("connectionTimeout", "3000");
-        tomcat.getService().addConnector(connector);
+        tomcat.getService().addConnector(connector);                                        // 初始化 server, service
         tomcat.setConnector(connector);
 
         // Add AprLifecycleListener if we are using the Apr connector
@@ -125,7 +125,7 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
 
         File catalinaBase = getTemporaryDirectory();
         tomcat.setBaseDir(catalinaBase.getAbsolutePath());
-        tomcat.getHost().setAppBase(appBase.getAbsolutePath());
+        tomcat.getHost().setAppBase(appBase.getAbsolutePath());                             // 初始化 host, 及 Engine
 
         accessLogEnabled = Boolean.parseBoolean(
             System.getProperty("tomcat.test.accesslog", "false"));
@@ -138,18 +138,19 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
 
         // Cannot delete the whole tempDir, because logs are there,
         // but delete known subdirectories of it.
-        addDeleteOnTearDown(new File(catalinaBase, "webapps"));
-        addDeleteOnTearDown(new File(catalinaBase, "work"));
+        addDeleteOnTearDown(new File(catalinaBase, "webapps"));         // 增加在 test 用例关闭时删除的文件夹
+        addDeleteOnTearDown(new File(catalinaBase, "work"));            // 增加在 test 用例关闭时删除的文件夹
     }
 
     protected String getProtocol() {
         // Has a protocol been specified
-        String protocol = System.getProperty("tomcat.test.protocol");
+        // 获取 程序默认指定的 处理协议
+        String protocol = System.getProperty("tomcat.test.protocol");   // 1. 获取 java 默认处理协议
 
         // Use NIO by default starting with Tomcat 8
         if (protocol == null) {
-            protocol = Http11NioProtocol.class.getName();
-            protocol = Http11Protocol.class.getName();
+            protocol = Http11NioProtocol.class.getName();                 // 2. Tomcat 8 默认是 NIO 模式
+            protocol = Http11Protocol.class.getName();                    // 3. 这里我们先用 BIO 做分析
         }
 
         return protocol;

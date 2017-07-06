@@ -64,7 +64,7 @@ public class StandardHost extends ContainerBase implements Host {
     public StandardHost() {
 
         super();
-        pipeline.setBasic(new StandardHostValve());
+        pipeline.setBasic(new StandardHostValve());                     // 初始化 pipeline 及 对应的 StandardHostValve
 
     }
 
@@ -689,7 +689,7 @@ public class StandardHost extends ContainerBase implements Host {
     @Override
     public void addChild(Container child) {
 
-        child.addLifecycleListener(new MemoryLeakTrackingListener());
+        child.addLifecycleListener(new MemoryLeakTrackingListener());   // 给StandardHost 添加 内存泄露监听器, 其实就是一个 WeakHashMap 来存储每个 StandardContext 对应的 ClassLoader, 在重启后, 监听, classLoader 是否还存在
 
         if (!(child instanceof Context))
             throw new IllegalArgumentException
@@ -702,6 +702,14 @@ public class StandardHost extends ContainerBase implements Host {
     /**
      * Used to ensure the regardless of {@link Context} implementation, a record
      * is kept of the class loader used every time a context starts.
+     *
+     * Tomcat 内存泄露监听器, 其实就是 一个 StandardContext 对应一个 WebappClassloader
+     * 在 StandardContext 重启后, 先前的 WebappClassloader 是否已经被 gc 回收掉来判断
+     *
+     * ClassLoader 何时被 GC:
+     *      classloader及加载的class类在没有实例引用的情况下
+     * 参考资料
+     * https://stackoverflow.com/questions/2344964/when-and-how-is-a-java-classloader-marked-for-garbage-collection
      */
     private class MemoryLeakTrackingListener implements LifecycleListener {
         @Override

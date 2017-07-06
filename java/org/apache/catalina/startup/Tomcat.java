@@ -230,9 +230,10 @@ public class Tomcat {
      *
      * TODO: add the rest
      *
-     *  @param contextPath "" for root context.
-     *  @param baseDir base dir for the context, for static files. Must exist,
+     *  @param contextPath "" for root context.     Context 的名字
+     *  @param baseDir base dir for the context, for static files. Must exist, 对应的部署目录
      *  relative to the server home
+     *  给容器添加对应的  Context
      */
     public Context addContext(String contextPath,
                                       String baseDir) {
@@ -437,10 +438,10 @@ public class Tomcat {
 
     public Host getHost() {
         if (host == null) {
-            host = new StandardHost();
+            host = new StandardHost();              // 初始化 StandardHost
             host.setName(hostname);
 
-            getEngine().addChild( host );
+            getEngine().addChild(host);             // 初始化 StandardEngine
         }
         return host;
     }
@@ -452,9 +453,9 @@ public class Tomcat {
         if(engine == null ) {
             getServer();
             engine = new StandardEngine();
-            engine.setName( "Tomcat" );
+            engine.setName( "Tomcat" );                // 注意 Engine 的名称是 Tomcat wa
             engine.setDefaultHost(hostname);
-            engine.setRealm(createDefaultRealm());
+            engine.setRealm(createDefaultRealm());      // 设置一个默认的, 在内存中的 Realm
             service.setContainer(engine);
         }
         return engine;
@@ -488,7 +489,7 @@ public class Tomcat {
      * @see #addContext(String, String)
      */
     public Context addContext(Host host, String contextPath, String dir) {
-        return addContext(host, contextPath, contextPath, dir);
+        return addContext(host, contextPath, contextPath, dir);         // 从这里可以看出 contextPath, 就是 contextName
     }
 
     /**
@@ -497,13 +498,13 @@ public class Tomcat {
     public Context addContext(Host host, String contextPath, String contextName,
             String dir) {
         silence(host, contextPath);
-        Context ctx = new StandardContext();
+        Context ctx = new StandardContext();                // 构建一个新的 StandardContext
         ctx.setName(contextName);
         ctx.setPath(contextPath);
         ctx.setDocBase(dir);
-        ctx.addLifecycleListener(new FixContextListener());
+        ctx.addLifecycleListener(new FixContextListener()); // 添加容器生命周期监听器
 
-        if (host == null) {
+        if (host == null) {                                // 给 StandardHost 添加子容器
             getHost().addChild(ctx);
         } else {
             host.addChild(ctx);
@@ -605,6 +606,15 @@ public class Tomcat {
         };
     }
 
+    /**
+     * 这里是初始化 catalina_base, catalina_home 的目录, 而我们从 catalina.sh 里面看出, 其实 catalina_base 就是 catalina_home
+     * 见下面 catalina.sh 124 行
+     * # Only set CATALINA_HOME if not already set 这一步其实就是设置 CATALINA_HOME, 通过 cd ./..; pwd 将路径直接赋值给 CATALINA_HOME
+     * [ -z "$CATALINA_HOME" ] && CATALINA_HOME=`cd "$PRGDIR/.." >/dev/null; pwd`
+
+     * # Copy CATALINA_BASE from CATALINA_HOME if not already set 从这一步我们看出原来 CATALINA_BASE 就是 CATALINA_HOME
+     * [ -z "$CATALINA_BASE" ] && CATALINA_BASE="$CATALINA_HOME"
+     */
     protected void initBaseDir() {
         String catalinaHome = System.getProperty(Globals.CATALINA_HOME_PROP);
         if (basedir == null) {
@@ -626,7 +636,7 @@ public class Tomcat {
         } catch (IOException e) {
             baseFile = baseFile.getAbsoluteFile();
         }
-        server.setCatalinaBase(baseFile);
+        server.setCatalinaBase(baseFile);                               // 设置 catalina_base
         System.setProperty(Globals.CATALINA_BASE_PROP, baseFile.getPath());
         basedir = baseFile.getPath();
 
@@ -640,7 +650,7 @@ public class Tomcat {
             } catch (IOException e) {
                 homeFile = homeFile.getAbsoluteFile();
             }
-            server.setCatalinaHome(homeFile);
+            server.setCatalinaHome(homeFile);                             // 设置 catalina_home
         }
         System.setProperty(Globals.CATALINA_HOME_PROP,
                 server.getCatalinaHome().getPath());

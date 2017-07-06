@@ -253,7 +253,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
             }
 
             // Report this property change to interested listeners
-            support.firePropertyChange("connector", null, connector);
+            support.firePropertyChange("connector", null, connector);       // 消息通知给 listener们
         }
 
     }

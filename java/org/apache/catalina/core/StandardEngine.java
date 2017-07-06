@@ -68,7 +68,7 @@ public class StandardEngine extends ContainerBase implements Engine {
     public StandardEngine() {
 
         super();
-        pipeline.setBasic(new StandardEngineValve());
+        pipeline.setBasic(new StandardEngineValve());                           // 初始化 pipeline 及 StandardEngineValve
         /* Set the jmvRoute using the system property jvmRoute */
         try {
             setJvmRoute(System.getProperty("jvmRoute"));
@@ -76,7 +76,7 @@ public class StandardEngine extends ContainerBase implements Engine {
             log.warn(sm.getString("standardEngine.jvmRouteFail"));
         }
         // By default, the engine will hold the reloading thread
-        backgroundProcessorDelay = 10;
+        backgroundProcessorDelay = 10;                                        // 这个值是 每次 ContainerBackgroundProcessor 每次执行时间隔时间, 默认单位秒
 
     }
 
@@ -219,7 +219,7 @@ public class StandardEngine extends ContainerBase implements Engine {
         if (!(child instanceof Host))
             throw new IllegalArgumentException
                 (sm.getString("standardEngine.notHost"));
-        super.addChild(child);
+        super.addChild(child);                      // 调用 ContainerBase 添加子容器
 
     }
 

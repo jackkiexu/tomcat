@@ -126,6 +126,11 @@ import org.apache.tomcat.util.res.StringManager;
  * TODO: Review synchronisation around background processing. See bug 47024.
  *
  * @author Craig R. McClanahan
+ * 继承 ContainerBase 的有
+ * StandardEngine
+ * StandardHost
+ * StandardContext
+ * StandardWrapper
  */
 public abstract class ContainerBase extends LifecycleMBeanBase
         implements Container {
@@ -694,7 +699,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
      */
     @Override
     public void addChild(Container child) {
-        if (Globals.IS_SECURITY_ENABLED) {
+        if (Globals.IS_SECURITY_ENABLED) {          // Java 是否启用安全管理器, 也就是在 Java 命令行的后面加上 System.getSecurityManager()
             PrivilegedAction<Void> dp =
                 new PrivilegedAddChild(child);
             AccessController.doPrivileged(dp);
@@ -703,7 +708,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         }
     }
 
-    private void addChildInternal(Container child) {
+    private void addChildInternal(Container child) {        // 添加子容器, 其实这里也可以像 server添加 service 一样通过 synchronized 与 System.copy() 进行添加
 
         if( log.isDebugEnabled() )
             log.debug("Add child " + child + " " + this);
@@ -718,8 +723,8 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
         // Start child
         // Don't do this inside sync block - start can be a slow process and
-        // locking the children object can cause problems elsewhere
-        if ((getState().isAvailable() ||
+        // locking the children object can cause problems elsewhere         // 这里是判断 容器是否在动态添加 子容器时, 启动容器
+        if ((getState().isAvailable() ||                                    // 在 容器启动时 getState().isAvailable() = true
                 LifecycleState.STARTING_PREP.equals(getState())) &&
                 startChildren) {
             try {
@@ -731,7 +736,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
             }
         }
 
-        fireContainerEvent(ADD_CHILD_EVENT, child);
+        fireContainerEvent(ADD_CHILD_EVENT, child);                        // 给监听容器事件的 listeners 发送通知
     }
 
 

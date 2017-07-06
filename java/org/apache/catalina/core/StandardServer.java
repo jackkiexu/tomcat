@@ -77,11 +77,11 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
     public StandardServer() {
 
         super();
-        // 初始化全局的 JNDI
+        // 初始化全局的 JNDI 资源管理(PS: JNDI 自己的理解就是通过 树的结构来管理注入进去的资源, 有点像 IOC, 这里可能理解有误)
         globalNamingResources = new NamingResourcesImpl();
         globalNamingResources.setContainer(this);
 
-        if (isUseNaming()) {    // 对应的 NamingContextListener
+        if (isUseNaming()) {                                            // 是否启动 JNDI 事件监听, 对应的 NamingContextListener
             namingContextListener = new NamingContextListener();
             addLifecycleListener(namingContextListener);
         } else {
@@ -337,6 +337,11 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
      * Add a new Service to the set of defined Services.
      *
      * @param service The Service to be added
+     * 不就是在 server 里面添加 service 码, 干嘛要这么写, 下面我们来分析一下原因
+     * 原因:
+     *     1. Server 通过下面的写法就能 支持动态增加 services
+     *     2. 这种方式添加 services, 会按照 services 的添加的顺序来存储
+     * 其实满足上述要求的 Java 数据结构还是存在的 比如 ConcurrentLinkedQueue(非常喜欢这个数据结构)
      */
     @Override
     public void addService(Service service) {
@@ -349,8 +354,8 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
             results[services.length] = service;
             services = results;
 
-            if (getState().isAvailable()) {
-                try {
+            if (getState().isAvailable()) {                 // 为什么有这个判断, 是因为 Tomcat 支持动态的添加容器
+                try {                                       // 当 getState().isAvailable() = true 时, 就直接启动子容器
                     service.start();
                 } catch (LifecycleException e) {
                     // Ignore
@@ -358,7 +363,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
             }
 
             // Report this property change to interested listeners
-            support.firePropertyChange("service", null, service);
+            support.firePropertyChange("service", null, service);       // 将Server 属性变化这一事件, 通知给 listeners
         }
 
     }

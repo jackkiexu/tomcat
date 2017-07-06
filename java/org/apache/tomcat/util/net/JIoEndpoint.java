@@ -70,10 +70,10 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
     public JIoEndpoint() {
         // Set maxConnections to zero so we can tell if the user has specified
         // their own value on the connector when we reach bind()
-        setMaxConnections(0);
+        setMaxConnections(0);                                               // 设置 JioEndPoint 的最大的连接数, 主要是通过 LimitLatch 来进行控制
         // Reduce the executor timeout for BIO as threads in keep-alive will not
         // terminate when the executor interrupts them.
-        setExecutorTerminationTimeoutMillis(0);
+        setExecutorTerminationTimeoutMillis(0);                             // 这个值是 当 JioEndPoint 关闭时 executor await 的时间 (因为可能有些事件还在处理中)
     }
 
     // ------------------------------------------------------------- Properties

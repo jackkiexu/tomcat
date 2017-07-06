@@ -622,6 +622,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
 
                 SocketState state = SocketState.CLOSED;
                 Iterator<DispatchType> dispatches = null;
+                // 为什么下面是一个 loop 呢, 因为 http 特性里面 keepAlive 的存在, 及一个 socket 的存在能处理多次 http 请求(PS: 那多少次呢, 是否有超时时间限制, 这些参数具体看配置了)
                 do {
                     if (dispatches != null) {
                         // Associate the processor with the connection as
@@ -749,6 +750,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
             }
             // Make sure socket/processor is removed from the list of current
             // connections
+            // 在 socket 处理完之后, 移除对应的处理类  Processor
             connections.remove(socket);
             // Don't try to add upgrade processors back into the pool
             if (processor !=null && !processor.isUpgrade()) {

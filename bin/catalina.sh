@@ -121,10 +121,10 @@ done
 # Get standard environment variables
 PRGDIR=`dirname "$PRG"`
 
-# Only set CATALINA_HOME if not already set
+# Only set CATALINA_HOME if not already set 这一步其实就是设置 CATALINA_HOME, 通过 cd ./..; pwd 将路径直接赋值给 CATALINA_HOME
 [ -z "$CATALINA_HOME" ] && CATALINA_HOME=`cd "$PRGDIR/.." >/dev/null; pwd`
 
-# Copy CATALINA_BASE from CATALINA_HOME if not already set
+# Copy CATALINA_BASE from CATALINA_HOME if not already set 从这一步我们看出原来 CATALINA_BASE 就是 CATALINA_HOME
 [ -z "$CATALINA_BASE" ] && CATALINA_BASE="$CATALINA_HOME"
 
 # Ensure that neither CATALINA_HOME nor CATALINA_BASE contains a colon

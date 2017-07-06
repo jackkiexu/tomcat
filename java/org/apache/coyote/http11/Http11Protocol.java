@@ -59,13 +59,27 @@ public class Http11Protocol extends AbstractHttp11JsseProtocol<Socket> {
 
     // ------------------------------------------------------------ Constructor
 
-
+    /**
+     * 每一个 ProtocolHandler 里面都会含有对应的 EndPoint(处理客户端的网络连接), Handler(处理EndPoint发来的 SocketWrapper, 主要是存储在 handler 里面的 Processor)
+     */
     public Http11Protocol() {
-        endpoint = new JIoEndpoint();
-        cHandler = new Http11ConnectionHandler(this);
-        ((JIoEndpoint) endpoint).setHandler(cHandler);
-        setSoLinger(Constants.DEFAULT_CONNECTION_LINGER);
+        endpoint = new JIoEndpoint();                            // Endpoint 网路连接请求的终点(这里的 bio 模型)
+        cHandler = new Http11ConnectionHandler(this);           // 新建处理 SocketWrapper 的Http11ConnectionHandler, 每次都是从对象池里面拿出 Processor, 或直接创建一个 Processor
+        ((JIoEndpoint) endpoint).setHandler(cHandler);          // JioEndPoint 里面的 SocketProcessor 会调用 Http11ConnectionHandler 中的 handler 来进行处理请求
+        setSoLinger(Constants.DEFAULT_CONNECTION_LINGER);     // soLinger 是在调用 socket.close() 时阻塞一会, 因为底层的数据 可能还没有发出去
+        /** soTimeOut 这个参数是在 ServerSocket.accept() 时阻塞的时间, 若超过这个时间还没有客户端连接上来, 则直接报出 SocketTimeoutException 异常, 当 ServerSocket 还是存活着的
+         * 参考地址 https://docs.oracle.com/javase/8/docs/api/java/net/ServerSocket.html#setSoTimeout-int-
+         * 与之对应的是 客户端的 socket, 这时 soTimeOut 影响的是 inputStream.read() 的超时时间
+         * 参考地址 https://docs.oracle.com/javase/8/docs/api/java/net/Socket.html#setSoTimeout-int-
+         */
         setSoTimeout(Constants.DEFAULT_CONNECTION_TIMEOUT);
+        /**
+         * Nagle's 算法主要是减少小数据包在网络上的流动,当数据包小于 limit (usually MSS), 将会等待前面发送的数据包返回  ACK(这意味着在底层积累数据包, 等到数据包变大了再发送出去)
+         * 而 TcpNoDelay 主要是禁止 Nagle 算法
+         * 参考地址
+         * https://stackoverflow.com/questions/3761276/when-should-i-use-tcp-nodelay-and-when-tcp-cork
+         * http://ccr.sigcomm.org/archive/2001/jan01/ccr-200101-mogul.pdf
+         */
         setTcpNoDelay(Constants.DEFAULT_TCP_NO_DELAY);
     }
 

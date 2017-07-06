@@ -710,7 +710,7 @@ public class CoyoteAdapter implements Adapter {
             // Parse the path parameters. This will:
             //   - strip out the path parameters
             //   - convert the decodedURI to bytes
-            parsePathParameters(req, request);
+            parsePathParameters(req, request);                                     // 解析 URI 问号后面接的参数
 
             // URI decoding
             // %xx decoding of the URL
@@ -732,7 +732,7 @@ public class CoyoteAdapter implements Adapter {
                 return false;
             }
             // Character decoding
-            convertURI(decodedURI, request);
+            convertURI(decodedURI, request);                                         // 将 URI 进行编码
             // Check that the URI is still normalized
             if (!checkNormalize(req.decodedURI())) {
                 res.setStatus(400);
@@ -954,7 +954,7 @@ public class CoyoteAdapter implements Adapter {
      * @param req
      * @param request
      *
-     * 解析 URL 里面的参数
+     * 解析 URI 里面的参数
      */
     protected void parsePathParameters(org.apache.coyote.Request req,
             Request request) {
@@ -963,7 +963,7 @@ public class CoyoteAdapter implements Adapter {
         req.decodedURI().toBytes();
 
         ByteChunk uriBC = req.decodedURI().getByteChunk();
-        int semicolon = uriBC.indexOf(';', 0);
+        int semicolon = uriBC.indexOf(';', 0);                              // 以冒号作为分隔符
 
         // What encoding to use? Some platforms, eg z/os, use a default
         // encoding that doesn't give the expected result so be explicit
@@ -1134,15 +1134,15 @@ public class CoyoteAdapter implements Adapter {
         CharChunk cc = uri.getCharChunk();
         cc.allocate(length, -1);
 
-        String enc = connector.getURIEncoding();
+        String enc = connector.getURIEncoding();                                    // 获取 connector 里面设置的编码模式
         if (enc != null) {
             B2CConverter conv = request.getURIConverter();
             try {
                 if (conv == null) {
-                    conv = new B2CConverter(enc, true);
+                    conv = new B2CConverter(enc, true);                             // 根据 编码模式生成 字节码转换器
                     request.setURIConverter(conv);
                 } else {
-                    conv.recycle();
+                    conv.recycle();                                                  // 为什么会存在 recycle, 因为有 keepalive 特性的存在, request 里面先前就有 转化器  B2CConverter
                 }
             } catch (IOException e) {
                 log.error("Invalid URI encoding; using HTTP default");
@@ -1150,9 +1150,9 @@ public class CoyoteAdapter implements Adapter {
             }
             if (conv != null) {
                 try {
-                    conv.convert(bc, cc, true);
-                    uri.setChars(cc.getBuffer(), cc.getStart(), cc.getLength());
-                    return;
+                    conv.convert(bc, cc, true);                                     // 将 URI 里面的数据进行编码
+                    uri.setChars(cc.getBuffer(), cc.getStart(), cc.getLength());    // 将 编码后的结果设置到 MessageBytes URI 里面
+                    return;                                                        // 编码成功, 直接返回
                 } catch (IOException ioe) {
                     // Should never happen as B2CConverter should replace
                     // problematic characters

@@ -68,13 +68,14 @@ public class Connector extends LifecycleMBeanBase  {
         ProtocolHandler p = null;
         try {
             /**
+             * 以下几种情况会初始化一个 class
              * 1. 当 JVM 遇到 new, getstatic, putstatic或 invokestatic 时 当前程序调用方的 classloader 进行加载这个 class
              * 2. 或访问这个类的静态变量, 或对静态变量赋值, 或静态方法
              * 3. 对类进行反射调用
              * 4. 初始化这个类的子类
              */
             Class<?> clazz = Class.forName(protocolHandlerClassName);               // 通过这种方式初始化 class时将会触发 static 所指定的类/方法运行
-            p = (ProtocolHandler) clazz.newInstance();                                  // 这里的 newInstance()
+            p = (ProtocolHandler) clazz.newInstance();                                  // 这里通过 newInstance() 来生成一个新的对象
         } catch (Exception e) {
             log.error(sm.getString(
                     "coyoteConnector.protocolHandlerInstantiationFailed"), e);
@@ -83,8 +84,8 @@ public class Connector extends LifecycleMBeanBase  {
         }
 
         if (!Globals.STRICT_SERVLET_COMPLIANCE) {
-            URIEncoding = "UTF-8";
-            URIEncodingLower = URIEncoding.toLowerCase(Locale.ENGLISH);
+            URIEncoding = "UTF-8";                                                  // connector 指定的默认编码(PS: 用于URI)
+            URIEncodingLower = URIEncoding.toLowerCase(Locale.ENGLISH);          // connector 指定的默认编码, 英文小写, 如 utf-8 (PS: 用于URI)
         }
     }
 
@@ -221,6 +222,7 @@ public class Connector extends LifecycleMBeanBase  {
 
     /**
      * Coyote protocol handler.
+     * protocol 处理类, 我们这里主要是 http 与 arp 协议处理, 分别是 bio, nio, aio 三种模式
      */
     protected final ProtocolHandler protocolHandler;
 
@@ -567,8 +569,8 @@ public class Connector extends LifecycleMBeanBase  {
      */
     public void setProtocol(String protocol) {
 
-        // 根据 Connector 的参数,来设置不同的协议处理器, 进行处理
-        if (AprLifecycleListener.isAprAvailable()) {
+        // 根据 Connector 的参数(这里的参数是指通过 server.xml 里面解析出来的),来设置不同的协议处理器, 进行处理
+        if (AprLifecycleListener.isAprAvailable()) {                            // 判断是否是 apr 协议
             if ("HTTP/1.1".equals(protocol)) {
                 setProtocolHandlerClassName
                     ("org.apache.coyote.http11.Http11AprProtocol");
