@@ -15,6 +15,10 @@
  * http://zddava.iteye.com/category/53603
  * https://my.oschina.net/u/862897/blog/129434
  *
+ * Tomcat 内存泄漏
+ * https://wiki.apache.org/tomcat/MemoryLeakProtection
+ * http://blog.xiaohansong.com/2016/08/09/ThreadLocal-leak-analyze/
+ *
  * 学习计划
  * 1. tomcat classLoader种类, 动态加载, 内存泄漏检测 (ClassLoaderLogManager, JreMemoryLeakPreventionListener, ThreadLocalLeakPreventionListener)
  *
