@@ -1990,6 +1990,8 @@ public class WebappClassLoader extends URLClassLoader
      * 参考资料
      * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076392&idx=1&sn=871d952a75b80eef073127698faf3536&chksm=878f90c6b0f819d0324748e3087f2de0e54fb6823ecbb138479f9aa38c5826585e62cf674784&mpshare=1&scene=23&srcid=0615MemRBS2YodaqKAZaXcjY#rd
      *
+     * AppClassLoader -> 工作线程 Thread A -> Thread A.ThreadLocalMap -> Thread A.ThreadLocalMap.value (若这个 value 是 WebappClassLoader 加载的话), 那么 WebappClassLoader也就被强引用, WepappClassLoader 也就不能被卸载
+     *
      */
     private void checkThreadLocalsForLeaks() {
         Thread[] threads = getThreads();
