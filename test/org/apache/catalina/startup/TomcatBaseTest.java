@@ -210,13 +210,13 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
 
     public static int headUrl(String path, ByteChunk out,
             Map<String, List<String>> resHead) throws IOException {
-        return methodUrl(path, out, 1000000, null, resHead, "HEAD");
+        return methodUrl(path, out, 1000000000, null, resHead, "HEAD");
     }
 
     public static int getUrl(String path, ByteChunk out,
             Map<String, List<String>> reqHead,
             Map<String, List<String>> resHead) throws IOException {
-        return getUrl(path, out, 1000000, reqHead, resHead);
+        return getUrl(path, out, 1000000000, reqHead, resHead);
     }
 
     public static int getUrl(String path, ByteChunk out, int readTimeout,
