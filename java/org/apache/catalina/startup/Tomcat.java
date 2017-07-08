@@ -336,9 +336,9 @@ public class Tomcat {
      * @throws LifecycleException
      */
     public void start() throws LifecycleException {
-        getServer();
-        getConnector();
-        server.start();
+        getServer();            // 这里的 getServer 是确保 Server 已经 new 出来了
+        getConnector();         // 这里的 getServer 是确保 Server 已经 new 出来了
+        server.start();        // 启动服务, 及其下面的子容器
     }
 
     /**

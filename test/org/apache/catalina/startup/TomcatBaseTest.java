@@ -409,15 +409,15 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
     private static class TomcatWithFastSessionIDs extends Tomcat {
 
         @Override
-        public void start() throws LifecycleException {
+        public void start() throws LifecycleException {                      // 初始化每个 Context 里面的 Session 管理器
             // Use fast, insecure session ID generation for all tests
             Server server = getServer();
-            for (Service service : server.findServices()) {
-                Container e = service.getContainer();
-                for (Container h : e.findChildren()) {
-                    for (Container c : h.findChildren()) {
-                        StandardManager m =
-                                (StandardManager) ((Context) c).getManager();
+            for (Service service : server.findServices()) {                     // 到 Service 层
+                Container e = service.getContainer();                           // 到 Engine 层
+                for (Container h : e.findChildren()) {                          // 到  Host 层
+                    for (Container c : h.findChildren()) {                      // 到 Context 层
+                        StandardManager m =                                     // 这里的 SandardManager 其实就是 Session 管理器
+                                (StandardManager) ((Context) c).getManager();   // 初始化 Session 管理器
                         if (m == null) {
                             m = new StandardManager();
                             m.setSecureRandomClass(

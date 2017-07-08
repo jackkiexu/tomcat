@@ -96,10 +96,10 @@ public abstract class LifecycleBase implements Lifecycle {
     @Override
     public final synchronized void init() throws LifecycleException {
         logger.info(this  + " init() ");
-        if (!state.equals(LifecycleState.NEW)) {
+        if (!state.equals(LifecycleState.NEW)) {                                 // 调用之前判断一下是否是 NEW 状态
             invalidTransition(Lifecycle.BEFORE_INIT_EVENT);
         }
-        setStateInternal(LifecycleState.INITIALIZING, null, false);
+        setStateInternal(LifecycleState.INITIALIZING, null, false);             // 容器状态机从 NEW -> INITIALIZING
 
         try {
             initInternal();
@@ -110,7 +110,7 @@ public abstract class LifecycleBase implements Lifecycle {
                     sm.getString("lifecycleBase.initFail",toString()), t);
         }
 
-        setStateInternal(LifecycleState.INITIALIZED, null, false);
+        setStateInternal(LifecycleState.INITIALIZED, null, false);             // 在调用了 容器的模板方法 initInternal 方法后, 设置状态位 INITIALIZED
     }
 
 
@@ -122,7 +122,7 @@ public abstract class LifecycleBase implements Lifecycle {
     @Override
     public final synchronized void start() throws LifecycleException {
         logger.info(this  + " start() ");
-        if (LifecycleState.STARTING_PREP.equals(state) ||
+        if (LifecycleState.STARTING_PREP.equals(state) ||               // 若程序处于 STARTING_PREP, STARTING, STARTED 时调用 start(), 则这时是错误的处理流程
                 LifecycleState.STARTING.equals(state) ||
                 LifecycleState.STARTED.equals(state)) {
 
@@ -148,7 +148,7 @@ public abstract class LifecycleBase implements Lifecycle {
             invalidTransition(Lifecycle.BEFORE_START_EVENT);
         }
 
-        setStateInternal(LifecycleState.STARTING_PREP, null, false);
+        setStateInternal(LifecycleState.STARTING_PREP, null, false);            // 到这里 容器的状态机再次改变 INITIALIZED -> STARTING_PREP
 
         try {
             logger.info(this  + " startInternal() ");

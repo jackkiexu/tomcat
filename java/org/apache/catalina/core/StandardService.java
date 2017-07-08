@@ -436,7 +436,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
             }
         }
 
-        synchronized (executors) {
+        synchronized (executors) {              // 这里的 executors 是哪里来的
             for (Executor executor: executors) {
                 executor.start();
             }
