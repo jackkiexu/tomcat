@@ -187,8 +187,8 @@ public abstract class AbstractEndpoint<S> {
             } else {
                 latch.setLimit(maxCon);
             }
-        } else if (maxCon > 0) {
-            initializeConnectionLatch();
+        } else if (maxCon > 0) {                        // 这里的 maxCon 默认值 200, 所以初始化 请求限流阀 LimitLatch(默认并发 200)
+            initializeConnectionLatch();                 // 这里的 LimitLatch 可以把它假想成 有限制的 共享读锁
         }
     }
 
@@ -353,7 +353,7 @@ public abstract class AbstractEndpoint<S> {
                 return -1;
             }
         } else {
-            return maxThreads;
+            return maxThreads;              // 最大工作线程数 200(PS: 这个工作线程不是由 WebappClassLoader 进行加载的)
         }
     }
 

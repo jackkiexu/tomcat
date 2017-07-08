@@ -2026,8 +2026,8 @@ public class StandardContext extends ContainerBase
         }
         if (namingResources != null) {
             try {
-                namingResources.init();
-                namingResources.start();
+                namingResources.init();                 // 注册 JMX 等信息
+                namingResources.start();                // 设置容器的状态
             } catch (LifecycleException e) {
                 log.warn("standardContext.namingResource.init.fail", e);
             }
@@ -2249,7 +2249,7 @@ public class StandardContext extends ContainerBase
             if (altDDName != null)
                 context.setAttribute(Globals.ALT_DD_ATTR,altDDName);
         }
-        return (context.getFacade());                   // 最后暴露出去的是一个 facade 类
+        return (context.getFacade());                   // 最后暴露出去的是一个 facade 类, 这个 facade 是在 new ApplicationContext 里面初始化的
 
     }
 
@@ -5058,7 +5058,7 @@ public class StandardContext extends ContainerBase
             broadcaster.sendNotification(notification);
         }
 
-        setConfigured(false);                                           // 触发配置时间
+        setConfigured(false);
         boolean ok = true;
 
         // Currently this is effectively a NO-OP but needs to be called to
@@ -5088,9 +5088,9 @@ public class StandardContext extends ContainerBase
             resourcesStart();       // 启动资源 其实就是启动 StandardRoot
         }
 
-        if (getLoader() == null) { // WebappLoader 启动
+        if (getLoader() == null) { // WebappLoader 初始化
             WebappLoader webappLoader = new WebappLoader(getParentClassLoader());
-            webappLoader.setDelegate(getDelegate());
+            webappLoader.setDelegate(getDelegate());                // 设置 WebappClassLoader 是否遵循传统的 parent delegate 模式
             setLoader(webappLoader);    // 将 delegate 传入到创建的 WebappClassLoader 中
         }
 
@@ -5143,14 +5143,14 @@ public class StandardContext extends ContainerBase
 
 
         // Binding thread
-        ClassLoader oldCCL = bindThread();                          // 第一次获取 ClassLoader 是一个 null
+        ClassLoader oldCCL = bindThread();                          // 第一次获取 ClassLoader 是一个 null ?????
 
         try {
             if (ok) {
                 // Start our subordinate components, if any
                 Loader loader = getLoader();
                 if ((loader != null) && (loader instanceof Lifecycle))
-                    ((Lifecycle) loader).start();                 // 触发 WebappClassLoader 启动
+                    ((Lifecycle) loader).start();                 // 触发 WebappLoader 启动
 
                 // since the loader just started, the webapp classloader is now
                 // created.
@@ -5168,7 +5168,7 @@ public class StandardContext extends ContainerBase
                 // By calling unbindThread and bindThread in a row, we setup the
                 // current Thread CCL to be the webapp classloader
                 unbindThread(oldCCL);                                                           // 这里又将加载 StandardContext 的类加载器替换回来
-                oldCCL = bindThread();                                                          // 将当前线程的类加载器变成 WebappClassLoader (PS: 这两行有点感觉是多此一举 ???)
+                oldCCL = bindThread();                                                          // 将当前线程的类加载器变成 WebappClassLoader (PS: 第一次是 bind ClassLoader 没有成功, 因为 WebappClassLoader 还没有创建起来)
 
                 // Initialize logger again. Other components might have used it
                 // too early, so it should be reset.
@@ -5178,7 +5178,7 @@ public class StandardContext extends ContainerBase
                 Cluster cluster = getClusterInternal();
                 if ((cluster != null) && (cluster instanceof Lifecycle))
                     ((Lifecycle) cluster).start();
-                Realm realm = getRealmInternal();       // realm 启动
+                Realm realm = getRealmInternal();       // realm 启动(这里的 realm 默认是 null, 在 StandardEngine 已经设置好了)
                 if ((realm != null) && (realm instanceof Lifecycle))
                     ((Lifecycle) realm).start();
                                                         //
@@ -5186,15 +5186,15 @@ public class StandardContext extends ContainerBase
                 fireLifecycleEvent(Lifecycle.CONFIGURE_START_EVENT, null);
 
                 // Start our child containers, if not already started
-                for (Container child : findChildren()) {
+                for (Container child : findChildren()) {                    // 下面是 启动 StandardWrapper
                     if (!child.getState().isAvailable()) {
-                        child.start();              // 依次启动 StandardContext 的子组件
+                        child.start();                                  // 依次启动 StandardContext 的子组件, 也就是 StandardWrapper, 这里其实也就是 JMX 注册, 与 ContainerBase 里面的 startInternal
                     }
                 }
 
                 // Start the Valves in our pipeline (including the basic),
                 // if any
-                if (pipeline instanceof Lifecycle) {            // 启动 StandardContext 对应的 Pipeline
+                if (pipeline instanceof Lifecycle) {            // 启动 StandardContext 对应的 Pipeline, 这里面很简单 设置 currentValve, 以及 start 对应的 valve, 因为 Valve 也是 实现 LifeCycle 接口
                     ((Lifecycle) pipeline).start();
                 }
 
@@ -5386,7 +5386,7 @@ public class StandardContext extends ContainerBase
 
     private void setClassLoaderProperty(String name, boolean value) {
         ClassLoader cl = getLoader().getClassLoader();
-        if (!IntrospectionUtils.setProperty(cl, name, Boolean.toString(value))) {
+        if (!IntrospectionUtils.setProperty(cl, name, Boolean.toString(value))) {           // 通过反射来设置 对象属性
             // Failed to set
             log.info(sm.getString(
                     "standardContext.webappClassLoader.missingProperty",
@@ -5870,7 +5870,7 @@ public class StandardContext extends ContainerBase
      *
      * @return the previous context class loader
      */
-    protected ClassLoader bindThread() {
+    protected ClassLoader bindThread() {                        // 将 Thread 的 contextClassLoader 设置为 StandardContext 对应的 WebappClassLoader
 
         ClassLoader oldContextClassLoader = bind(false, null);
 
@@ -5905,7 +5905,7 @@ public class StandardContext extends ContainerBase
         Loader loader = getLoader();                                                                    // 获取 StandardContext 的类加载器, 其实就是 WebappClassLoader
         ClassLoader webApplicationClassLoader = null;
         if (loader != null) {
-            webApplicationClassLoader = loader.getClassLoader();
+            webApplicationClassLoader = loader.getClassLoader();                                        // 获取 StandardContext 对应的 WebappClassloader
         }
 
         if (originalClassLoader == null) {
@@ -5924,7 +5924,7 @@ public class StandardContext extends ContainerBase
             return null;
         }
 
-        ThreadBindingListener threadBindingListener = getThreadBindingListener();
+        ThreadBindingListener threadBindingListener = getThreadBindingListener();                       // 这里的 线程 classLoader bind/unbind classLoader 操作的监听器默认是空的实现
 
         if (usePrivilegedAction) {
             PrivilegedAction<Void> pa = new PrivilegedSetTccl(webApplicationClassLoader);
@@ -5952,7 +5952,7 @@ public class StandardContext extends ContainerBase
             return;
         }
 
-        if (threadBindingListener != null) {
+        if (threadBindingListener != null) {                                           // 这里的 ThreadBindingListener 默认都是空的实现
             try {
                 threadBindingListener.unbind();
             } catch (Throwable t) {
@@ -5966,7 +5966,7 @@ public class StandardContext extends ContainerBase
             PrivilegedAction<Void> pa = new PrivilegedSetTccl(originalClassLoader);
             AccessController.doPrivileged(pa);
         } else {
-            Thread.currentThread().setContextClassLoader(originalClassLoader);
+            Thread.currentThread().setContextClassLoader(originalClassLoader);              // 将 当前线程的 classloader 从 WebappClassLoader 变成 原先的 originClassloader
         }
     }
 

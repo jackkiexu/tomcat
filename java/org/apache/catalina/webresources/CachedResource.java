@@ -71,8 +71,8 @@ public class CachedResource implements WebResource {
                 if (webResource == null) {
                     webResource = root.getResourceInternal(
                             webAppPath, useClassLoaderResources);
-                    getLastModified();
-                    getContentLength();
+                    getLastModified();                                  // 资源上次修改的时间
+                    getContentLength();                                 // 资源数据的大小
                     nextCheck = ttl + now; // 计算下次检查的时间
                     // exists() is a relatively expensive check for a file so
                     // use the fact that we know if it exists at this point

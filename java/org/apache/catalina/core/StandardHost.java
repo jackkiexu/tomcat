@@ -844,7 +844,7 @@ public class StandardHost extends ContainerBase implements Host {
                         break;
                     }
                 }
-                if(!found) {
+                if(!found) {                                        // 初始化 错误报告的 valve ErrorReportValve
                     Valve valve =
                         (Valve) Class.forName(errorValve).newInstance();
                     getPipeline().addValve(valve);
@@ -856,7 +856,7 @@ public class StandardHost extends ContainerBase implements Host {
                         errorValve), t);
             }
         }
-        super.startInternal();
+        super.startInternal();                                     // 调用父类 ContainerBase 的 startInternal 方法
     }
 
 

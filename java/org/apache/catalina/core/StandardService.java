@@ -423,30 +423,30 @@ public class StandardService extends LifecycleMBeanBase implements Service {
      *  that prevents this component from being used
      */
     @Override
-    protected void startInternal() throws LifecycleException {
+    protected void startInternal() throws LifecycleException {      // 注意一下的启动顺序, 为什么这么启动
 
         if(log.isInfoEnabled())
             log.info(sm.getString("standardService.start.name", this.name));
-        setState(LifecycleState.STARTING);
+        setState(LifecycleState.STARTING);                          // 设置容器状态 STARTING
 
         // Start our defined Container first
         if (container != null) {
-            synchronized (container) {
+            synchronized (container) {                            // 启动子容器, 也就是 StandardEngine
                 container.start();
             }
         }
 
-        synchronized (executors) {              // 这里的 executors 是哪里来的
+        synchronized (executors) {              // 这里的 executors 是哪里来的 ?
             for (Executor executor: executors) {
                 executor.start();
             }
         }
 
 
-        mapperListener.start();
+        mapperListener.start();                                  // 这里会将 Tomcat 里面的 Host, Context, Wrapper 的等等路由信息设置到 mapper
 
         // Start our defined Connectors second
-        synchronized (connectorsLock) {
+        synchronized (connectorsLock) {                         // 启动对应的 Connector
             for (Connector connector: connectors) {
                 try {
                     // If it has already failed, don't try and start it
@@ -539,14 +539,14 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     @Override
     protected void initInternal() throws LifecycleException {
 
-        super.initInternal();
+        super.initInternal();                       // 注册 JMX 里面
         // StandardService 里面的子容器就是 StandardEngine
-        if (container != null) {
+        if (container != null) {                  // init 子容器 Engine
             container.init();
         }
 
         // Initialize any Executors
-        for (Executor executor : findExecutors()) {
+        for (Executor executor : findExecutors()) {                // 在初始化时未发现任何 Executors
             if (executor instanceof JmxEnabled) {
                 ((JmxEnabled) executor).setDomain(getDomain());
             }
@@ -554,7 +554,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         }
 
         // Initialize mapper listener
-        mapperListener.init();                                   // 初始化 MapperListener
+        mapperListener.init();                                   // 初始化 MapperListener(MapperListener 没有自己的  initInternal, 只是在父类里面注册一下 JMX 服务)
 
         // Initialize our defined Connectors
         synchronized (connectorsLock) {

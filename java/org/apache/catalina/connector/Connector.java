@@ -483,7 +483,7 @@ public class Connector extends LifecycleMBeanBase  {
 
     }
 
-    public void setParseBodyMethods(String methods) {
+    public void setParseBodyMethods(String methods) {           // 设置何时解析 http body 里面的数据
 
         HashSet<String> methodSet = new HashSet<>();
 
@@ -947,11 +947,11 @@ public class Connector extends LifecycleMBeanBase  {
     @Override
     protected void initInternal() throws LifecycleException {
 
-        super.initInternal();
+        super.initInternal();                                   // 注册 JMX 信息
 
         // Initialize adapter
-        adapter = new CoyoteAdapter(this);
-        protocolHandler.setAdapter(adapter);
+        adapter = new CoyoteAdapter(this);                    // CoyoTeAdapter 里面就一个 ThreadLocal 来记录 线程的名称
+        protocolHandler.setAdapter(adapter);                 // 设置 ProtocolHandler Request, Response 的 Adapter
 
         // Make sure parseBodyMethodsSet has a default
         if( null == parseBodyMethodsSet ) {

@@ -405,7 +405,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
     public void bind() throws Exception {
 
         // Initialize thread count defaults for acceptor
-        if (acceptorThreadCount == 0) {
+        if (acceptorThreadCount == 0) {                     // 接收请求的处理线程数, 也就是 Accepter 的个数(缺省值 1)
             acceptorThreadCount = 1;
         }
         // Initialize maxConnections
@@ -414,7 +414,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
             setMaxConnections(getMaxThreadsExecutor(true));
         }
 
-        if (serverSocketFactory == null) {
+        if (serverSocketFactory == null) {  // 初始化 serverSocketFactory
             if (isSSLEnabled()) {               // 若是 基于 SSL 的
                 serverSocketFactory =
                     handler.getSslImplementation().getServerSocketFactory(this);
@@ -423,8 +423,8 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
             }
         }
 
-        if (serverSocket == null) {
-            try {
+        if (serverSocket == null) {                     // 初始化 服务端的 serverSocket, 下面的 backLog 注意一下, backLog + LimitLatch.limit 决定 Tomcat 的并发请求
+            try {                                          // backLog 指的是 TCP 中的 accept queue,  LimitLatch.limit 控制的是 Tomcat 层面的并发请求数
                 if (getAddress() == null) {
                     serverSocket = serverSocketFactory.createSocket(getPort(),
                             getBacklog());
@@ -459,7 +459,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                 createExecutor();       // 工作线程池
             }
 
-            initializeConnectionLatch();
+            initializeConnectionLatch();                // 初始化
 
             startAcceptorThreads(); // Accept 连接线程池
 

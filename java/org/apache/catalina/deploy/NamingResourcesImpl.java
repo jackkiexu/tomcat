@@ -927,10 +927,10 @@ public class NamingResourcesImpl extends LifecycleMBeanBase
 
 
     // ------------------------------------------------------- Lifecycle methods
-
+    // 下面没什么好说的, 都是 JMX 相关的
     @Override
     protected void initInternal() throws LifecycleException {
-        super.initInternal();
+        super.initInternal();           // 注册 JMX 服务中
 
         // Set this before we register currently known naming resources to avoid
         // timing issues. Duplication registration is not an issue.

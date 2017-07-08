@@ -61,7 +61,7 @@ public class Cache {
 
         lookupCount.incrementAndGet();  // 查询次数 + 1
 
-        if (noCache(path)) {
+        if (noCache(path)) {  // /WEB-INF/classes 或 /WEB-INF/lib 下面的资源不会缓存
             return root.getResourceInternal(path, useClassLoaderResources);
         }
         // 看看缓存里面有没有
@@ -72,19 +72,19 @@ public class Cache {
             cacheEntry = null;
         }
 
-        if (cacheEntry == null) {
+        if (cacheEntry == null) {                                                 // 若没查找到资源
             // Local copy to ensure consistency
             // 查询对象的最大size
             int objectMaxSizeBytes = getObjectMaxSizeBytes();
             // 创建 CachedResource
             CachedResource newCacheEntry =
-                    new CachedResource(root, path, getTtl(), objectMaxSizeBytes);
+                    new CachedResource(root, path, getTtl(), objectMaxSizeBytes);       // 这里的 ttl 指的是 Time To Live
 
             // Concurrent callers will end up with the same CachedResource
             // instance
             cacheEntry = resourceCache.putIfAbsent(path, newCacheEntry);
 
-            if (cacheEntry == null) {
+            if (cacheEntry == null) {                                                   // cacheEntry == null, 说明 Map 里面原先没有 path 对应的数据
                 // newCacheEntry was inserted into the cache - validate it
                 cacheEntry = newCacheEntry;
                 // 每一次都更新 ttl 的时间
@@ -93,10 +93,10 @@ public class Cache {
                 // Even if the resource content larger than objectMaxSizeBytes
                 // there is still benefit in caching the resource metadata
 
-                long delta = cacheEntry.getSize();
+                long delta = cacheEntry.getSize();                                      // 获取 大小
                 size.addAndGet(delta);
 
-                if (size.get() > maxSize) {
+                if (size.get() > maxSize) {                                           // 看看有没有资源大小超过上限
                     // Process resources unordered for speed. Trades cache
                     // efficiency (younger entries may be evicted before older
                     // ones) for speed since this is on the critical path for

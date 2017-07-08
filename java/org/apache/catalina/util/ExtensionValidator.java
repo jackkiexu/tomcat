@@ -158,7 +158,7 @@ public final class ExtensionValidator {
         }
 
         // Primarily used for error reporting
-        String jarName = null;
+        String jarName = null;                                                        // 在 jar 包里面查找 Manifest 文件
         WebResource[] jars = resources.listResources("/WEB-INF/lib");               // 获取 /WEB-INF/lib
         for (WebResource jar : jars) {
             jarName = jar.getName();

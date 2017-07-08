@@ -33,7 +33,7 @@ import java.util.concurrent.Executor;
  * @author Costin Manolache
  * @see Adapter
  */
-public interface ProtocolHandler {
+public interface ProtocolHandler {          // 通讯协议处理接口
 
     /**
      * The adapter, used to call the connector.

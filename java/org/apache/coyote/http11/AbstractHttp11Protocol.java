@@ -18,7 +18,7 @@ package org.apache.coyote.http11;
 
 
 import org.apache.coyote.AbstractProtocol;
-
+// 支持 HTTP 的封装类
 public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
 
     @Override

@@ -108,7 +108,7 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
             Collections.newSetFromMap(new ConcurrentHashMap<TrackedWebResource,Boolean>());
 
     // Constructs to make iteration over all WebResourceSets simpler
-    private final ArrayList<WebResourceSet> mainResources = new ArrayList<>();
+    private final ArrayList<WebResourceSet> mainResources = new ArrayList<>();              // 上面各种 resource 最终都会汇总到 mainResources 里面
     private final ArrayList<ArrayList<WebResourceSet>> allResources =
             new ArrayList<>();
     {
@@ -298,7 +298,7 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         }
 
         // Default is empty resource in main resources
-        return mainEmpty;
+        return mainEmpty;                       // 若没找到, 则返回一个 EmptyResource
     }
 
     @Override
@@ -658,7 +658,7 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         // 1. 基于 War 部署或是目录部署, 初始化 DirResourceSet 或 FileResourceSet
         if (f.isDirectory()) {                                      // 判断 f 是 Directory, 则构成一个 DirResourceSet
             main = new DirResourceSet(this, "/", f.getAbsolutePath(), "/");
-        } else if(f.isFile() && docBase.endsWith(".war")) {
+        } else if(f.isFile() && docBase.endsWith(".war")) {       // 若是一个 war 包, 则 构造一个 JarResourceSet
             // 2. 基于 web 应用的 根目录的路径, 会准备 JarResourceSet, 这个集合中都是 jar 包
             main = new JarResourceSet(this, "/", f.getAbsolutePath(), "/");
         } else {
@@ -668,11 +668,11 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         }
 
         mainResources.clear();
-        mainResources.add(main);
+        mainResources.add(main);                                // 加上面的 resources 加入到 mainResources 里面
 
         for (ArrayList<WebResourceSet> list : allResources) {           // 初始化 allResources 对应的所有的资源
             for (WebResourceSet webResourceSet : list) {
-                webResourceSet.start();
+                webResourceSet.start();                                     // 看了一下 DirResourceSet 就是设置一下状态
             }
         }
 
@@ -686,9 +686,9 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         }
 
         // 4. CacheResource 准备好, 为通过 StandardRoot 查找资源做准备
-        cache.enforceObjectMaxSizeLimit();
+        cache.enforceObjectMaxSizeLimit();                               // 初始化 Cache 的限制 limit
 
-        setState(LifecycleState.STARTING);
+        setState(LifecycleState.STARTING);                              // 设置一下容器的状态
     }
 
     @Override

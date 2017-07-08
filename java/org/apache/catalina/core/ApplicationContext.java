@@ -111,7 +111,7 @@ public class ApplicationContext
      *
      * @param context The associated Context instance
      */
-    public ApplicationContext(StandardContext context) {
+    public ApplicationContext(StandardContext context) {                    // ServletContext 就是 Servlet 的上下文
         super();
         this.context = context;
         this.service = ((Engine) context.getParent().getParent()).getService();
@@ -1127,7 +1127,7 @@ public class ApplicationContext
         defaultSessionTrackingModes = EnumSet.of(SessionTrackingMode.URL);
         supportedSessionTrackingModes = EnumSet.of(SessionTrackingMode.URL);
 
-        if (context.getCookies()) {
+        if (context.getCookies()) {                                     // Context 是否通过 cookie 来追踪 Session 的状态
             defaultSessionTrackingModes.add(SessionTrackingMode.COOKIE);
             supportedSessionTrackingModes.add(SessionTrackingMode.COOKIE);
         }
@@ -1135,10 +1135,10 @@ public class ApplicationContext
         // SSL not enabled by default as it can only used on its own
         // Context > Host > Engine > Service
         Service s = ((Engine) context.getParent().getParent()).getService();
-        Connector[] connectors = s.findConnectors();
+        Connector[] connectors = s.findConnectors();                            // 从这里我们也可以看出 connector 是归属于 StandardService
         // Need at least one SSL enabled connector to use the SSL session ID.
         for (Connector connector : connectors) {
-            if (Boolean.TRUE.equals(connector.getAttribute("SSLEnabled"))) {
+            if (Boolean.TRUE.equals(connector.getAttribute("SSLEnabled"))) {    // 判断 connector 若是 ssl 的话, 就添加 通过 ssl 来追踪 Session 的模式
                 supportedSessionTrackingModes.add(SessionTrackingMode.SSL);
                 break;
             }

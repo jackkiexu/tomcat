@@ -119,7 +119,7 @@ public class StandardEngine extends ContainerBase implements Engine {
      */
     @Override
     public Realm getRealm() {
-        Realm configured = super.getRealm();
+        Realm configured = super.getRealm();            // 这个 Realm 是在 Tomcat.createDefaultRealm 里面创建的
         // If no set realm has been called - default to NullRealm
         // This can be overridden at engine, context and host level
         if (configured == null) {
@@ -244,7 +244,7 @@ public class StandardEngine extends ContainerBase implements Engine {
         // Ensure that a Realm is present before any attempt is made to start
         // one. This will create the default NullRealm if necessary.
         getRealm();
-        super.initInternal();
+        super.initInternal();       // 注册 JMX 相关的信息
     }
 
 
@@ -263,7 +263,7 @@ public class StandardEngine extends ContainerBase implements Engine {
             log.info( "Starting Servlet Engine: " + ServerInfo.getServerInfo());
 
         // Standard container startup
-        super.startInternal();
+        super.startInternal();                      // 这里面调用的是 ContainerBase 的 startInternal
     }
 
 

@@ -17,7 +17,7 @@
 package org.apache.coyote.http11;
 
 import org.apache.tomcat.util.net.SSLImplementation;
-
+ // 这是为支持 SSL 的封装类
 public abstract class AbstractHttp11JsseProtocol<S>
         extends AbstractHttp11Protocol<S> {
 

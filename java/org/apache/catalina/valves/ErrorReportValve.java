@@ -71,14 +71,14 @@ public class ErrorReportValve extends ValveBase {
         throws IOException, ServletException {
 
         // Perform the request
-        getNext().invoke(request, response);
+        getNext().invoke(request, response);                // 先将 请求转发给下一个 Valve
 
         if (response.isCommitted()) {
             return;
         }
 
         Throwable throwable =
-                (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
+                (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);        // 判断请求过程中是否有异常发生
 
         if (request.isAsyncStarted() && ((response.getStatus() < 400 &&
                 throwable == null) || request.isAsyncDispatching())) {
@@ -98,19 +98,19 @@ public class ErrorReportValve extends ValveBase {
             }
 
             response.sendError
-                (HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                (HttpServletResponse.SC_INTERNAL_SERVER_ERROR);                            // 这就是我们常看到的 500 错误码
 
         }
 
         response.setSuspended(false);
 
         try {
-            report(request, response, throwable);
+            report(request, response, throwable);                                             // 这里就是将 异常的堆栈信息组合成 html 页面, 输出到前台
         } catch (Throwable tt) {
             ExceptionUtils.handleThrowable(tt);
         }
 
-        if (request.isAsyncStarted()) {
+        if (request.isAsyncStarted()) {                                                      // 若是异步请求的话, 设置对应的 complete (对应的是 异步 Servlet)
             request.getAsyncContext().complete();
         }
     }

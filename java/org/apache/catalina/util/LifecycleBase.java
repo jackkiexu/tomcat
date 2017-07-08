@@ -404,7 +404,7 @@ public abstract class LifecycleBase implements Lifecycle {
 
         this.state = state;
         String lifecycleEvent = state.getLifecycleEvent();
-        if (lifecycleEvent != null) {
+        if (lifecycleEvent != null) {                               // 将事件发送给 容器生命周期监听器
             fireLifecycleEvent(lifecycleEvent, data);
         }
     }

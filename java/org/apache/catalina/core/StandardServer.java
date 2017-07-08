@@ -745,15 +745,15 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
     @Override
     protected void startInternal() throws LifecycleException {
 
-        fireLifecycleEvent(CONFIGURE_START_EVENT, null);
-        setState(LifecycleState.STARTING);
+        fireLifecycleEvent(CONFIGURE_START_EVENT, null);   // 触发一下容器生命周期的事件
+        setState(LifecycleState.STARTING);                    // 设置一下现在容器的状态
 
-        globalNamingResources.start();
+        globalNamingResources.start();                      // 这里面的start, 只是设置一下状态, 触发一下事件 CONFIGURE_START_EVENT
 
         // Start our defined Services
         synchronized (servicesLock) {
             for (int i = 0; i < services.length; i++) {
-                services[i].start();
+                services[i].start();                         // 启动 StandardService
             }
         }
     }
@@ -804,7 +804,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
         onameMBeanFactory = register(factory, "type=MBeanFactory");
 
         // Register the naming resources
-        globalNamingResources.init();
+        globalNamingResources.init();                       // 初始化 Server 的 JNDI 全局命名服务 (这个整个 Tomcat 只存在一个, 而与之对应的 Context 也是 每一个 Context 一个对应的 Namingresources)
 
         // Populate the extension validator with JARs from common and shared
         // class loaders

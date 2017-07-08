@@ -43,7 +43,7 @@ import org.apache.tomcat.util.net.DispatchType;
 import org.apache.tomcat.util.net.SocketStatus;
 import org.apache.tomcat.util.net.SocketWrapper;
 import org.apache.tomcat.util.res.StringManager;
-
+// 协议抽象类
 public abstract class AbstractProtocol<S> implements ProtocolHandler,
         MBeanRegistration {
 
@@ -418,7 +418,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
      */
 
     @Override
-    public void init() throws Exception {
+    public void init() throws Exception {   // 这一块主要是 JMX + endpoint 初始化
         if (getLog().isInfoEnabled())
             getLog().info(sm.getString("abstractProtocolHandler.init",
                     getName()));

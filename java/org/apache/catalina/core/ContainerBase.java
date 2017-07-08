@@ -789,7 +789,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
     @Override
     public Container[] findChildren() {
 
-        synchronized (children) {
+        synchronized (children) {           // 下面这种方式能一直性的获取 此刻对应的所有 childContainer
             Container results[] = new Container[children.size()];
             return children.values().toArray(results);
         }
@@ -878,7 +878,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
 
     @Override
-    protected void initInternal() throws LifecycleException {
+    protected void initInternal() throws LifecycleException {               // 对应的说明 Engine, Host, Context, Wrapper 都有对应自己的 startStopExecutor
         BlockingQueue<Runnable> startStopQueue = new LinkedBlockingQueue<>();
         startStopExecutor = new ThreadPoolExecutor(
                 getStartStopThreadsInternal(),
@@ -902,16 +902,16 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
         // Start our subordinate components, if any
         logger = null;
-        getLogger();
-        Cluster cluster = getClusterInternal();
+        getLogger();                                                        // 初始化容器对应的 logger
+        Cluster cluster = getClusterInternal();                             // Tomcat cluster 配置(Tomcat 原生集群方式有问题, 扩张性不好, 容易造成集群中各个节点的 Session 状态的不一致)
         if ((cluster != null) && (cluster instanceof Lifecycle))
             ((Lifecycle) cluster).start();
-        Realm realm = getRealmInternal();
-        if ((realm != null) && (realm instanceof Lifecycle))
+        Realm realm = getRealmInternal();                                   // Tomcat 类里面默认创建的 Realm, 方法 createDefaultRealm
+        if ((realm != null) && (realm instanceof Lifecycle))             // 默认创建的 Realm start 方法, 初始化 MD5 加密工具 MessageDigest
             ((Lifecycle) realm).start();
 
         // Start our child containers, if any
-        Container children[] = findChildren();
+        Container children[] = findChildren();                              // 找出对应的子容器
         // 通过一个线程池来进行启动对应的子容器
         // 有点不明白, 这种写法不能提高什么程序 lazyInit 或性能之类
         /*List<Future<Void>> results = new ArrayList<>();
@@ -934,8 +934,8 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                     sm.getString("containerBase.threadedStartFailed"));
         }*/
 
-        try {
-            for (int i = 0; i < children.length; i++) {
+        try {                                                                         // 这里的子容器也从 StandardHost -> StandardContext -> StandardWrapper
+            for (int i = 0; i < children.length; i++) {                             // 初始化对应的子容器 从 Engine -> Host -> Context -> Wrapper
                 logger.info(" children :" + children + " start ()");
                 children[i].start();
             }
@@ -945,7 +945,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         }
 
         // Start the Valves in our pipeline (including the basic), if any
-        if (pipeline instanceof Lifecycle)
+        if (pipeline instanceof Lifecycle)                                        // 容器内部的 Pipeline start
             ((Lifecycle) pipeline).start();
 
 
@@ -1134,7 +1134,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         Cluster cluster = getClusterInternal();
         if (cluster != null) {
             try {
-                cluster.backgroundProcess();
+                cluster.backgroundProcess();                        // Tomcat 集群 Cluster 的 background 操作
             } catch (Exception e) {
                 log.warn(sm.getString("containerBase.backgroundProcess.cluster",
                         cluster), e);
@@ -1143,7 +1143,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         Realm realm = getRealmInternal();
         if (realm != null) {
             try {
-                realm.backgroundProcess();
+                realm.backgroundProcess();                          // Realm 的 background 操作
             } catch (Exception e) {
                 log.warn(sm.getString("containerBase.backgroundProcess.realm", realm), e);
             }
@@ -1151,7 +1151,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         Valve current = pipeline.getFirst();
         while (current != null) {
             try {
-                current.backgroundProcess();
+                current.backgroundProcess();                        // Valve 的 background 操作
             } catch (Exception e) {
                 log.warn(sm.getString("containerBase.backgroundProcess.valve", current), e);
             }
@@ -1294,18 +1294,18 @@ public abstract class ContainerBase extends LifecycleMBeanBase
      * Start the background thread that will periodically check for
      * session timeouts.
      */
-    protected void threadStart() {
-
+    protected void threadStart() {                          // 启动容器的后台任务(PS: 容器的后台任务执行时一定要注意对应的 ClassLoader, 对应 StandardContext 的后台任务, 一定要将 classloader 设置为 对应的 WebappClassloader)
+                                                              // 为什么要在执行任务时更改对应的 Thread.ContextClassloader 呢, 主要是 若原先的 classloader 很有可能导致 在热部署情况下 出现内存泄露 <- (辣手)
         if (thread != null)
             return;
-        if (backgroundProcessorDelay <= 0)
+        if (backgroundProcessorDelay <= 0)               // backgroundProcessorDelay 每次后台任务的执行间隔时间
             return;
 
         threadDone = false;
         String threadName = "ContainerBackgroundProcessor[" + toString() + "]";
         thread = new Thread(new ContainerBackgroundProcessor(), threadName);
         thread.setDaemon(true);
-        thread.start();
+        thread.start();                                      // 启动后台任务的线程
 
     }
 
@@ -1369,7 +1369,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
                     // Ensure background processing for Contexts and Wrappers
                     // is performed under the web app's class loader
-                    originalClassLoader = ((Context) container).bind(false, null);
+                    originalClassLoader = ((Context) container).bind(false, null); // 确保 backgroundProcessor 操作是在 WebappClassLoader 作用下
                 }
                 container.backgroundProcess();                                      // 这是 backgroundProcessor 主要的工作
                 Container[] children = container.findChildren();
@@ -1383,7 +1383,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                 log.error("Exception invoking periodic operation: ", t);
             } finally {
                 if (container instanceof Context) {
-                    ((Context) container).unbind(false, originalClassLoader);
+                    ((Context) container).unbind(false, originalClassLoader);       // 将当前线程的 ContextClassloader 从 WebappClassloader 还原回来
                }
             }
         }

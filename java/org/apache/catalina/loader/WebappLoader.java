@@ -83,7 +83,7 @@ public class WebappLoader extends LifecycleMBeanBase
      */
     public WebappLoader(ClassLoader parent) {
         super();
-        this.parentClassLoader = parent;
+        this.parentClassLoader = parent;            // debug 了一下代码,  看到这里是 AppClassLoader
     }
 
 
@@ -401,7 +401,7 @@ public class WebappLoader extends LifecycleMBeanBase
 
             classLoader = createClassLoader();                      // 通过反射构建 WebAppClassLoader
             classLoader.setResources(context.getResources());      // 设置 WebappClassLoader 的 resources (其实就是 StandardRoot)
-            classLoader.setDelegate(this.delegate);               // 设置 WebappClassLoader 是否也按照双亲委派机制
+            classLoader.setDelegate(this.delegate);               // 设置 WebappClassLoader 是否也按照双亲委派机制 (默认 false)
 
             // Configure our repositories
             setClassPath();
@@ -515,7 +515,7 @@ public class WebappLoader extends LifecycleMBeanBase
             parentClassLoader = context.getParentClassLoader(); // 获取 context 的 parentClassLoader, 这里就是 shareLoader
         }
         Class<?>[] argTypes = { ClassLoader.class };
-        Object[] args = { parentClassLoader };                  // 初始化 WebappClassLoader, 并将其的 parentClassLoader 设置为 Launcher.AppClassLoader
+        Object[] args = { parentClassLoader };                  // 初始化 WebappClassLoader, 并将其的 StandardContext 的 parentClassLoader 设置为 WebappClassLoader 的父 classLoader
         Constructor<?> constr = clazz.getConstructor(argTypes);
         classLoader = (WebappClassLoader) constr.newInstance(args);
 
@@ -528,7 +528,7 @@ public class WebappLoader extends LifecycleMBeanBase
      */
     private void setPermissions() {
 
-        if (!Globals.IS_SECURITY_ENABLED)
+        if (!Globals.IS_SECURITY_ENABLED)           // 是否设置 安全模式
             return;
         if (context == null)
             return;
@@ -567,7 +567,7 @@ public class WebappLoader extends LifecycleMBeanBase
         // Validate our current state information
         if (context == null)
             return;
-        ServletContext servletContext = context.getServletContext();
+        ServletContext servletContext = context.getServletContext();                    // 这里的 ServletContext 其实就是 ApplicationContext
         if (servletContext == null)
             return;
 
@@ -599,7 +599,7 @@ public class WebappLoader extends LifecycleMBeanBase
         this.classpath = classpath.toString();                                  // 这里的 classpath 是从底层的 WebappClassLoader 一直递归到 BootstrapClassLoader 合并在一起的 classpath
 
         // Store the assembled class path as a servlet context attribute
-        servletContext.setAttribute(Globals.CLASS_PATH_ATTR, this.classpath);
+        servletContext.setAttribute(Globals.CLASS_PATH_ATTR, this.classpath);   // 在 ServletContext 里面设置 classpath
     }
 
 
@@ -618,7 +618,7 @@ public class WebappLoader extends LifecycleMBeanBase
                     if (repository == null)
                         continue;
                     if (classpath.length() > 0)
-                        classpath.append(File.pathSeparator);
+                        classpath.append(File.pathSeparator);           // 加上系统的分隔符
                     classpath.append(repository);
                 }
         } else {
