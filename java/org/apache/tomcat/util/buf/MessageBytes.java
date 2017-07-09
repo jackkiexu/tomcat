@@ -16,8 +16,11 @@
  */
 package org.apache.tomcat.util.buf;
 
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
@@ -34,6 +37,9 @@ import java.util.Locale;
  * @author Costin Manolache
  */
 public final class MessageBytes implements Cloneable, Serializable {
+
+    public Logger logger = Logger.getLogger(MessageBytes.class);
+
     private static final long serialVersionUID = 1L;
 
     // primary type ( whatever is set as original value )
@@ -113,6 +119,11 @@ public final class MessageBytes implements Cloneable, Serializable {
         hasStrValue=false;
         hasHashCode=false;
         hasLongValue=false;
+        try {
+            logger.info(new String(byteC.getBytes() ,"UTF-8"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**

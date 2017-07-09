@@ -899,14 +899,14 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
      */
     @Override
     public SocketState process(SocketWrapper<S> socketWrapper)
-        throws IOException {
-        RequestInfo rp = request.getRequestProcessor();
-        rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);
+        throws IOException {                                    // 这里的 RequestInfo 有点向 ApplicationContextFacade 对应 ApplicationContext
+        RequestInfo rp = request.getRequestProcessor();         // 这里的 Request, Response 对应着就是 Http11Processor 新建的时候创建的
+        rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);   // Request 进入 Constants.STAGE_PARSE ( HTTP 解析阶段)
 
         // Setting up the I/O 设置 SocketWrapper
         setSocketWrapper(socketWrapper);
-        getInputBuffer().init(socketWrapper, endpoint);     // 获取 Socket 中的 InputStream 设置到 InputBuffer, 也就是设置到 Request 中
-        getOutputBuffer().init(socketWrapper, endpoint);   // 获取 Socket 中的 OutputStream 设置到 OutputBuffer, 也就是设置到 Response 中
+        getInputBuffer().init(socketWrapper, endpoint);         // 获取 Socket 中的 InputStream 设置到 InputBuffer, 也就是设置到 Request 中
+        getOutputBuffer().init(socketWrapper, endpoint);        // 获取 Socket 中的 OutputStream 设置到 OutputBuffer, 也就是设置到 Response 中
 
         // Flags
         error = false;
@@ -930,8 +930,21 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
          * 因为活已经都干完了, 如果发现不是最后一个请求, 或者后续还有可能有请求, 那么这里务必需要将 keepalive 的模式的状态还要保持住, 这些属性如 openSocket 和
          * readComplete 等状态, 来保证下一次请求还能正常工作
          */
-        while (!error && keepAlive && !comet && !isAsync() &&
-                httpUpgradeHandler == null && !endpoint.isPaused()) {
+
+        logger.info("!error:" + error);
+        logger.info("!keepAlive:" + keepAlive);
+        logger.info("!comet:" + comet);
+        logger.info("!isAsync():" + isAsync());
+        logger.info("!error:" + error);
+        logger.info("!httpUpgradeHandler:" + httpUpgradeHandler);
+        logger.info("!endpoint.isPaused():" + endpoint.isPaused());
+
+        while (!error &&
+                keepAlive &&
+                !comet &&
+                !isAsync() &&
+                httpUpgradeHandler == null
+                && !endpoint.isPaused()) {
 
             // Parsing the request header                                           // 解析 HTTP 请求的头
             try {
@@ -956,7 +969,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
                     }
                     keptAlive = true;
                     // Set this every time in case limit has been changed via JMX
-                    request.getMimeHeaders().setLimit(endpoint.getMaxHeaderCount());
+                    request.getMimeHeaders().setLimit(endpoint.getMaxHeaderCount());    // 设置最大的 Header 大小
                     // Currently only NIO will ever return false here
                     if (!getInputBuffer().parseHeaders()) {                     // 解析 HTTP 请求的包问头 headers
                         // We've read part of the request, don't recycle it
@@ -1117,6 +1130,16 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             if (breakKeepAliveLoop(socketWrapper)) {                // 查看变量是否符合 跳出大循环
                 break;
             }
+
+
+            logger.info("!error:" + error);
+            logger.info("!keepAlive:" + keepAlive);
+            logger.info("!comet:" + comet);
+            logger.info("!isAsync():" + isAsync());
+            logger.info("!error:" + error);
+            logger.info("!httpUpgradeHandler:" + httpUpgradeHandler);
+            logger.info("!endpoint.isPaused():" + endpoint.isPaused());
+
         }
 
         rp.setStage(org.apache.coyote.Constants.STAGE_ENDED);

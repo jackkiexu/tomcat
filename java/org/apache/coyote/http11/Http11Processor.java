@@ -115,7 +115,7 @@ public class Http11Processor extends AbstractHttp11Processor<Socket> {
             threadRatio = (threadsBusy * 100) / maxThreads;
         }
         // Disable keep-alive if we are running low on threads
-        if (threadRatio > getDisableKeepAlivePercentage()) {
+        if (threadRatio > getDisableKeepAlivePercentage()) {            // 这里是 disable KeepAlive 阀值 (默认 若超过 75 则就返回 false)
             return true;
         }
 

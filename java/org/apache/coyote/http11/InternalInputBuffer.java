@@ -67,7 +67,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
         this.request = request;
         headers = request.getMimeHeaders();
 
-        buf = new byte[headerBufferSize];
+        buf = new byte[headerBufferSize];           // 先构造一个比较大的 用于存储 Header 里面信息的 buffer( 在 AbstractHttp11Protocol 里面 默认是 8M)
 
         inputStreamInputBuffer = new InputStreamInputBuffer();
 
@@ -125,7 +125,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
 
             chr = buf[pos++];
 
-        } while ((chr == Constants.CR) || (chr == Constants.LF));
+        } while ((chr == Constants.CR) || (chr == Constants.LF));       // 判断是否是 换行符号
 
         pos--;
 
@@ -229,6 +229,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
         } else {
             request.requestURI().setBytes(buf, start, end - start);
         }
+        logger.info(new String(request.requestURI().getByteChunk().getBytes(), "utf-8"));
 
         // Spec says single SP but also says be tolerant of multiple and/or HT
         // 这段算是重复代码, 就是忽略空格
@@ -282,6 +283,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
         } else {
             request.protocol().setString("");
         }
+        logger.info(new String(request.protocol().getByteChunk().getBytes(), "utf-8"));
 
         return true;
 
@@ -549,10 +551,10 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
             }
 
             nRead = inputStream.read(buf, pos, buf.length - lastValid);
-            if (nRead > 0) {
+            if (nRead > 0) {                                        //  nRead 就是已经读取的数据
                 lastValid = pos + nRead;
             }
-
+            logger.info(new String(buf, "UTF-8"));
         } else {
 
             if (buf.length - end < 4500) {

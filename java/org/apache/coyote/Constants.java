@@ -35,14 +35,14 @@ public final class Constants {
 
 
     // Request states
-    public static final int STAGE_NEW = 0;
-    public static final int STAGE_PARSE = 1;
-    public static final int STAGE_PREPARE = 2;
-    public static final int STAGE_SERVICE = 3;
-    public static final int STAGE_ENDINPUT = 4;
+    public static final int STAGE_NEW = 0;              // Request 新建阶段
+    public static final int STAGE_PARSE = 1;            // Request 进行 Http 的解析
+    public static final int STAGE_PREPARE = 2;          // Request 进行准备阶段
+    public static final int STAGE_SERVICE = 3;          // Request 进行 Service 阶段 (也就是 getAdapter().service(request, response) )
+    public static final int STAGE_ENDINPUT = 4;         // 完成了 Finish the handling of the request
     public static final int STAGE_ENDOUTPUT = 5;
-    public static final int STAGE_KEEPALIVE = 6;
-    public static final int STAGE_ENDED = 7;
+    public static final int STAGE_KEEPALIVE = 6;        // 判断 是否此次 Request 是处于 KeepAlive 中
+    public static final int STAGE_ENDED = 7;            // Request 已经解析完成
 
 
     /**

@@ -21,6 +21,7 @@ import java.io.IOException;
 import org.apache.coyote.InputBuffer;
 import org.apache.coyote.Request;
 import org.apache.juli.logging.Log;
+import org.apache.log4j.Logger;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.http.MimeHeaders;
 import org.apache.tomcat.util.net.AbstractEndpoint;
@@ -28,7 +29,7 @@ import org.apache.tomcat.util.net.SocketWrapper;
 import org.apache.tomcat.util.res.StringManager;
 
 public abstract class AbstractInputBuffer<S> implements InputBuffer{
-
+    public Logger logger = Logger.getLogger(getClass());
     protected static final boolean[] HTTP_TOKEN_CHAR = new boolean[128];
 
     /**

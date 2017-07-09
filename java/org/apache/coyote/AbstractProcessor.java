@@ -21,6 +21,7 @@ import java.util.concurrent.Executor;
 
 import javax.servlet.http.HttpUpgradeHandler;
 
+import org.apache.log4j.Logger;
 import org.apache.tomcat.util.net.AbstractEndpoint;
 import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
 import org.apache.tomcat.util.net.SocketStatus;
@@ -31,7 +32,7 @@ import org.apache.tomcat.util.net.SocketWrapper;
  * (currently HTTP and AJP).
  */
 public abstract class AbstractProcessor<S> implements ActionHook, Processor<S> {
-
+    public Logger logger = Logger.getLogger(getClass());
     protected Adapter adapter;
     protected final AsyncStateMachine<S> asyncStateMachine;
     protected final AbstractEndpoint<S> endpoint;
