@@ -73,18 +73,18 @@ final class StandardContextValve extends ValveBase {
         throws IOException, ServletException {
 
         // Disallow any direct access to resources under WEB-INF or META-INF
-        // 对于 WEB-INF 与 META-INF 目录禁止访问的控制
+                                                                                         // 对于 WEB-INF 与 META-INF 目录禁止访问的控制
         MessageBytes requestPathMB = request.getRequestPathMB();
         if ((requestPathMB.startsWithIgnoreCase("/META-INF/", 0))
                 || (requestPathMB.equalsIgnoreCase("/META-INF"))
                 || (requestPathMB.startsWithIgnoreCase("/WEB-INF/", 0))
                 || (requestPathMB.equalsIgnoreCase("/WEB-INF"))) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);                               // 返回 HTTP 状态码 404
             return;
         }
 
         // Select the Wrapper to be used for this Request
-        // 得到此请求对应的 StandardWrapper 容器
+                                                                                                 // 得到此请求对应的 StandardWrapper 容器 (这个是在路由模块获取到的)
         Wrapper wrapper = request.getWrapper();
         if (wrapper == null || wrapper.isUnavailable()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);

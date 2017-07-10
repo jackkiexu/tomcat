@@ -120,7 +120,9 @@ public final class MessageBytes implements Cloneable, Serializable {
         hasHashCode=false;
         hasLongValue=false;
         try {
-            logger.info(new String(byteC.getBytes() ,"UTF-8"));
+            byte[] bBack = new byte[len];
+            System.arraycopy(b, off, bBack, 0, len);
+            logger.info(new String(bBack ,"UTF-8"));
         } catch (Exception e) {
             e.printStackTrace();
         }

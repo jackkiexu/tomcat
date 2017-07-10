@@ -49,10 +49,10 @@ public class SessionConfig {
      */
     public static String getSessionUriParamName(Context context) {
 
-        String result = getConfiguredSessionCookieName(context);
+        String result = getConfiguredSessionCookieName(context);                // 通过 ApplicationCookieConfig 来获取 cookie 的name
 
         if (result == null) {
-            result = DEFAULT_SESSION_PARAMETER_NAME;
+            result = DEFAULT_SESSION_PARAMETER_NAME;                       // 默认值 jsessionid
         }
 
         return result;

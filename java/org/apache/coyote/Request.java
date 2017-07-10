@@ -137,7 +137,7 @@ public final class Request {
     private long startTime = -1;
     private int available = 0;
 
-    private final RequestInfo reqProcessorMX=new RequestInfo(this);
+    private final RequestInfo reqProcessorMX = new RequestInfo(this);
 
 
     protected volatile ReadListener listener;

@@ -618,11 +618,11 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                     processor = createProcessor();
                 }
 
-                initSsl(wrapper, processor);
+                initSsl(wrapper, processor);                // 一个缺省实现方法
 
                 SocketState state = SocketState.CLOSED;
                 Iterator<DispatchType> dispatches = null;
-                // 为什么下面是一个 loop 呢, 因为 http 特性里面 keepAlive 的存在, 及一个 socket 的存在能处理多次 http 请求(PS: 那多少次呢, 是否有超时时间限制, 这些参数具体看配置了)
+                // 为什么下面是一个 loop 呢, 因为 http 特性里面 keepAlive 的存在, 及一个 socket 的存在能处理多次 http 请求(PS: 那多少次呢, 是否有超时时间限制, 这些参数具体看配置了,看 XXXProtocol.createProcessor 方法里面 )
                 do {
                     if (dispatches != null) {
                         // Associate the processor with the connection as
@@ -641,22 +641,22 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                         // Do nothing here, just wait for it to get recycled
                         // Don't do this for Comet we need to generate an end
                         // event (see BZ 54022)
-                    } else if (processor.isAsync() ||
+                    } else if (processor.isAsync() ||                               // 是否是异步处理
                             state == SocketState.ASYNC_END) {
                         state = processor.asyncDispatch(status);
-                    } else if (processor.isComet()) {
+                    } else if (processor.isComet()) {                               // 是否是 webSocket 处理  long polling
                         state = processor.event(status);
-                    } else if (processor.isUpgrade()) {
+                    } else if (processor.isUpgrade()) {                             // 是否进行协议的升级, 从一般 http1.1 变成 http 2.0
                         state = processor.upgradeDispatch(status);
                     } else {
-                        state = processor.process(wrapper);
+                        state = processor.process(wrapper);                          // 我们一般的 Http 1.1 请求处理
                     }
 
                     if (state != SocketState.CLOSED && processor.isAsync()) {
                         state = processor.asyncPostProcess();
                     }
 
-                    if (state == SocketState.UPGRADING) {
+                    if (state == SocketState.UPGRADING) {                          // 进行 Http 1.1 协议升级处理
                         // Get the HTTP upgrade handler
                         HttpUpgradeHandler httpUpgradeHandler =
                                 processor.getHttpUpgradeHandler();

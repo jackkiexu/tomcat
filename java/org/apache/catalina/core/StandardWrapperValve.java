@@ -103,13 +103,13 @@ final class StandardWrapperValve
         requestCount.incrementAndGet();                                          // 增加请求次数
 
         // 得到 StandardWrapper 容器
-        // 每个请求都会对应相应的 StandardWrapper 及 StandardWrapperValve 对象
+                                                                                     // 每个请求都会对应相应的 StandardWrapper 及 StandardWrapperValve 对象
         StandardWrapper wrapper = (StandardWrapper) getContainer();
 
         // 此次请求对应的 servlet
         Servlet servlet = null;
 
-        // 得到此次请求的 StandardContext 对象
+                                                                                     // 得到此次请求的 StandardContext 对象
         Context context = (Context) wrapper.getParent();
 
         // Check for the application being marked unavailable
@@ -120,7 +120,7 @@ final class StandardWrapperValve
         }
 
         // Check for the servlet being marked unavailable
-        if (!unavailable && wrapper.isUnavailable()) {
+        if (!unavailable && wrapper.isUnavailable()) {                                      // 若 Context 的状态现在是 disavailable，则请求如何处理
             container.getLogger().info(sm.getString("standardWrapper.isUnavailable",
                     wrapper.getName()));
             long available = wrapper.getAvailable();
@@ -185,7 +185,7 @@ final class StandardWrapperValve
             request.setComet(true);
         }
 
-        MessageBytes requestPathMB = request.getRequestPathMB();
+        MessageBytes requestPathMB = request.getRequestPathMB();                              // 获取 请求的 Path
         DispatcherType dispatcherType = DispatcherType.REQUEST;
         if (request.getDispatcherType()==DispatcherType.ASYNC) dispatcherType = DispatcherType.ASYNC;
         request.setAttribute(Globals.DISPATCHER_TYPE_ATTR,dispatcherType);
@@ -299,7 +299,7 @@ final class StandardWrapperValve
                 // processing of all subsequent events.
                 filterChain.reuse();
             } else {
-                filterChain.release();
+                filterChain.release();                      // 释放 对应的 ApplicationFilterChain 的构造
             }
         }
 

@@ -81,7 +81,7 @@ public final class ApplicationFilterFactory {
 
         // 请求路径的获取
         String requestPath = null;
-        Object attribute = request.getAttribute(
+        Object attribute = request.getAttribute(                            // 获取请求路径
                 Globals.DISPATCHER_REQUEST_PATH_ATTR);
 
         if (attribute != null){
@@ -108,7 +108,7 @@ public final class ApplicationFilterFactory {
                 }
             } else {
                 filterChain = (ApplicationFilterChain) req.getFilterChain();
-                if (filterChain == null) {
+                if (filterChain == null) {                                      // 构建 Request 对应的 ApplicationFilterChain
                     filterChain = new ApplicationFilterChain();
                     req.setFilterChain(filterChain);
                 }
@@ -117,15 +117,15 @@ public final class ApplicationFilterFactory {
             // Request dispatcher in use
             filterChain = new ApplicationFilterChain();
         }
-        // 设置 servlet
+                                                                                // ApplicationFilterChain 设置 servlet
         filterChain.setServlet(servlet);
 
         filterChain.setSupport
-            (((StandardWrapper)wrapper).getInstanceSupport());
+            (((StandardWrapper)wrapper).getInstanceSupport());                  // 这里的 InstanceSupport 其实就是 Wrapper 的一个包装类
 
         // Acquire the filter mappings for this Context
         StandardContext context = (StandardContext) wrapper.getParent();
-        FilterMap filterMaps[] = context.findFilterMaps();                  // 从 context 中拿到 context 对应的所有 filter
+        FilterMap filterMaps[] = context.findFilterMaps();                     // 从 context 中拿到 context 对应的所有 filter
 
         // If there are no filter mappings, we are done
         if ((filterMaps == null) || (filterMaps.length == 0))

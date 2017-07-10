@@ -51,7 +51,7 @@ public class Http11Processor extends AbstractHttp11Processor<Socket> {
     public Http11Processor(int headerBufferSize, JIoEndpoint endpoint,
             int maxTrailerSize, int maxExtensionSize) {
 
-        super(endpoint);
+        super(endpoint);        //   在初始化时, 会构建 Request, Response
 
         inputBuffer = new InternalInputBuffer(request, headerBufferSize);
         request.setInputBuffer(inputBuffer);
@@ -59,7 +59,7 @@ public class Http11Processor extends AbstractHttp11Processor<Socket> {
         outputBuffer = new InternalOutputBuffer(response, headerBufferSize);
         response.setOutputBuffer(outputBuffer);
 
-        initializeFilters(maxTrailerSize, maxExtensionSize);
+        initializeFilters(maxTrailerSize, maxExtensionSize);                    // 初始化 buffer 的 Filter
     }
 
 

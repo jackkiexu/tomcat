@@ -44,7 +44,7 @@ public final class Constants {
     /**
      * CRLF.
      */
-    public static final String CRLF = "\r\n";
+    public static final String CRLF = "\r\n";               // 换行 + 回车
 
 
     /**
@@ -57,36 +57,36 @@ public final class Constants {
     /**
      * CR.
      */
-    public static final byte CR = (byte) '\r';
+    public static final byte CR = (byte) '\r';              // 换行
 
 
     /**
      * LF.
      */
-    public static final byte LF = (byte) '\n';
+    public static final byte LF = (byte) '\n';              // 回车
 
 
     /**
      * SP.
      */
-    public static final byte SP = (byte) ' ';
+    public static final byte SP = (byte) ' ';               // 空格
 
 
     /**
      * HT.
      */
-    public static final byte HT = (byte) '\t';
+    public static final byte HT = (byte) '\t';              // 水平制表符
 
 
     /**
      * COLON.
      */
-    public static final byte COLON = (byte) ':';
+    public static final byte COLON = (byte) ':';           // 冒号
 
     /**
      * SEMI_COLON.
      */
-    public static final byte SEMI_COLON = (byte) ';';
+    public static final byte SEMI_COLON = (byte) ';';     // 分号
 
 
 

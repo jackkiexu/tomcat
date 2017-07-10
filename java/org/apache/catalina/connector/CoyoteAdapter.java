@@ -473,8 +473,8 @@ public class CoyoteAdapter implements Adapter {
         if (request == null) {
             // Tomcat 容器中传递的 Request 和 Response 都是这里创建的 Request 及 Response 对象
             // Create objects
-            // 通过 Connector 创建 org.apache.catalina.connector.Request对象
-            request = connector.createRequest();
+            // 通过 Connector 创建 org.apache.catalina.connector.Request对象,org.apache.catalina.connectorResponse 对象 这里的 Request, Response 实现了 ServletRequest/ServletResponse, 并且在内部属性中拥有 org.apache.coyote.Request/Response
+            request = connector.createRequest();                                        // 这里的 Request 或实现 ServletRequest接口, 并且会传递到下游容器中           //在创建 Connector 时会构建一个 CoyoteAdapter(Connector)
             // 设置 org.apache.coyote.Request 对象
             request.setCoyoteRequest(req);
             // 通过 Connector 创建 org.apache.catalina.connectorResponse 对象
@@ -492,7 +492,7 @@ public class CoyoteAdapter implements Adapter {
             res.setNote(ADAPTER_NOTES, response);
 
             // Set query string encoding
-            req.getParameters().setQueryStringEncoding
+            req.getParameters().setQueryStringEncoding                              // 获取 URI 的编码格式
                 (connector.getURIEncoding());
 
         }
@@ -511,9 +511,9 @@ public class CoyoteAdapter implements Adapter {
 
             // Parse and set Catalina and configuration specific
             // request parameters
-            req.getRequestProcessor().setWorkerThreadName(THREAD_NAME.get());
+            req.getRequestProcessor().setWorkerThreadName(THREAD_NAME.get());                                  // 在 RequestInfo 里面设置对应的 ThreadName (PS: 可以看到 这里 ThreadLocal 只有对对应 get, 但没有对应的 remove, 为什么呢?  因为这里存储 Tomcat 工作线程池的领地,  工作线程池 never stop, 除非停止 Tomcat, 并且这里缓存的数据的大小也是非常小的, 也不会也 其他的 WebappClassLoader/WebappClassLoader 生产出来的来有任何挂钩)
 
-            // 下面的 postParseRequest 是用来处理请求映射
+            // 下面的 postParseRequest 是用来处理请求映射 (获取 host, context, wrapper, URI 后面的参数, sessionId )
             boolean postParseSuccess = postParseRequest(req, request, res, response);
             if (postParseSuccess) {
                 //check valves if we support async
@@ -732,9 +732,9 @@ public class CoyoteAdapter implements Adapter {
                 return false;
             }
             // Character decoding
-            convertURI(decodedURI, request);                                         // 将 URI 进行编码
+            convertURI(decodedURI, request);                                         // 将 URI 进行编码  (这里会生成 字符编码转化器, 设置到请求的 Request 里面, 并且会传递到下游)
             // Check that the URI is still normalized
-            if (!checkNormalize(req.decodedURI())) {
+            if (!checkNormalize(req.decodedURI())) {                                // 对 URI 进行校验, 不行的话, 直接返回 400
                 res.setStatus(400);
                 res.setMessage("Invalid URI character encoding");
                 connector.getService().getContainer().logAccess(
@@ -798,8 +798,8 @@ public class CoyoteAdapter implements Adapter {
             // MappingData.contexts 中存放着所有的结果
             connector.getService().getMapper().map(serverName, decodedURI,
                     version, request.getMappingData());
-            request.setContext(request.getMappingData().context);
-            request.setWrapper(request.getMappingData().wrapper);
+            request.setContext(request.getMappingData().context);                           // 设置匹配到的 StandardContext
+            request.setWrapper(request.getMappingData().wrapper);                           // 设置对应的 StandardWrapper
 
             // Single contextVersion therefore no possibility of remap
             if (request.getMappingData().contexts == null) {
@@ -828,7 +828,7 @@ public class CoyoteAdapter implements Adapter {
             /**
              * 直接在 URL 中查找 jsessionId 的参数, 如果有的话, 就代表有 sessionId
              */
-            if (request.getServletContext().getEffectiveSessionTrackingModes()
+            if (request.getServletContext().getEffectiveSessionTrackingModes()                              // 是否支持通过 URI 尾缀 JSessionId 的方式来追踪 Session 的变化
                     .contains(SessionTrackingMode.URL)) {
 
                 // Get the session ID if there was one      // 如果 URL 重写中附带 sessionId
@@ -973,7 +973,7 @@ public class CoyoteAdapter implements Adapter {
         }
         Charset charset = null;
         try {
-            charset = B2CConverter.getCharsetLower(enc);
+            charset = B2CConverter.getCharsetLower(enc);                            // 获取小写的 utf-8
         } catch (UnsupportedEncodingException e1) {
             log.warn(sm.getString("coyoteAdapter.parsePathParam",
                     enc));
@@ -1139,7 +1139,7 @@ public class CoyoteAdapter implements Adapter {
             B2CConverter conv = request.getURIConverter();
             try {
                 if (conv == null) {
-                    conv = new B2CConverter(enc, true);                             // 根据 编码模式生成 字节码转换器
+                    conv = new B2CConverter(enc, true);                             // 根据 编码模式生成 UTF-8, 这个会传递到下面的容器里面, 具体的编码通过 conenctor 来进行设置
                     request.setURIConverter(conv);
                 } else {
                     conv.recycle();                                                  // 为什么会存在 recycle, 因为有 keepalive 特性的存在, request 里面先前就有 转化器  B2CConverter
@@ -1148,7 +1148,7 @@ public class CoyoteAdapter implements Adapter {
                 log.error("Invalid URI encoding; using HTTP default");
                 connector.setURIEncoding(null);
             }
-            if (conv != null) {
+            if (conv != null) {                                                     // 下面这几部操作, 就是根据 connector 里面 设置的 URI 编码模式, 生成字符转化器器, 并且对 URI 进行编码
                 try {
                     conv.convert(bc, cc, true);                                     // 将 URI 里面的数据进行编码
                     uri.setChars(cc.getBuffer(), cc.getStart(), cc.getLength());    // 将 编码后的结果设置到 MessageBytes URI 里面

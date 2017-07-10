@@ -54,13 +54,13 @@ public abstract class AbstractProcessor<S> implements ActionHook, Processor<S> {
 
     public AbstractProcessor(AbstractEndpoint<S> endpoint) {
         this.endpoint = endpoint;
-        asyncStateMachine = new AsyncStateMachine<>(this);
+        asyncStateMachine = new AsyncStateMachine<>(this);    // 新建异步状态机
 
-        request = new Request();
+        request = new Request();                                // 创建 Request
 
-        response = new Response();
-        response.setHook(this);
-        request.setResponse(response);
+        response = new Response();                              // 创建 Response
+        response.setHook(this);                                 // 将 Http11Processor 设置为钩子(用于返回 ACK)
+        request.setResponse(response);                         // Request 关联对应的 response 引用
     }
 
 

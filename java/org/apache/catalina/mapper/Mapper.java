@@ -667,7 +667,7 @@ public final class Mapper {
         }
         host.toChars();
         uri.toChars();
-        internalMap(host.getCharChunk(), uri.getCharChunk(), version,
+        internalMap(host.getCharChunk(), uri.getCharChunk(), version,                   // 路由程序, 根据 URI 中的信息, 匹配对应的 StandardHost, StandardContext, StandardWrapper
                 mappingData);
 
     }
@@ -712,13 +712,13 @@ public final class Mapper {
 
         int nesting = 0;
 
-        // Virtual host mapping
+        // Virtual host mapping                                              // 根据 URI 里面host, 获取 对应的 StandardHost
         if (mappingData.host == null) {
             MappedHost[] hosts = this.hosts;                                // 根据传入的 host, 找到路由表中的 mappedHost
             int pos = findIgnoreCase(hosts, host);
             if ((pos != -1) && (host.equalsIgnoreCase(hosts[pos].name))) {
-                mappingData.host = hosts[pos].object;                      // 基于找到的 MappedHost 找到当前host中应用的列表
-                contexts = hosts[pos].contextList.contexts;
+                mappingData.host = hosts[pos].object;                      // 在 StandardHost 数组中找到当前请求的 StandardHost
+                contexts = hosts[pos].contextList.contexts;              // 通过上一行代码获取的 StandardHost, 从而获取 StandardContext 数组
                 nesting = hosts[pos].contextList.nesting;
             } else {
                 if (defaultHostName == null) {
@@ -735,7 +735,7 @@ public final class Mapper {
             }
         }
 
-        // Context mapping
+        // Context mapping                                                  // 根据 URI 里面的信息, 获取对应的 StandardContext
         if (mappingData.context == null && contexts != null) {
             int pos = find(contexts, uri);
             if (pos == -1) {
@@ -779,7 +779,7 @@ public final class Mapper {
             }
         }
 
-        if (context != null) {
+        if (context != null) {                                                  // 下面这段是 Context 多版本控制的内容了
             ContextVersion[] contextVersions = context.versions;
             int versionCount = contextVersions.length;
             if (versionCount > 1) {
@@ -842,7 +842,7 @@ public final class Mapper {
 
         // Rule 1 -- Exact Match                                    // 精确匹配就是找前面缓存下来的 exactWrappers
         MappedWrapper[] exactWrappers = contextVersion.exactWrappers;
-        internalMapExactWrapper(exactWrappers, path, mappingData);
+        internalMapExactWrapper(exactWrappers, path, mappingData);  // 根据 Servlet
 
         // Rule 2 -- Prefix Match                                   // 路径匹配
         boolean checkJspWelcomeFiles = false;

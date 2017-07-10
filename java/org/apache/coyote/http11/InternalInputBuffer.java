@@ -26,6 +26,7 @@ import org.apache.coyote.InputBuffer;
 import org.apache.coyote.Request;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
+import org.apache.log4j.Logger;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.buf.MessageBytes;
 import org.apache.tomcat.util.net.AbstractEndpoint;
@@ -49,7 +50,7 @@ import org.apache.tomcat.util.net.SocketWrapper;
  * @author <a href="mailto:remm@apache.org">Remy Maucherat</a>
  */
 public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
-
+    public Logger logger = Logger.getLogger(InternalInputBuffer.class);
     private static final Log log = LogFactory.getLog(InternalInputBuffer.class);
 
 
@@ -113,7 +114,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
         // Skipping blank lines
         // 忽略空行
         //
-
+                                                                        // 读取整个 Http 请求发来的 header 中的所有内容
         byte chr = 0;
         do {
 
@@ -124,7 +125,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
             }
 
             chr = buf[pos++];
-
+            logger.info((Byte)chr);
         } while ((chr == Constants.CR) || (chr == Constants.LF));       // 判断是否是 换行符号
 
         pos--;
@@ -154,10 +155,10 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
             }
             // Spec says single SP but it also says be tolerant of HT
             // 查出第一个空格, tab 居然也是允许的
-            if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {
+            if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {         // 是空格 或水平制表符
                 space = true; // 跳出循环
-                // 把下标记录下来, 这里的 method() 得到一个 Request 的 MessageBytes: methodMB
-                request.method().setBytes(buf, start, pos - start);
+                // 把下标记录下来, 这里的 method() 得到一个 Request 的 MessageBytes: methodMB (其实就是读取 请求用的方法 POST, GET 等)
+                request.method().setBytes(buf, start, pos - start);             // 这里处理 HTTP 请求头中的第一个 标识 Method (GET, POT, DELETE 等)
             }
 
             pos++;
@@ -173,7 +174,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
                 if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
-            if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {
+            if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {         // 是 空格 / 水平指标符号
                 pos++;  // 忽略的方式就是继续移动下标
             } else {
                 space = false;
@@ -201,7 +202,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
 
             // Spec says single SP but it also says be tolerant of HT
             // 寻找第二个空格, 第一个空格和第二个空格之间就是传说中的 URI
-            if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {
+            if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {                 // 是空格 / 水平制表符号
                 space = true;
                 end = pos;
             } else if ((buf[pos] == Constants.CR)
@@ -210,7 +211,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
                 eol = true;     // 为了兼容 HTTP 0.9 格式
                 space = true;
                 end = pos;
-            } else if ((buf[pos] == Constants.QUESTION) // 遇到 '?'
+            } else if ((buf[pos] == Constants.QUESTION) // 遇到 '?'                    // 遇到 URI 中的问号
                        && (questionPos == -1)) {
                 questionPos = pos; // 把问号的位置先记录下来
             }
@@ -219,8 +220,8 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
 
         }
         // 把可能包含问号的 URI 的起始位和结束位记录下来
-        request.unparsedURI().setBytes(buf, start, end - start);
-        if (questionPos >= 0) { // 有问号的情况
+        request.unparsedURI().setBytes(buf, start, end - start);                        // 获取 Http 请求中的 URI
+        if (questionPos >= 0) {                                                          // URI 请求中 有问号的情况
             // 问号位置记录
             request.queryString().setBytes(buf, questionPos + 1,
                                            end - questionPos - 1);
@@ -239,7 +240,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
                 if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
-            if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {
+            if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {                 // 是空格 或 水平制表符号
                 pos++;
             } else {
                 space = false;
@@ -266,9 +267,9 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
             // 查出 /r/n
-            if (buf[pos] == Constants.CR) {
+            if (buf[pos] == Constants.CR) {                         // 是 换行
                 end = pos;
-            } else if (buf[pos] == Constants.LF) {
+            } else if (buf[pos] == Constants.LF) {                 // 是 回车符号
                 if (end == 0)
                     end = pos;
                 eol = true;
@@ -279,7 +280,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
         }
         // 至此把 head 分成 三部分, 放到 Request 定义好的 MessageBytes 中去了
         if ((end - start) > 0) {
-            request.protocol().setBytes(buf, start, end - start);
+            request.protocol().setBytes(buf, start, end - start);                               // 这里就是获取 Http 请求中的协议
         } else {
             request.protocol().setString("");
         }
@@ -302,7 +303,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
                     sm.getString("iib.parseheaders.ise.error"));
         }
 
-        while (parseHeader()) {
+        while (parseHeader()) {             // 这里其实就是在 解析 Http header 里面的键值对 (loop 一次, 读取一行数据)
             // Loop until we run out of headers
         }
 
@@ -337,9 +338,9 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
 
             chr = buf[pos];
 
-            if (chr == Constants.CR) {
+            if (chr == Constants.CR) {                              // 遇到换行符
                 // Skip
-            } else if (chr == Constants.LF) {
+            } else if (chr == Constants.LF) {                      // 遇到回车符
                 pos++;
                 return false;
             } else {
@@ -369,7 +370,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
 
-            if (buf[pos] == Constants.COLON) {
+            if (buf[pos] == Constants.COLON) {                      // 遇到冒号 (Http head 里面的数据都是 以冒号分割的 KV 对)
                 colon = true;
                 headerValue = headers.addValue(buf, start, pos - start);
             } else if (!HTTP_TOKEN_CHAR[buf[pos]]) {
@@ -380,7 +381,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
             }
 
             chr = buf[pos];
-            if ((chr >= Constants.A) && (chr <= Constants.Z)) {
+            if ((chr >= Constants.A) && (chr <= Constants.Z)) {      // 是否是正确的英文字符
                 buf[pos] = (byte) (chr - Constants.LC_OFFSET);
             }
 
@@ -412,7 +413,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
                         throw new EOFException(sm.getString("iib.eof.error"));
                 }
 
-                if ((buf[pos] == Constants.SP) || (buf[pos] == Constants.HT)) {
+                if ((buf[pos] == Constants.SP) || (buf[pos] == Constants.HT)) {         // 空格 或 水平制表符号
                     pos++;
                 } else {
                     space = false;
@@ -431,11 +432,11 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
                         throw new EOFException(sm.getString("iib.eof.error"));
                 }
 
-                if (buf[pos] == Constants.CR) {
+                if (buf[pos] == Constants.CR) {                             // 换行符
                     // Skip
-                } else if (buf[pos] == Constants.LF) {
+                } else if (buf[pos] == Constants.LF) {                     // 回车符号
                     eol = true;
-                } else if (buf[pos] == Constants.SP) {
+                } else if (buf[pos] == Constants.SP) {                     // 空格符号
                     buf[realPos] = buf[pos];
                     realPos++;
                 } else {
@@ -460,7 +461,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
             }
 
             chr = buf[pos];
-            if ((chr != Constants.SP) && (chr != Constants.HT)) {
+            if ((chr != Constants.SP) && (chr != Constants.HT)) {               // 空格 或 水平制表符号
                 validLine = false;
             } else {
                 eol = false;
@@ -473,7 +474,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
         }
 
         // Set the header value
-        headerValue.setBytes(buf, start, realPos - start);
+        headerValue.setBytes(buf, start, realPos - start);                      // 设置 冒号后面对应的值
 
         return true;
 
@@ -550,7 +551,7 @@ public class InternalInputBuffer extends AbstractInputBuffer<Socket> {
                     (sm.getString("iib.requestheadertoolarge.error"));
             }
 
-            nRead = inputStream.read(buf, pos, buf.length - lastValid);
+            nRead = inputStream.read(buf, pos, buf.length - lastValid);     // 这里就是读取 Http 请求的数据, 默认最大 8M
             if (nRead > 0) {                                        //  nRead 就是已经读取的数据
                 lastValid = pos + nRead;
             }

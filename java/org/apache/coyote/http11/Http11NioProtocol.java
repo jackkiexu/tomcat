@@ -48,7 +48,7 @@ import org.apache.tomcat.util.net.SocketWrapper;
  * http://blog.csdn.net/yfkscu/article/details/38144029
  *
  *
- *
+ * Http11NioProtocol 对应的 处理器是 org.apache.coyote.http11.Http11NioProcessor, 通过 Http11ConnectionHandler.createProcessor 创建出来
  * @author Remy Maucherat
  * @author Costin Manolache
  */

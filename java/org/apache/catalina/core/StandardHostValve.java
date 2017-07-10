@@ -111,18 +111,18 @@ final class StandardHostValve extends ValveBase {
      */
     @Override
     public final void invoke(Request request, Response response)
-        throws IOException, ServletException {
+        throws IOException, ServletException {                          // PS: 在这个 Valve 上面还有一个 ErrorReportValve
 
         // Select the Context to be used for this Request
         // 获取此次请求对应的 StandardContext 容器
-        Context context = request.getContext(); // 这里的 Context 是通过 Mapper 路由获取到的
+        Context context = request.getContext();                         // 这里的 Context 是通过 Mapper 路由获取到的
         if (context == null) {
             response.sendError
                 (HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                  sm.getString("standardHost.noContext"));
             return;
         }
-        // 线程上下文类加载器切换成当前 WebApp 的类加载器
+                                                                        // 线程上下文类加载器切换成当前 StandardContext 的 WebappClassLoader
         context.bind(Globals.IS_SECURITY_ENABLED, MY_CLASSLOADER);
 
         if (request.isAsyncSupported()) {
@@ -136,11 +136,11 @@ final class StandardHostValve extends ValveBase {
         // An async error page may dispatch to another resource. This flag helps
         // ensure an infinite error handling loop is not entered
         boolean errorAtStart = response.isError();
-        if (asyncAtStart || context.fireRequestInitEvent(request)) {
+        if (asyncAtStart || context.fireRequestInitEvent(request)) {                                // 这一块是异步处理的过程
 
             // Ask this Context to process this request
             try {
-                // 调用 StandardContext 容器中管道 Pipeline 中的第一个 Valve
+                                                                                                   // 调用 StandardContext 容器中管道 Pipeline 中的第一个 Valve
                 context.getPipeline().getFirst().invoke(request, response);
             } catch (Throwable t) {
                 ExceptionUtils.handleThrowable(t);
@@ -188,7 +188,7 @@ final class StandardHostValve extends ValveBase {
             request.getSession(false);
         }
         // 还原 类加载器
-        context.unbind(Globals.IS_SECURITY_ENABLED, MY_CLASSLOADER);
+        context.unbind(Globals.IS_SECURITY_ENABLED, MY_CLASSLOADER);                    // 还原为 StandardHost 的类加载器
     }
 
 

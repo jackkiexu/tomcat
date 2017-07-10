@@ -247,7 +247,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
 
     public AbstractHttp11Processor(AbstractEndpoint<S> endpoint) {
-        super(endpoint);
+        super(endpoint);    // 在初始化时, 会构建 Request, Response
         userDataHelper = new UserDataHelper(getLog());
     }
 
@@ -950,13 +950,13 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             try {
                 setRequestLineReadTimeout();
                 // 解析 HTTP 请求的method, requestURL, protocol 等
-                if (!getInputBuffer().parseRequestLine(keptAlive)) {
+                if (!getInputBuffer().parseRequestLine(keptAlive)) {             // 解析 Http 请求头中的 方法, URI, 协议
                     if (handleIncompleteRequestLineRead()) {
                         break;
                     }
                 }
 
-                if (endpoint.isPaused()) {
+                if (endpoint.isPaused()) {                                                              // 默认值 false(Tomcat协议处理是否暂停)
                     // 503 - Service unavailable
                     response.setStatus(503);
                     error = true;
@@ -967,11 +967,11 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
                     if (request.getStartTime() < 0) {
                         request.setStartTime(System.currentTimeMillis());
                     }
-                    keptAlive = true;
+                    keptAlive = true;                                                                // KeepAlive 默认值 true
                     // Set this every time in case limit has been changed via JMX
-                    request.getMimeHeaders().setLimit(endpoint.getMaxHeaderCount());    // 设置最大的 Header 大小
+                    request.getMimeHeaders().setLimit(endpoint.getMaxHeaderCount());        // 设置最大的 Header 大小
                     // Currently only NIO will ever return false here
-                    if (!getInputBuffer().parseHeaders()) {                     // 解析 HTTP 请求的包问头 headers
+                    if (!getInputBuffer().parseHeaders()) {                                   // 解析 HTTP 请求的包问头 headers
                         // We've read part of the request, don't recycle it
                         // instead associate it with the socket
                         openSocket = true;
@@ -1034,10 +1034,10 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             if (maxKeepAliveRequests == 1) {
                 keepAlive = false;
             } else if (maxKeepAliveRequests > 0 &&
-                    socketWrapper.decrementKeepAlive() <= 0) {
+                    socketWrapper.decrementKeepAlive() <= 0) {          // 进行 KeepAlive 情况下的请求数减一操作
                 keepAlive = false;
             }
-
+                                                                                    // 程序到这里, 已经到 Http 请求中Header 里面的信息都读取出来, 并进行解析
             // Process the request in the adapter                                   将消息
             if (!error) {
                 try {
@@ -1178,12 +1178,12 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         contentDelimitation = false;
         expectation = false;
 
-        prepareRequestInternal();
+        prepareRequestInternal();                            // 空实现一个
 
         if (endpoint.isSSLEnabled()) {
             request.scheme().setString("https");
         }
-        MessageBytes protocolMB = request.protocol();       // 通过请求头来判断 keepalive 是否支持
+        MessageBytes protocolMB = request.protocol();                           // 通过请求头中包含的协议信息
         if (protocolMB.equals(Constants.HTTP_11)) {
             http11 = true;
             protocolMB.setString(Constants.HTTP_11);
@@ -1208,14 +1208,14 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             response.setStatus(505);
         }
 
-        MessageBytes methodMB = request.method();
+        MessageBytes methodMB = request.method();                                   // 设置请求方法
         if (methodMB.equals(Constants.GET)) {
             methodMB.setString(Constants.GET);
         } else if (methodMB.equals(Constants.POST)) {
             methodMB.setString(Constants.POST);
         }
 
-        MimeHeaders headers = request.getMimeHeaders();
+        MimeHeaders headers = request.getMimeHeaders();                             // 获取 Http 请求头里面的 KV 信息
 
         // Check connection header
         MessageBytes connectionValueMB = headers.getValue(Constants.CONNECTION);    // 通过请求头中的 Connection 判断是否是 Close 状态, 来判断 Keepalive 是否需要关闭
@@ -1282,7 +1282,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         }
 
         // Input filter setup
-        InputFilter[] inputFilters = getInputBuffer().getFilters();
+        InputFilter[] inputFilters = getInputBuffer().getFilters();             // 默认情况下 Filter 是一个空的数组
 
         // Parse transfer-encoding header
         MessageBytes transferEncodingValueMB = null;
@@ -1363,7 +1363,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             contentDelimitation = true;
         }
 
-        if (error) {
+        if (error) {                // 若出现错误, 则进行记录
             getAdapter().log(request, response, 0);
         }
     }

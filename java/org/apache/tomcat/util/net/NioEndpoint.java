@@ -574,9 +574,9 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                 if (sslContext != null) {
                     SSLEngine engine = createSSLEngine();
                     int appbufsize = engine.getSession().getApplicationBufferSize();
-                    NioBufferHandler bufhandler = new NioBufferHandler(Math.max(appbufsize,socketProperties.getAppReadBufSize()),
-                                                                       Math.max(appbufsize,socketProperties.getAppWriteBufSize()),
-                                                                       socketProperties.getDirectBuffer());
+                    NioBufferHandler bufhandler = new NioBufferHandler(Math.max(appbufsize,socketProperties.getAppReadBufSize()),       // socket 读取的最大 BufferSize 默认 8M
+                                                                       Math.max(appbufsize,socketProperties.getAppWriteBufSize()),      // socket 写会数据, 最大 8M
+                                                                       socketProperties.getDirectBuffer());                             // 是否启用堆外的内存
                     channel = new SecureNioChannel(socket, engine, bufhandler, selectorPool);
                 } else {
                     // normal tcp setup

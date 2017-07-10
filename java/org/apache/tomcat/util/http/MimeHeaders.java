@@ -20,6 +20,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Enumeration;
 
+import org.apache.log4j.Logger;
 import org.apache.tomcat.util.buf.MessageBytes;
 import org.apache.tomcat.util.res.StringManager;
 
@@ -95,7 +96,7 @@ public class MimeHeaders {
      *  XXX  make it configurable ( fine-tuning of web-apps )
      */
     public static final int DEFAULT_HEADER_SIZE=8;
-
+    public Logger logger = Logger.getLogger(MimeHeaders.class);
     private static final StringManager sm =
             StringManager.getManager("org.apache.tomcat.util.http");
 
@@ -240,7 +241,7 @@ public class MimeHeaders {
      * field has not had its name or value initialized.
      */
     private MimeHeaderField createHeader() {
-        if (limit > -1 && count >= limit) {
+        if (limit > -1 && count >= limit) {                         // 查看 Http 请求头里面 的 KV 对个数
             throw new IllegalStateException(sm.getString(
                     "headers.maxCountFail", Integer.valueOf(limit)));
         }
@@ -280,6 +281,13 @@ public class MimeHeaders {
     {
         MimeHeaderField mhf=createHeader();
         mhf.getName().setBytes(b, startN, len);
+        try {
+            byte[] bBack = new byte[len];
+            System.arraycopy(b, startN, bBack, 0, len);
+            logger.info(new String(bBack ,"UTF-8"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return mhf.getValue();
     }
 
