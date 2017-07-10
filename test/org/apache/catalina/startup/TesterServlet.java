@@ -23,6 +23,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 public class TesterServlet extends HttpServlet {
 
@@ -33,6 +34,8 @@ public class TesterServlet extends HttpServlet {
 
         resp.setContentType("text/plain");
         PrintWriter out = resp.getWriter();
+        HttpSession httpSession = req.getSession();
+        httpSession.setAttribute("name", "xjk");
         out.print("OK");
     }
 }
