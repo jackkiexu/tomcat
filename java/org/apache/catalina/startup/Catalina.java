@@ -64,6 +64,8 @@ import org.xml.sax.SAXParseException;
  *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
+ *
+ * 参考资料
  */
 public class Catalina {
 
@@ -640,6 +642,7 @@ public class Catalina {
 
     /**
      * Start a new server instance.
+     * 创建一个 tomcat Server 的实例
      */
     public void start() {
 

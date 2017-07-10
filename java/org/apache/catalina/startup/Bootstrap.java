@@ -46,6 +46,10 @@ import org.apache.juli.logging.LogFactory;
  *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
+ *
+ * 参考资料
+ * http://blog.csdn.net/fjslovejhl/article/details/19995383
+ *
  */
 public final class Bootstrap {
 
@@ -54,14 +58,14 @@ public final class Bootstrap {
     /**
      * Daemon object used by main.
      */
-    private static Bootstrap daemon = null;
-
+    private static Bootstrap daemon = null;                 // 当前类型的一个引用
+    // 这两个其实一般被赋值为 tomcta 的根路径 (可以通过 catalina.sh 里面获取得到)
     private static final File catalinaBaseFile;
     private static final File catalinaHomeFile;
 
     private static final Pattern PATH_PATTERN = Pattern.compile("(\".*?\")|(([^,])*)");
 
-    static {
+    static {    // 进行一些类型的 初始化
         // Will always be non-null
         String userDir = System.getProperty("user.dir");
 
@@ -81,7 +85,7 @@ public final class Bootstrap {
         if (homeFile == null) {
             // First fall-back. See if current directory is a bin directory
             // in a normal Tomcat install
-            File bootstrapJar = new File(userDir, "bootstrap.jar");
+            File bootstrapJar = new File(userDir, "bootstrap.jar");             // Tomcat 的启动 jar 包
 
             if (bootstrapJar.exists()) {
                 File f = new File(userDir, "..");
@@ -95,7 +99,7 @@ public final class Bootstrap {
 
         if (homeFile == null) {
             // Second fall-back. Use current directory
-            File f = new File(userDir);
+            File f = new File(userDir);                                             // 当前陈旭的根路径
             try {
                 homeFile = f.getCanonicalFile();
             } catch (IOException ioe) {
@@ -110,7 +114,7 @@ public final class Bootstrap {
         // Then base
         String base = System.getProperty(Globals.CATALINA_BASE_PROP);
         if (base == null) {
-            catalinaBaseFile = catalinaHomeFile;
+            catalinaBaseFile = catalinaHomeFile;                            // 从这里可以看出 catalinaBase = catalinaHome
         } else {
             File baseFile = new File(base);
             try {
@@ -129,13 +133,14 @@ public final class Bootstrap {
 
     /**
      * Daemon reference.
+     * 当前 tomcat 的后台,  org.apache.catalina.startup.Catalina 对象, 它才是用于负者具体的 server 的启动
      */
     private Object catalinaDaemon = null;
 
-
-    protected ClassLoader commonLoader = null;
-    protected ClassLoader catalinaLoader = null;
-    protected ClassLoader sharedLoader = null;
+    // 3 个层次的 classLoader, commonLoader 是下面两个 loader 的父 classLoader,
+    protected ClassLoader commonLoader = null;          // tomcat 与 app 都可见
+    protected ClassLoader catalinaLoader = null;       // 只能 tomcat 可见
+    protected ClassLoader sharedLoader = null;          // 只有当前的 webApp 运用可见
 
 
     // -------------------------------------------------------- Private Methods
@@ -250,12 +255,13 @@ public final class Bootstrap {
 
     /**
      * Initialize daemon.
+     * 初始化当前的 tomcat 后台, 主要是创建 org.apache.catalina.start.Catalina 对象, 并且设置它的 classLoader 为catalinaLoader
      */
     public void init() throws Exception {
 
-        initClassLoaders();
+        initClassLoaders();                                                 // 初始化 classLoader
 
-        Thread.currentThread().setContextClassLoader(catalinaLoader);
+        Thread.currentThread().setContextClassLoader(catalinaLoader);    // 设置当前线程的 classLoader
 
         SecurityClassLoad.securityClassLoad(catalinaLoader);
 
@@ -264,8 +270,8 @@ public final class Bootstrap {
             log.debug("Loading startup class");
         Class<?> startupClass =
             catalinaLoader.loadClass
-            ("org.apache.catalina.startup.Catalina");
-        Object startupInstance = startupClass.newInstance();
+            ("org.apache.catalina.startup.Catalina");               // 加载 org.apache.catalina.startup.Catalina 类型
+        Object startupInstance = startupClass.newInstance();              // 创建 org.apache.catalina.startup.Catalina 对象
 
         // Set the shared extensions class loader
         if (log.isDebugEnabled())
@@ -277,9 +283,9 @@ public final class Bootstrap {
         paramValues[0] = sharedLoader;
         Method method =
             startupInstance.getClass().getMethod(methodName, paramTypes);
-        method.invoke(startupInstance, paramValues);
+        method.invoke(startupInstance, paramValues);                     // 调用刚刚创建的 org.apache.catalina.startup.Catalina 对象的 setParentClassLoader 设置 classLoader
 
-        catalinaDaemon = startupInstance;
+        catalinaDaemon = startupInstance;                              // 将这个启动的实例保存下来
 
     }
 
@@ -345,10 +351,10 @@ public final class Bootstrap {
      */
     public void start()
         throws Exception {
-        if( catalinaDaemon==null ) init();
+        if( catalinaDaemon==null ) init();                                              // 初始化 catalinaDaemon, 其实主要初始化 org.apache.startup.Catalina 对象
 
         Method method = catalinaDaemon.getClass().getMethod("start", (Class [] )null);
-        method.invoke(catalinaDaemon, (Object [])null);
+        method.invoke(catalinaDaemon, (Object [])null);                                 // 调用 org.apache.catalina.startup.Catalina 对象的start方法
 
     }
 
@@ -450,15 +456,15 @@ public final class Bootstrap {
 
         if (daemon == null) {
             // Don't set daemon until init() has completed
-            Bootstrap bootstrap = new Bootstrap();
+            Bootstrap bootstrap = new Bootstrap();                      // 这里创建当前的 Bootstrap 类型的对象
             try {
-                bootstrap.init();
+                bootstrap.init();                                       // 初始化, 其实这里主要是创建 org.apache.catalina.startup.Catalina 对象 并调用 setParentClassLoader 设置 classLoader , 用的就是 shareLoader
             } catch (Throwable t) {
                 handleThrowable(t);
                 t.printStackTrace();
                 return;
             }
-            daemon = bootstrap;
+            daemon = bootstrap;                                         // 保存当前引用到静态变量
         } else {
             // When running as a service the call to stop will be on a new
             // thread so make sure the correct class loader is used to prevent
@@ -467,8 +473,8 @@ public final class Bootstrap {
         }
 
         try {
-            String command = "start";
-            if (args.length > 0) {
+            String command = "start";                                   // 命令参数
+            if (args.length > 0) {                                      // 这里可能是其他的参数, 但默认命令就是 start
                 command = args[args.length - 1];
             }
 
@@ -481,8 +487,8 @@ public final class Bootstrap {
                 daemon.stop();
             } else if (command.equals("start")) {
                 daemon.setAwait(true);
-                daemon.load(args);
-                daemon.start();
+                daemon.load(args);                                      // 启动的时候加载传进来的参数
+                daemon.start();                                         // 启动当前 bootstrap 对象, 其实主要是调用前面生成的 org.apache.catalina.startup.Catalina 的 start 方法
             } else if (command.equals("stop")) {
                 daemon.stopServer(args);
             } else if (command.equals("configtest")) {
