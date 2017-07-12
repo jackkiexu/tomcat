@@ -1581,7 +1581,7 @@ public class Request
         byte buffer[] = new byte[1];
         buffer[0] = (byte) 'a';
 
-        // Confirm that the encoding name is valid
+        // Confirm that the encoding name is valid          // 通过这种方式来确认, 这种类型的编码格式, 系统是支持的
         B2CConverter.getCharset(enc);
 
         // Save the validated encoding
@@ -2916,7 +2916,7 @@ public class Request
 
             // getCharacterEncoding() may have been overridden to search for
             // hidden form field containing request encoding
-            String enc = getCharacterEncoding();
+            String enc = getCharacterEncoding();                                // 这里是从 org.apache.coyote.Request 里面拿取对应的编码模式
 
             boolean useBodyEncodingForURI = connector.getUseBodyEncodingForURI();
             if (enc != null) {
@@ -2925,7 +2925,7 @@ public class Request
                     parameters.setQueryStringEncoding(enc);
                 }
             } else {
-                parameters.setEncoding
+                parameters.setEncoding                                          // 若未获取编码格式, 则直接使用 "ISO-8859-1" 这种编码格式
                     (org.apache.coyote.Constants.DEFAULT_CHARACTER_ENCODING);
                 if (useBodyEncodingForURI) {
                     parameters.setQueryStringEncoding
@@ -2940,7 +2940,7 @@ public class Request
                 return;
             }
 
-            if( !getConnector().isParseBodyMethod(getMethod()) ) {
+            if( !getConnector().isParseBodyMethod(getMethod()) ) {          // 判断这种请求方法类型是否需要解析 http 的 body
                 success = true;
                 return;
             }
@@ -3006,7 +3006,7 @@ public class Request
                     coyoteRequest.getHeader("transfer-encoding"))) {
                 byte[] formData = null;
                 try {
-                    formData = readChunkedPostBody();
+                    formData = readChunkedPostBody();                           // 这里就是进行 form 表单提交时, 默认的解析 body 里面数据的入口
                 } catch (IOException e) {
                     // Client disconnect or chunkedPostTooLarge error
                     if (context.getLogger().isDebugEnabled()) {
@@ -3054,11 +3054,11 @@ public class Request
     protected byte[] readChunkedPostBody() throws IOException {
         ByteChunk body = new ByteChunk();
 
-        byte[] buffer = new byte[CACHED_POST_LEN];
+        byte[] buffer = new byte[CACHED_POST_LEN];                  // 默认的 POST请求时, 最大的 body 的大小
 
         int len = 0;
         while (len > -1) {
-            len = getStream().read(buffer, 0, CACHED_POST_LEN);
+            len = getStream().read(buffer, 0, CACHED_POST_LEN);     // 最大读取的数据大小
             if (connector.getMaxPostSize() > 0 &&
                     (body.getLength() + len) > connector.getMaxPostSize()) {
                 // Too much data

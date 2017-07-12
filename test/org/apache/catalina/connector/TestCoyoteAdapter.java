@@ -51,7 +51,7 @@ public class TestCoyoteAdapter extends TomcatBaseTest {
     }
 
     @Test
-    public void testPathParmsRootSessionOnly() throws Exception {
+    public void testPathParmsRootSessionOnly() throws Exception {           // 通过在 URL 后面加上 jsessionId 的方式 追踪 Session
         pathParamTest("/;jsessionid=1234", "1234");
     }
 
@@ -188,6 +188,7 @@ public class TestCoyoteAdapter extends TomcatBaseTest {
         Assert.assertEquals(expected, res.toString());
     }
 
+    // 下面都是 CoyoteAdapter.postParseRequest 里面对 URI 的解析
     @Test
     public void testBug54602a() throws Exception {
         // No UTF-8

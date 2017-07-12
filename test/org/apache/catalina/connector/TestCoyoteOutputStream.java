@@ -39,6 +39,7 @@ import org.apache.tomcat.util.buf.ByteChunk;
 
 public class TestCoyoteOutputStream extends TomcatBaseTest {
 
+    // 下面全部是测试异步 Servlet的
     @Test
     public void testNonBlockingWriteNoneBlockingWriteNone() throws Exception {
         doNonBlockingTest(0, 0);

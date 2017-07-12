@@ -513,7 +513,7 @@ public class CoyoteAdapter implements Adapter {
             // request parameters
             req.getRequestProcessor().setWorkerThreadName(THREAD_NAME.get());                                  // 在 RequestInfo 里面设置对应的 ThreadName (PS: 可以看到 这里 ThreadLocal 只有对对应 get, 但没有对应的 remove, 为什么呢?  因为这里存储 Tomcat 工作线程池的领地,  工作线程池 never stop, 除非停止 Tomcat, 并且这里缓存的数据的大小也是非常小的, 也不会也 其他的 WebappClassLoader/WebappClassLoader 生产出来的来有任何挂钩)
 
-            // 下面的 postParseRequest 是用来处理请求映射 (获取 host, context, wrapper, URI 后面的参数, sessionId )
+            // 下面的 postParseRequest 是用来处理请求映射 (获取 host, context, wrapper, URI 后面的参数的解析, sessionId )
             boolean postParseSuccess = postParseRequest(req, request, res, response);
             if (postParseSuccess) {
                 //check valves if we support async
@@ -993,7 +993,7 @@ public class CoyoteAdapter implements Adapter {
             int end = uriBC.getEnd();
 
             int pathParamStart = semicolon + 1;
-            int pathParamEnd = ByteChunk.findBytes(uriBC.getBuffer(),
+            int pathParamEnd = ByteChunk.findBytes(uriBC.getBuffer(),                       // 这里就是做 URI 里面参数的分割
                     start + pathParamStart, end,
                     new byte[] {';', '/'});
 

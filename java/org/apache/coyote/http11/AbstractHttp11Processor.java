@@ -950,7 +950,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             try {
                 setRequestLineReadTimeout();
                 // 解析 HTTP 请求的method, requestURL, protocol 等
-                if (!getInputBuffer().parseRequestLine(keptAlive)) {             // 解析 Http 请求头中的 方法, URI, 协议
+                if (!getInputBuffer().parseRequestLine(keptAlive)) {             // 只解析 Http 请求头中的 方法, URI, 协议
                     if (handleIncompleteRequestLineRead()) {
                         break;
                     }

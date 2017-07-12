@@ -33,6 +33,9 @@ import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.buf.ByteChunk;
 
+/**
+ * 这个 Test 是测试 Servlet 的吞吐量的
+ */
 public class TestOutputBuffer extends TomcatBaseTest{
 
     @Test

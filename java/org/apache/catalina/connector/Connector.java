@@ -120,7 +120,7 @@ public class Connector extends LifecycleMBeanBase  {
     /*
      * Is generation of X-Powered-By response header enabled/disabled?
      */
-    protected boolean xpoweredBy = false;
+    protected boolean xpoweredBy = true;
 
 
     /**
@@ -816,7 +816,7 @@ public class Connector extends LifecycleMBeanBase  {
      * @return true if generation of X-Powered-By response header is enabled,
      * false otherwise
      */
-    public boolean getXpoweredBy() {
+    public boolean getXpoweredBy() {                // http 头里面的信息, x 开头表示自己定义的, 这里的 xpoweredBy 表示 由什么语言提供的
         return xpoweredBy;
     }
 
