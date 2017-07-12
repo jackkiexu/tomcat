@@ -263,7 +263,8 @@ public class Catalina {
 
     /**
      * 参考资料
-     * http://blog.csdn.net/fjslovejhl/article/details/21328347
+     * 下面就是创建解析 server.xml 的 Digester 对象, 对于 Digester 可以参考下面的链接来理解一下
+     * http://www.everycoding.com/coding/78.html
      *
      * Create and configure the Digester we will be using for startup.
      */
@@ -511,20 +512,20 @@ public class Catalina {
 
         long t1 = System.nanoTime();
 
-        initDirs();
+        initDirs();                         // 初始化目录 参数
 
         // Before digester - it may be needed
 
         initNaming();
 
         // Create and execute our Digester
-        Digester digester = createStartDigester();
+        Digester digester = createStartDigester();              // 创建 digester 对象, 用于解析 xml
 
         InputSource inputSource = null;
         InputStream inputStream = null;
         File file = null;
         try {
-            file = configFile();
+            file = configFile();                                // 获取 server.xml
             inputStream = new FileInputStream(file);
             inputSource = new InputSource(file.toURI().toURL().toString());
         } catch (Exception e) {
@@ -581,7 +582,7 @@ public class Catalina {
 
         try {
             inputSource.setByteStream(inputStream);
-            digester.push(this);
+            digester.push(this);                    // 这里将当前对象 push 到 Digester 的最底部
             digester.parse(inputSource);
         } catch (SAXParseException spe) {
             log.warn("Catalina.start using " + getConfigFile() + ": " +
@@ -598,7 +599,7 @@ public class Catalina {
             }
         }
 
-        getServer().setCatalina(this);
+        getServer().setCatalina(this);                                  // 设置 server 的 catalina 对象
         getServer().setCatalinaHome(Bootstrap.getCatalinaHomeFile());
         getServer().setCatalinaBase(Bootstrap.getCatalinaBaseFile());
 
@@ -607,7 +608,7 @@ public class Catalina {
 
         // Start the new server
         try {
-            getServer().init();
+            getServer().init();                                         // 初始化创建的 server 对象, 其实这里主要是初始化 service
         } catch (LifecycleException e) {
             if (Boolean.getBoolean("org.apache.catalina.startup.EXIT_ON_INIT_FAILURE")) {
                 throw new java.lang.Error(e);
@@ -647,7 +648,7 @@ public class Catalina {
     public void start() {
 
         if (getServer() == null) {
-            load();
+            load();             // 加载 server, 其实这里主要是 解析 xml 文件, 读取里面的元素定义, 用于生成 server 对象, 并且初始化 server 对象
         }
 
         if (getServer() == null) {
@@ -659,7 +660,7 @@ public class Catalina {
 
         // Start the new server
         try {
-            getServer().start();
+            getServer().start();            // 调用 server 的start, 最终启动 Tomcat 服务器, 其实 server 要做的是启动里面的 service
         } catch (LifecycleException e) {
             log.fatal(sm.getString("catalina.serverStartFail"), e);
             try {

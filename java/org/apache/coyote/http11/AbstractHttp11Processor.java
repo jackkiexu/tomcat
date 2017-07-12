@@ -204,7 +204,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
 
     /**
-     * Minimum content size to make compression.
+     * Minimum content size to make compression. 默认 2k (2 * 1024)
      */
     protected int compressionMinSize = 2048;
 

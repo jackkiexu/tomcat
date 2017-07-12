@@ -2912,7 +2912,7 @@ public class Request
         boolean success = false;
         try {
             // Set this every time in case limit has been changed via JMX
-            parameters.setLimit(getConnector().getMaxParameterCount());
+            parameters.setLimit(getConnector().getMaxParameterCount());         // http 请求的最大参数个数 (KV 对)
 
             // getCharacterEncoding() may have been overridden to search for
             // hidden form field containing request encoding

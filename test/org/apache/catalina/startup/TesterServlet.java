@@ -34,6 +34,7 @@ public class TesterServlet extends HttpServlet {
 
         resp.setContentType("text/plain");
         PrintWriter out = resp.getWriter();
+        Object object = req.getParameter("name");
         HttpSession httpSession = req.getSession();
         httpSession.setAttribute("name", "xjk");
         out.print("OK");

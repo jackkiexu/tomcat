@@ -244,7 +244,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                     // Configure the socket
                     if (running && !paused && setSocketOptions(socket)) {
                         // Hand this socket off to an appropriate processor
-                        if (!processSocket(socket)) {
+                        if (!processSocket(socket)) {                           // 若处理出错, 直接 countDownConnection (减去并发连接处理的个数)
                             countDownConnection();
                             // Close socket right away
                             closeSocket(socket);
@@ -316,7 +316,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                     // 若是 SSL 则先握手
                     try {
                         // SSL handshake
-                        serverSocketFactory.handshake(socket.getSocket());
+                        serverSocketFactory.handshake(socket.getSocket());              // 若是 配置了 SSL, 则在这里完成 SSL 握手的操作
                     } catch (Throwable t) {
                         ExceptionUtils.handleThrowable(t);
                         if (log.isDebugEnabled()) {

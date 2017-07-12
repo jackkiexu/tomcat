@@ -601,7 +601,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                 return SocketState.CLOSED;
             }
 
-            Processor<S> processor = connections.get(socket);
+            Processor<S> processor = connections.get(socket);                    // 若 http keepalive 是 true的话, 将会把 socket 对应的 Processor 放入 connections 里面, 以便下次请求来的时候再次使用
             if (status == SocketStatus.DISCONNECT && processor == null) {
                 // Nothing to do. Endpoint requested a close and there is no
                 // longer a processor associated with this socket.
@@ -615,7 +615,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                     processor = recycledProcessors.pop();
                 }
                 if (processor == null) {
-                    processor = createProcessor();
+                    processor = createProcessor();                                  // 创建处理器
                 }
 
                 initSsl(wrapper, processor);                // 一个缺省实现方法
