@@ -101,7 +101,7 @@ public final class Response {
      */
     protected String contentType = null;
     protected String contentLanguage = null;
-    protected String characterEncoding = Constants.DEFAULT_CHARACTER_ENCODING;
+    protected String characterEncoding = Constants.DEFAULT_CHARACTER_ENCODING;  // org.apache.coyote.response 的默认字符编码格式
     protected long contentLength = -1;
     private Locale locale = DEFAULT_LOCALE;
 

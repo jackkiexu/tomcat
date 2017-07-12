@@ -30,6 +30,7 @@ import org.apache.tomcat.util.res.StringManager;
  * in a <code>&lt;filter&gt;</code> element in the deployment descriptor.
  *
  * @author Craig R. McClanahan
+ * 这个对象就是 Filter 的描述信息, 就像 Spring 里面的 beanDefinition 一样
  */
 public class FilterDef implements Serializable {
 

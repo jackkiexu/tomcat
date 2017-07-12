@@ -40,7 +40,7 @@ import org.apache.catalina.Globals;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.buf.ByteChunk;
-
+// Tomcat 发送文件
 public class TestSendFile extends TomcatBaseTest{
 
     public static final int ITERATIONS = 10;

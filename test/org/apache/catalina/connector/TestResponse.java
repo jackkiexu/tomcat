@@ -42,6 +42,7 @@ import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.buf.ByteChunk;
 
 /**
+ * 这里都是编码相关的事件
  * Test case for {@link Request}.
  */
 public class TestResponse extends TomcatBaseTest {
