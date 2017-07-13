@@ -99,9 +99,9 @@ public class MapperListener extends LifecycleMBeanBase
         findDefaultHost();                                  // 获取对应的默认 Host
 
         Engine engine = (Engine) service.getContainer();
-        addListeners(engine);                               // 给tomcat后端组件加上 lifecycle事件
+        addListeners(engine);                               // 将 自己作为 StandardEngine 及其子容器 Container及 lifecycle 的 listener
 
-        Container[] conHosts = engine.findChildren();
+        Container[] conHosts = engine.findChildren();       // 获取 StandardHost 并且注册到当前的 Mapper 中s
         for (Container conHost : conHosts) {
             Host host = (Host) conHost;
             if (!LifecycleState.NEW.equals(host.getState())) {
@@ -299,12 +299,12 @@ public class MapperListener extends LifecycleMBeanBase
     /**
      * Register host.
      */
-    private void registerHost(Host host) {
+    private void registerHost(Host host) {                      // 注册 StandardHost 到 mapper 中
 
         String[] aliases = host.findAliases();
         mapper.addHost(host.getName(), aliases, host);
 
-        for (Container container : host.findChildren()) {
+        for (Container container : host.findChildren()) {       // 获取 对应的 StandardContext, 并将其注册到 Mapper 中
             if (container.getState().isAvailable()) {
                 registerContext((Context) container);
             }
@@ -362,7 +362,7 @@ public class MapperListener extends LifecycleMBeanBase
     /**
      * Register context.
      */
-    private void registerContext(Context context) {
+    private void registerContext(Context context) {                             // 将 StandardContext 注册到 mapper 中
 
         String contextPath = context.getPath();
         if ("/".equals(contextPath)) {
@@ -376,7 +376,7 @@ public class MapperListener extends LifecycleMBeanBase
         mapper.addContextVersion(host.getName(), host, contextPath,
                 context.getWebappVersion(), context, welcomeFiles, resources);
 
-        for (Container container : context.findChildren()) {
+        for (Container container : context.findChildren()) {                        // 获取 StandardContext 下面的 StandardWrapper, 注册到当前的 mapper 中
             registerWrapper((Wrapper) container);
         }
 
@@ -416,7 +416,7 @@ public class MapperListener extends LifecycleMBeanBase
     /**
      * Register wrapper.
      */
-    private void registerWrapper(Wrapper wrapper) {
+    private void registerWrapper(Wrapper wrapper) {                                     // 将 StandardWrapper 注册到当前的 mapper 中
 
         String wrapperName = wrapper.getName();
         Context context = (Context) wrapper.getParent();
@@ -431,7 +431,7 @@ public class MapperListener extends LifecycleMBeanBase
 
         for (String mapping : mappings) {
             boolean jspWildCard = (wrapperName.equals("jsp")
-                                   && mapping.endsWith("/*"));
+                                   && mapping.endsWith("/*"));                          // 将  StandardWrapper 信息注册到 Mapper 中
             mapper.addWrapper(hostName, contextPath, version, mapping, wrapper,
                               jspWildCard,
                               context.isResourceOnlyServlet(wrapperName));

@@ -507,7 +507,7 @@ public abstract class AbstractEndpoint<S> {
         return paused;
     }
 
-    // 创建处理线程池
+    // 创建 工作 线程池
     public void createExecutor() {
         internalExecutor = true;
         TaskQueue taskqueue = new TaskQueue();

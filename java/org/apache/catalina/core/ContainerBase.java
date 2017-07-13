@@ -951,7 +951,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
         setState(LifecycleState.STARTING);
 
-        // Start our thread
+        // Start our thread StandardEngine 的后台任务执行线程
         threadStart();
 
     }
