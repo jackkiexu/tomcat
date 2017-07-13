@@ -342,7 +342,7 @@ public class WebappClassLoader extends URLClassLoader
      * those cases {@link ClassLoader#getParent()} will be called recursively on
      * the system class loader and the last non-null result used.
      */
-    protected final ClassLoader j2seClassLoader;
+    protected final ClassLoader j2seClassLoader;            // 这个 classLoader 其实就是 AppClassLoader
 
 
     /**
