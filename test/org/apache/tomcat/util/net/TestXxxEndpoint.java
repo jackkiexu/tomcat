@@ -118,6 +118,9 @@ public class TestXxxEndpoint extends TomcatBaseTest {
     public void testStartStopBindOnInit() throws Exception {
         Tomcat tomcat = getTomcatInstance();
         File appDir = new File(getBuildDirectory(), "webapps/examples");
+        if(!appDir.exists()){
+            appDir.mkdirs();
+        }
         tomcat.addWebapp(null, "/examples", appDir.getAbsolutePath());
 
         tomcat.start();
@@ -166,6 +169,9 @@ public class TestXxxEndpoint extends TomcatBaseTest {
         c.setProperty("bindOnInit", "false");
 
         File appDir = new File(getBuildDirectory(), "webapps/examples");
+        if(!appDir.exists()){
+            appDir.mkdirs();
+        }
         tomcat.addWebapp(null, "/examples", appDir.getAbsolutePath());
 
 

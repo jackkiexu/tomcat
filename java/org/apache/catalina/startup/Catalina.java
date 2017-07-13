@@ -512,7 +512,7 @@ public class Catalina {
 
         long t1 = System.nanoTime();
 
-        initDirs();                         // 初始化目录 参数
+        initDirs();                                              // 初始化 临时目录
 
         // Before digester - it may be needed
 
@@ -582,7 +582,7 @@ public class Catalina {
 
         try {
             inputSource.setByteStream(inputStream);
-            digester.push(this);                    // 这里将当前对象 push 到 Digester 的最底部
+            digester.push(this);                    // 这里将当前对象 push 到 Digester 的最底部, 那调用 digester.parse 时会将 server.xml 里面的信息解析出来, 并映射到 当前的 Catalina 上
             digester.parse(inputSource);
         } catch (SAXParseException spe) {
             log.warn("Catalina.start using " + getConfigFile() + ": " +
@@ -604,11 +604,11 @@ public class Catalina {
         getServer().setCatalinaBase(Bootstrap.getCatalinaBaseFile());
 
         // Stream redirection
-        initStreams();
+        initStreams();                                                 // 这里的设置就是让程序里面 log 的信息输出到 catalina.out 文件里面
 
         // Start the new server
         try {
-            getServer().init();                                         // 初始化创建的 server 对象, 其实这里主要是初始化 service
+            getServer().init();                                        // 初始化创建的 server 对象, 其实这里主要是初始化 Servrer 及 下面的所有 childContainer
         } catch (LifecycleException e) {
             if (Boolean.getBoolean("org.apache.catalina.startup.EXIT_ON_INIT_FAILURE")) {
                 throw new java.lang.Error(e);
@@ -648,7 +648,7 @@ public class Catalina {
     public void start() {
 
         if (getServer() == null) {
-            load();             // 加载 server, 其实这里主要是 解析 xml 文件, 读取里面的元素定义, 用于生成 server 对象, 并且初始化 server 对象
+            load();                                                          // 加载 server, 其实这里主要是 解析 xml 文件, 读取里面的元素定义, 用于生成 server 对象, 并且初始化 server 对象
         }
 
         if (getServer() == null) {
@@ -660,7 +660,7 @@ public class Catalina {
 
         // Start the new server
         try {
-            getServer().start();            // 调用 server 的start, 最终启动 Tomcat 服务器, 其实 server 要做的是启动里面的 service
+            getServer().start();                                            // 调用 server 的start, 最终启动 Tomcat 服务器, 其实 server 要做的是启动里面的 service
         } catch (LifecycleException e) {
             log.fatal(sm.getString("catalina.serverStartFail"), e);
             try {
@@ -679,7 +679,7 @@ public class Catalina {
         // Register shutdown hook
         if (useShutdownHook) {
             if (shutdownHook == null) {
-                shutdownHook = new CatalinaShutdownHook();
+                shutdownHook = new CatalinaShutdownHook();      // 增加运用程序的 钩子程序, 在 程序关闭时, 做一下操作
             }
             Runtime.getRuntime().addShutdownHook(shutdownHook);
 
@@ -693,9 +693,9 @@ public class Catalina {
             }
         }
 
-        if (await) {
-            await();
-            stop();
+        if (await) {                                    // 判断 Tomcat 启动后是否一直 await 住, 直到有停止的命令发送过
+            await();                                     // 启动 socket 来监听指定端口, 直到有 stop 的命令发来
+            stop();                                      // 停止 server 程序
         }
     }
 

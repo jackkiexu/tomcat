@@ -790,7 +790,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
     protected void initInternal() throws LifecycleException {
         logger.info(this + " initInternal() ");
 
-        super.initInternal();
+        super.initInternal();                                    // 将当前类信息注册到 JMX 里面
 
         // Register global String cache
         // Note although the cache is global, if there are multiple Servers
@@ -808,7 +808,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
 
         // Populate the extension validator with JARs from common and shared
         // class loaders
-        if (getCatalina() != null) {
+        if (getCatalina() != null) {                            // 这里获取的就是 Tomcat 中的 shareClassLoader
             ClassLoader cl = getCatalina().getParentClassLoader();
             // Walk the class loader hierarchy. Stop at the system class loader.
             // This will add the shared (if present) and common class loaders
@@ -835,7 +835,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
             }
         }
         // Initialize our defined Services
-        for (int i = 0; i < services.length; i++) {
+        for (int i = 0; i < services.length; i++) {                     // 初始化 StandardServer 下面对应 StandardService
             services[i].init();
         }
     }

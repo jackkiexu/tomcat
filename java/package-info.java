@@ -20,38 +20,26 @@
  * http://blog.xiaohansong.com/2016/08/09/ThreadLocal-leak-analyze/
  *
  * 学习计划
- * 1. tomcat classLoader种类, 动态加载, 内存泄漏检测 (ClassLoaderLogManager, JreMemoryLeakPreventionListener, ThreadLocalLeakPreventionListener)
  *
- * 2. tomcat servlet jsp 原理(从启动加载, 路由映射, jsp动态编译成 servlet的class并且动态加载)
+ * 1. Tomcat 启动过程
  *
- * 3. tomcat jasper 原理, 及处理过程
+ * 2. 一次 Tomcat Http 请求
  *
- * 4. tomcat session 原理, 持久化
+ * 3. Tomcat classLoader 设计及热部署
  *
- * 5. tomcat cookie 原理
+ * 4. Tomcat线程模型 (bio, nio)
  *
- * 6. tomcat 通信框架 coyote
+ * 5. Tomcat 中使用的设计模式
  *
- * 7. tomcat 里面各种 valve
+ * 6. Tomcat Session 生成,追踪及管理(持久化)策略(涉及 cookie, request.getAttribute 触发什么动作)
  *
- * 8. tomcat 里面各种 filter, 装饰器, 过滤器， 适配器(以及其他 设计模式)
+ * 7. Tomcat Servlet 生命周期 (new, init, service, destory)
  *
- * 9. tomcat JMX 使用
+ * 8. Tomcat JSP 创建, 解析过程, 动态编译过程, 动态加载
+ *
+ * 9. Tomcta 里面的主要 Valve, Filter, Listener (JreMemoryLeakPreventionListener, ThreadLocalLeakPreventionListener ...)
  *
  * 10. tomcat 默认 bash 处理
- *
- * 11. tomcat 里面的各种线程模型(线程池)
- *
- * 12. tomcat 里面所使用的设计模式
- *
- * 13. Tomcat 里面的 StandardServer, StandardService, StandardEngine, StandardHost, StandardContext 为什么需要 listener 监听其生命周期
- *      tomcat 是一个热部署的web容器, 需要通过监听的机制, 知道tomcat以前及现在的运行状态
- *
- * 14. Tomcat 的 keepalive 原理
- *
- * 15. request.getAttribute 触发什么动作
- *
- * 16. Servlet, Session, Server, Service, Engine, Host, Context 的生命周期
  *
  * Created by xjk on 5/31/17.
  *

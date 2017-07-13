@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+// 这个测试类 主要测试 Cookie 里面键值对的构建, 其实就是 Cookie.toString
 public class TestSetCookieSupport {
 
     @Test

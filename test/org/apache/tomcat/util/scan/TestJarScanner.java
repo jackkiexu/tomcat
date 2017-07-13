@@ -33,7 +33,7 @@ public class TestJarScanner extends TomcatBaseTest {
     @Test
     public void testJarsToSkipFormat() {
 
-        String jarList = System.getProperty(Constants.SKIP_JARS_PROPERTY);
+        String jarList = System.getProperty(Constants.SKIP_JARS_PROPERTY);          // 测试 JarScanner 过滤几个 jar 包
         assertNotNull("Jar skip list is null", jarList);
         assertFalse("Jar skip list is empty", jarList.isEmpty());
         StringTokenizer tokenizer = new StringTokenizer(jarList, ",");

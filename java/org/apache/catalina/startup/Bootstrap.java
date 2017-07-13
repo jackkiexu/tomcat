@@ -148,13 +148,13 @@ public final class Bootstrap {
 
     private void initClassLoaders() {
         try {
-            commonLoader = createClassLoader("common", null);
+            commonLoader = createClassLoader("common", null);               // 根据 catalina.properties 指定的 加载jar包的目录, 生成对应的 URLClassLoader(这个Tomcat 中加载公共jar包的 classLoader)
             if( commonLoader == null ) {
                 // no config file, default to this loader - we might be in a 'single' env.
                 commonLoader=this.getClass().getClassLoader();
             }
-            catalinaLoader = createClassLoader("server", commonLoader);
-            sharedLoader = createClassLoader("shared", commonLoader);
+            catalinaLoader = createClassLoader("server", commonLoader);   // 将 commonClassLoader 作为父 ClassLoader, 生成 catalinaLoader，这个类就是加载 Tomcat bootstrap.jar, tomcat-juli.jar 包的 classLoader (PS; 在 catalina.properties 里面 server.loader 是空的， 说明 其实 代码运行到这边时 catalinaClassLoader 与 commonClassLoader 可加载 class 的路径是一样的), 当没事 在外层程序会调用  Thread.currentThread().setContextClassLoader(daemon.catalinaLoader) 来将 catalinaClassLoader 设置为 Tomcat启动线程的 contextClassLoader
+            sharedLoader = createClassLoader("shared", commonLoader);     //  将 commonClassLoader 作为父 ClassLoader, 生成 sharedLoader, 这个类最后会作为所有 WebappClassLoader 的父类
         } catch (Throwable t) {
             handleThrowable(t);
             log.error("Class loader creation threw exception", t);
@@ -166,17 +166,17 @@ public final class Bootstrap {
     private ClassLoader createClassLoader(String name, ClassLoader parent)
         throws Exception {
 
-        String value = CatalinaProperties.getProperty(name + ".loader");
+        String value = CatalinaProperties.getProperty(name + ".loader");        // 这里加载 properties 信息的位置是 ${catalina.base}/conf/catalina.properties
         if ((value == null) || (value.equals("")))
             return parent;
 
-        value = replace(value);
+        value = replace(value);                                                  // 替换 ${catalina.base}, 获取绝对的路径
 
         List<Repository> repositories = new ArrayList<>();
 
         String[] repositoryPaths = getPaths(value);
 
-        for (String repository : repositoryPaths) {
+        for (String repository : repositoryPaths) {                             // 生成 ClassLoader 加载资源的 repositories
             // Check for a JAR URL repository
             try {
                 @SuppressWarnings("unused")
@@ -259,21 +259,21 @@ public final class Bootstrap {
      */
     public void init() throws Exception {
 
-        initClassLoaders();                                                 // 初始化 classLoader
+        initClassLoaders();                                                 // 初始化 commonClassLoader, catalinaClassLoader, sharedClassLoader (其中commonClassLoader作为另外两个 classLoader 的 parent, 并且其加载了 ${catalina.base}/bin 下面的公共 jar 包) (PS: catalina.base 其实就是 Tomcat 的安装目录, catalina.home 与 catalina.base 其实是一样的)
 
-        Thread.currentThread().setContextClassLoader(catalinaLoader);    // 设置当前线程的 classLoader
+        Thread.currentThread().setContextClassLoader(catalinaLoader);    // 设置当前线程的 classLoader 为 catalinaClassLoader
 
-        SecurityClassLoad.securityClassLoad(catalinaLoader);
+        SecurityClassLoad.securityClassLoad(catalinaLoader);             // 让 catalinaLoader 来加载 Tomcat 下面几个核心的 类 (PS: 这里用 catalinaClassLoader 来加载的, 意味着 sharedClassLoader 是获取不到)
 
         // Load our startup class and call its process() method
         if (log.isDebugEnabled())
             log.debug("Loading startup class");
         Class<?> startupClass =
             catalinaLoader.loadClass
-            ("org.apache.catalina.startup.Catalina");               // 加载 org.apache.catalina.startup.Catalina 类型
-        Object startupInstance = startupClass.newInstance();              // 创建 org.apache.catalina.startup.Catalina 对象
+            ("org.apache.catalina.startup.Catalina");               // 加载 org.apache.catalina.startup.Catalina 类型 (PS: 这里的 catalina 其实没有在 Bootstrap.jar 里面)
+        Object startupInstance = startupClass.newInstance();              // 创建 org.apache.catalina.startup.Catalina 对象 (PS: 这里为什么要用 反射的方式来生成 Tomcat 启动实例, 主要是为以后, 出现一个 catalina2 时, 只需要这里一个配置, 就开启另外一种 Tomcat 启动模式)
 
-        // Set the shared extensions class loader
+        // Set the shared extensions class loader                         // 设置 CataLina 类的 parentClassLoader (PS: 这是啥用??? 我们瞧瞧发现, Catalina.parentClassLoader 会 StandardContext 启动时设置 WebappLoader 的parentClassLoader 时用到; 这里用的就是 sharedClassLoader, 意味着 每个 WebAppClassLoader 的 parentClassLoader 都是 sharedClassLoader, 将代码 #new WebappLoader(getParentClassLoader())#)
         if (log.isDebugEnabled())
             log.debug("Setting startup class properties");
         String methodName = "setParentClassLoader";
@@ -458,7 +458,7 @@ public final class Bootstrap {
             // Don't set daemon until init() has completed
             Bootstrap bootstrap = new Bootstrap();                      // 这里创建当前的 Bootstrap 类型的对象
             try {
-                bootstrap.init();                                       // 初始化, 其实这里主要是创建 org.apache.catalina.startup.Catalina 对象 并调用 setParentClassLoader 设置 classLoader , 用的就是 shareLoader
+                bootstrap.init();                                       // 初始化整个系统中用到的几个 classLoader, 并设置父子关系, 创建 org.apache.catalina.startup.Catalina 对象, 设置其 parentClassLoader 为shareClassLoader, 为创建 WebappClassLoader 做准备
             } catch (Throwable t) {
                 handleThrowable(t);
                 t.printStackTrace();
@@ -471,27 +471,27 @@ public final class Bootstrap {
             // a range of class not found exceptions.
             Thread.currentThread().setContextClassLoader(daemon.catalinaLoader);
         }
-
+                                                                       // 程序运行到这边时 Thread.currentThread().contextClassLoader 就是 catalinaClassLoader 了, 下面的所有加载 class操作, 都是由这个 classloader 来进行加载
         try {
-            String command = "start";                                   // 命令参数
-            if (args.length > 0) {                                      // 这里可能是其他的参数, 但默认命令就是 start
+            String command = "start";                                 // 命令参数
+            if (args.length > 0) {                                    // 这里可能是其他的参数, 但默认命令就是 start
                 command = args[args.length - 1];
             }
 
-            if (command.equals("startd")) {
+            if (command.equals("startd")) {                          // 启动 Tomcat (PS: 这种方式, Tomcat 启动过后会立刻 关闭 )
                 args[args.length - 1] = "start";
                 daemon.load(args);
                 daemon.start();
-            } else if (command.equals("stopd")) {
+            } else if (command.equals("stopd")) {                   // 停止 Tomcat (若程序执行下面的 stop, 则其不会关闭 Tomcat 因为 catalina.await 住而监听的端口)
                 args[args.length - 1] = "stop";
                 daemon.stop();
             } else if (command.equals("start")) {
-                daemon.setAwait(true);
-                daemon.load(args);                                      // 启动的时候加载传进来的参数
-                daemon.start();                                         // 启动当前 bootstrap 对象, 其实主要是调用前面生成的 org.apache.catalina.startup.Catalina 的 start 方法
-            } else if (command.equals("stop")) {
+                daemon.setAwait(true);                                // Tomcat 启动程序 stop程序代码, 程序会 hold 住, 直到有向 Tomcat 发送 stop 命令, 程序就会停止 (详情将 Catalina.start() 方法)
+                daemon.load(args);                                    // 启动的时候加载传进来的参数
+                daemon.start();                                       // 启动当前 bootstrap 对象, 其实主要是调用前面生成的 org.apache.catalina.startup.Catalina 的 start 方法
+            } else if (command.equals("stop")) {                    // 停止 Tomcat (并清理对应的 关闭 Tomcat 的监听程序)
                 daemon.stopServer(args);
-            } else if (command.equals("configtest")) {
+            } else if (command.equals("configtest")) {             // 这个只是 将 Tomcat 的配置文件加载进来, 并对 Tomcat 相关主键进行 init 操作, 从而检测 程序对应的配置文件是否正确
                 daemon.load(args);
                 if (null==daemon.getServer()) {
                     System.exit(1);

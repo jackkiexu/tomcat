@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+// 这个测试类 主要测试 Cookie 里面键值对的构建, 其实就是 Cookie.toString
 public class TestSetCookieSupportSeparatorsAllowed {
 
     static {
@@ -29,7 +30,7 @@ public class TestSetCookieSupportSeparatorsAllowed {
         System.setProperty("org.apache.tomcat.util.http.ServerCookie.FWD_SLASH_IS_SEPARATOR", "true");
     }
     @Test
-    public void v0simpleCookie() {
+    public void v0simpleCookie() {  // 结构 Cookie 里面的键值对
         Cookie cookie = new Cookie("foo", "bar");
         Assert.assertEquals("foo=bar", SetCookieSupport.generateHeader(cookie));
     }

@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+// 格式化 URI (主要是去掉 URI 中的双斜杠)
 public class TestRequestUtil {
 
     @Test

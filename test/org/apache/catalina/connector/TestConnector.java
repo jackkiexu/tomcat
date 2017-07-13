@@ -39,7 +39,7 @@ public class TestConnector extends TomcatBaseTest {
     public void testStop() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        Context root = tomcat.addContext("", TEMP_DIR);
+        Context root = tomcat.addContext("", TEMP_DIR);         // 我在这里加入了 2个 Servlet, 对应的在 StandardContext 里面会有对应两个 StandardWrapper 生成
         Wrapper w = Tomcat.addServlet(root, "tester", new TesterServlet());
         Wrapper w2 = Tomcat.addServlet(root, "tester2", new TesterServlet());
         w.setAsyncSupported(true);

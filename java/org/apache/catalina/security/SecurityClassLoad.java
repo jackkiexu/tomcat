@@ -31,24 +31,24 @@ public final class SecurityClassLoad {
         securityClassLoad(loader, true);
     }
 
-
+    // 下面是 用 catalinaClassLoader tomcat中指定几个包中的指定几个 类 (个人认为, 这个其实不要这一步啊, 在使用到类的时候, 当前线程会通过 contextClassLoader 到加载对应 URL 下面的 查找class, 并加载进来)
     static void securityClassLoad(ClassLoader loader, boolean requireSecurityManager)
             throws Exception {
 
         if (requireSecurityManager && System.getSecurityManager() == null) {
             return;
         }
-
-        loadCorePackage(loader);
-        loadCoyotePackage(loader);
-        loadLoaderPackage(loader);
-        loadRealmPackage(loader);
-        loadSessionPackage(loader);
-        loadUtilPackage(loader);
-        loadValvesPackage(loader);
-        loadJavaxPackage(loader);
-        loadConnectorPackage(loader);
-        loadTomcatPackage(loader);
+        // 用 catalinaClassLoader 加载 tomcat 类
+        loadCorePackage(loader);                // 用 catalinaClassLoader 加载 org.apache.catalina.core中的类
+        loadCoyotePackage(loader);              // 用 catalinaClassLoader 加载 org.apache.coyote 中的类
+        loadLoaderPackage(loader);              // 用 catalinaClassLoader 加载 org.apache.catalina.loader 中的类
+        loadRealmPackage(loader);               // 用 catalinaClassLoader 加载 org.apache.catalina.realm 中的类
+        loadSessionPackage(loader);             // 用 catalinaClassLoader 加载 org.apache.catalina.session 中的类
+        loadUtilPackage(loader);                // 用 catalinaClassLoader 加载 oorg.apache.catalina.util 中的类
+        loadValvesPackage(loader);              // 用 catalinaClassLoader 加载 org.apache.catalina.valves 中的类
+        loadJavaxPackage(loader);               // 用 catalinaClassLoader 加载 javax.servlet.http.Cookie
+        loadConnectorPackage(loader);           // 用 catalinaClassLoader 加载 org.apache.catalina.connector 中的类
+        loadTomcatPackage(loader);              // 用 catalinaClassLoader 加载 org.apache.tomcat 中的类
     }
 
 
