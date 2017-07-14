@@ -217,7 +217,7 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
          * Write chunk.
          */
         @Override
-        public int doWrite(ByteChunk chunk, Response res)
+        public int doWrite(ByteChunk chunk, Response res)           // 调用这里就是将 body 里面的数据追加, 刷到 socketBuffer 里面
             throws IOException {
 
             int length = chunk.getLength();

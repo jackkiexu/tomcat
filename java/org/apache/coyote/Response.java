@@ -365,7 +365,7 @@ public final class Response {
      *  interceptors to fix headers.
      */
     public void sendHeaders() {
-        action(ActionCode.COMMIT, this);
+        action(ActionCode.COMMIT, this);        // 将 http header 里面的信息组装到 headerBuffer 里面, 再刷到 senderBuffer 中
         setCommitted(true);
     }
 

@@ -118,7 +118,7 @@ public class Response
     public void setConnector(Connector connector) {
         if("AJP/1.3".equals(connector.getProtocol())) {
             // default size to size of one ajp-packet
-            outputBuffer = new OutputBuffer(8184);
+            outputBuffer = new OutputBuffer(8184);              // 这里的 outputBuffer 其实就是 org.apache.catalina.connector.OutputBuffer
         } else {
             outputBuffer = new OutputBuffer();
         }

@@ -281,7 +281,7 @@ public class OutputBuffer extends Writer
             // If this didn't cause a commit of the response, the final content
             // length can be calculated
             if (!coyoteResponse.isCommitted()) {
-                coyoteResponse.setContentLength(bb.getLength());
+                coyoteResponse.setContentLength(bb.getLength());    // 设置 Http header 里面 content-length 的长度
             }
         }
 
@@ -300,7 +300,7 @@ public class OutputBuffer extends Writer
                 CoyoteAdapter.ADAPTER_NOTES);
         req.inputBuffer.close();
 
-        coyoteResponse.finish();                    // 这边才是正真写出数据的地方 注意这里是 org.apache.coyote.Response
+        coyoteResponse.finish();                    // 这边才是正真写出数据的地方 注意这里是 org.apache.coyote.Response, 将 InternalOutputBuffer 中的 socketBuffer 刷到浏览器中
 
     }
 
@@ -332,14 +332,14 @@ public class OutputBuffer extends Writer
         try {
             doFlush = true;
             if (initial) {
-                coyoteResponse.sendHeaders();
+                coyoteResponse.sendHeaders();           // coyoteResponse 就是 org.apache.coyote.Response (将 Http header 里面的信息 刷到 headBuffer 中, 然后刷到 socketBuffer 中, 这里的 headBuffer 与 sendBuffer 都是在 InternalOutputBuffer 中)
                 initial = false;
             }
             if (cb.getLength() > 0) {
                 cb.flushBuffer();
             }
-            if (bb.getLength() > 0) {
-                bb.flushBuffer();
+            if (bb.getLength() > 0) {                   // 这里的 bb(ByteChunk) 存储的是 http 请求的 body 里面的数据
+                bb.flushBuffer();                       // bb(ByteChunk) 将自己的数据刷到 org.apache.catalina.connector.OutputBuffer 的 outputChunk, 然后再调用 coyoteResponse.doWrite 刷到
             }
         } finally {
             doFlush = false;
@@ -388,7 +388,7 @@ public class OutputBuffer extends Writer
             // real write to the adapter
             outputChunk.setBytes(buf, off, cnt);
             try {
-                coyoteResponse.doWrite(outputChunk);
+                coyoteResponse.doWrite(outputChunk);            // 将 http body 里面的数据 刷到 InternalOutputBuffer 的 socketBuffer 里面 (InternalOutputBuffer 附属于org.apache.coyote.Respnse)
             } catch (IOException e) {
                 // An IOException on a write is almost always due to
                 // the remote client aborting the request.  Wrap this

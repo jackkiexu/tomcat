@@ -390,7 +390,7 @@ public final class CharChunk implements Cloneable, Serializable, CharSequence {
             throw new IOException( "Buffer overflow, no sink " + limit + " " +
                                    buff.length  );
         }
-        out.realWriteChars( buff, start, end - start );             // 这里的 out 是 OutputBuffer
+        out.realWriteChars( buff, start, end - start );             // 这里的 out 是 OutputBuffer, 将 CharChunk 里面的数据刷到 byteChunk
         end=start;
     }
 

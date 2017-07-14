@@ -747,8 +747,8 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
              * 2. 调用 OutputBuffer  进行 commit
              */
             try {
-                prepareResponse();
-                getOutputBuffer().commit();
+                prepareResponse();              // 将 Http header 里面的信息刷到 headerbuffer 里面
+                getOutputBuffer().commit();     // 将 headerbuffer 里面的数据刷到 socketBuffer (socketBuffer 是一个 ByteChunk)
             } catch (IOException e) {
                 // Set error flag
                 error = true;
@@ -1534,7 +1534,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             // If app didn't set the header, use the default
             getOutputBuffer().write(Constants.SERVER_BYTES);            // 写入服务端的信息 InternalOutputBuffer
         }
-
+                                                                        // 将 Http header 里面的数据组装到 headerbuffer 里面
         int size = headers.size();
         for (int i = 0; i < size; i++) {
             getOutputBuffer().sendHeader(headers.getName(i), headers.getValue(i));      // 这里是 InternalOutputBuffer

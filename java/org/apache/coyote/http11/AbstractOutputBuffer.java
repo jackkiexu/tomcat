@@ -242,7 +242,7 @@ public abstract class AbstractOutputBuffer<S> implements OutputBuffer {
     public int doWrite(ByteChunk chunk, Response res)
         throws IOException {
 
-        if (!committed) {
+        if (!committed) {           // 刷 body 里面的数据时, 这时 committed 已经是 true
 
             // Send the connector a request for commit. The connector should
             // then validate the headers, send them (using sendHeaders) and
@@ -252,9 +252,9 @@ public abstract class AbstractOutputBuffer<S> implements OutputBuffer {
         }
 
         if (lastActiveFilter == -1)
-            return outputStreamOutputBuffer.doWrite(chunk, res);
+            return outputStreamOutputBuffer.doWrite(chunk, res);        // 将 body 里面的数据, 刷到 InternalOutputBuffer 的 socketBuffer 里面
         else
-            return activeFilters[lastActiveFilter].doWrite(chunk, res);
+            return activeFilters[lastActiveFilter].doWrite(chunk, res); // 通过 outputBufferFilter 过滤器将数据刷到 InternalOutputBuffer 的 socketBuffer 里面
 
     }
 
@@ -378,7 +378,7 @@ public abstract class AbstractOutputBuffer<S> implements OutputBuffer {
         if (lastActiveFilter != -1)
             activeFilters[lastActiveFilter].end();
 
-        flushBuffer(true);          // 将数据刷到远端
+        flushBuffer(true);          // 将数据刷到远端, 最终用的还是 InternalOutputBuffer 中的 outputStream 来进行刷数据到浏览器
 
         finished = true;
     }
