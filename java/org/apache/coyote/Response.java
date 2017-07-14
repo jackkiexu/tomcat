@@ -510,7 +510,7 @@ public final class Response {
     }
 
     public long getContentLengthLong() {
-        return contentLength;
+        return contentLength;           // 默认值 -1 表示没有设置
     }
 
 

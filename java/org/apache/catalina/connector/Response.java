@@ -122,8 +122,8 @@ public class Response
         } else {
             outputBuffer = new OutputBuffer();
         }
-        outputStream = new CoyoteOutputStream(outputBuffer);
-        writer = new CoyoteWriter(outputBuffer);
+        outputStream = new CoyoteOutputStream(outputBuffer);   // 原来 Response.getOutputStream() 获取到的就是这里的 outputStream
+        writer = new CoyoteWriter(outputBuffer);                // 这里的 writer 其实 response.getPrinter() 就是获取这个 Writer
     }
 
 

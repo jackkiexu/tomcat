@@ -163,13 +163,13 @@ public class OutputBuffer extends Writer
      */
     public OutputBuffer(int size) {
 
-        bb = new ByteChunk(size);
+        bb = new ByteChunk(size);           // ByteChunk 默认 8M
         bb.setLimit(size);
-        bb.setByteOutputChannel(this);
+        bb.setByteOutputChannel(this);      //  这时 ByteChunk 里面的 out 是 org.apache.catalina.connector.OutputBuffer
         cb = new CharChunk(size);
-        cb.setLimit(size);
+        cb.setLimit(size);                  // CharChunk 默认 8M
         cb.setOptimizedWrite(false);
-        cb.setCharOutputChannel(this);
+        cb.setCharOutputChannel(this);     // 这时 CharChunk 里面的 out 是 org.apache.catalina.connector.OutputBuffer
 
     }
 
@@ -272,8 +272,8 @@ public class OutputBuffer extends Writer
 
         // If there are chars, flush all of them to the byte buffer now as bytes are used to
         // calculate the content-length (if everything fits into the byte buffer, of course).
-        if (cb.getLength() > 0) {
-            cb.flushBuffer();               // 将 CharChunk 里面的数据刷到 OutputBuffer
+        if (cb.getLength() > 0) {           // 这里 cb 里面的数据就是 Response.getPrintWriter.write("OK") 写到 CharChunk 里面
+            cb.flushBuffer();               // 将 CharChunk 里面的数据刷到 OutputBuffer (这里就是将 CharChunk 里面的数据刷到 ByteChunk 里面), 期间转化会经过字符转化器
         }
 
         if ((!coyoteResponse.isCommitted())                         // 这里的 coyoteResponse 是 coyote 的 response

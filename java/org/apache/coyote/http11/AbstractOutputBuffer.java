@@ -122,7 +122,7 @@ public abstract class AbstractOutputBuffer<S> implements OutputBuffer {
 
         this.response = response;
 
-        headerBuffer = new byte[headerBufferSize];
+        headerBuffer = new byte[headerBufferSize];              // 构造 Http 的 header (默认大小 8M)
 
         filterLibrary = new OutputFilter[0];
         activeFilters = new OutputFilter[0];
@@ -156,8 +156,8 @@ public abstract class AbstractOutputBuffer<S> implements OutputBuffer {
     /**
      * Add an output filter to the filter library.
      */
-    public void addFilter(OutputFilter filter) {
-
+    public void addFilter(OutputFilter filter) { // 个人认为这里完全可以用 System.copy 来进行操作, 做要求线程安全的话, 直接加一个 filterLibraryObject, 每次 更改 filterLibrary 时, 加上 synchronized(filterLibraryObject) 来实现线程安全
+        // 下面的这几步操作其实就是将 filter 加入到 newFilterLibrary, 然后赋值给 filterLibrary, 最后 重新建立一个 activeFilters,
         OutputFilter[] newFilterLibrary =
             new OutputFilter[filterLibrary.length + 1];
         for (int i = 0; i < filterLibrary.length; i++) {

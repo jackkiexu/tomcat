@@ -152,7 +152,7 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
         if (pos > 0) {                  // pos > 0 说明要写入数据
             // Sending the response header buffer
             if (useSocketBuffer) {
-                socketBuffer.append(headerBuffer, 0, pos);          // 这里的 socketBuffer 是  ByteChunk
+                socketBuffer.append(headerBuffer, 0, pos);          // 这里的 socketBuffer 是  ByteChunk, 追加的是 Http Header 里面的信息
             } else {
                 outputStream.write(headerBuffer, 0, pos);
             }
