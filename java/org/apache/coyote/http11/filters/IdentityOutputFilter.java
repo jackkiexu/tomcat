@@ -81,7 +81,7 @@ public class IdentityOutputFilter implements OutputFilter {
                 } else {
                     remaining = remaining - result;
                 }
-                buffer.doWrite(chunk, res);
+                buffer.doWrite(chunk, res);                                     // InternalOutputBuffer.OutputStreamOutputBuffer
             } else {
                 // No more bytes left to be written : return -1 and clear the
                 // buffer

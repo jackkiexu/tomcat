@@ -727,7 +727,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             // End the processing of the current request
 
             try {
-                getOutputBuffer().endRequest();     // 将数据刷到远端
+                getOutputBuffer().endRequest();     // 将数据刷到远端 这里是 InternalOutputBuffer
             } catch (IOException e) {
                 // Set error flag
                 error = true;
@@ -1537,7 +1537,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
         int size = headers.size();
         for (int i = 0; i < size; i++) {
-            getOutputBuffer().sendHeader(headers.getName(i), headers.getValue(i));
+            getOutputBuffer().sendHeader(headers.getName(i), headers.getValue(i));      // 这里是 InternalOutputBuffer
         }
         getOutputBuffer().endHeaders();                                  //  response 中最后加入 换行 + 回车
 

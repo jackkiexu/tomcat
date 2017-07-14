@@ -300,7 +300,7 @@ public class OutputBuffer extends Writer
                 CoyoteAdapter.ADAPTER_NOTES);
         req.inputBuffer.close();
 
-        coyoteResponse.finish();                    // 这边才是正真写出数据的地方
+        coyoteResponse.finish();                    // 这边才是正真写出数据的地方 注意这里是 org.apache.coyote.Response
 
     }
 
@@ -360,8 +360,8 @@ public class OutputBuffer extends Writer
 
 
     // ------------------------------------------------- Bytes Handling Methods
-
-
+    // 下面这个 realWriteBytes 其实是非常重要的一步操作 主要是 org.apache.catalina.connector.Response 中的数据 刷到 org.apache.coyote.Response 中的 InternalOutputBuffer 里面
+    //
     /**
      * Sends the buffer data to the client output, checking the
      * state of Response and calling the right interceptors.

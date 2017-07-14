@@ -152,7 +152,7 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
         if (pos > 0) {                  // pos > 0 说明要写入数据
             // Sending the response header buffer
             if (useSocketBuffer) {
-                socketBuffer.append(headerBuffer, 0, pos);
+                socketBuffer.append(headerBuffer, 0, pos);          // 这里的 socketBuffer 是  ByteChunk
             } else {
                 outputStream.write(headerBuffer, 0, pos);
             }
@@ -196,7 +196,7 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
         // Blocking connector so ignore block parameter as this will always use
         // blocking IO.
         if (useSocketBuffer) {
-            socketBuffer.flushBuffer();
+            socketBuffer.flushBuffer();         // 这里是 socketBuffer 是 ByteChunk
         }
         // Always blocks so never any data left over.
         return false;
@@ -222,7 +222,7 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
 
             int length = chunk.getLength();
             if (useSocketBuffer) {
-                socketBuffer.append(chunk.getBuffer(), chunk.getStart(),
+                socketBuffer.append(chunk.getBuffer(), chunk.getStart(),                    // ByteChunk
                                     length);
             } else {
                 outputStream.write(chunk.getBuffer(), chunk.getStart(),
