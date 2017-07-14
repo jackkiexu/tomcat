@@ -618,7 +618,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                     processor = createProcessor();                                  // 创建处理器
                 }
 
-                initSsl(wrapper, processor);                // 一个缺省实现方法
+                initSsl(wrapper, processor);                                         // 一个缺省实现方法
 
                 SocketState state = SocketState.CLOSED;
                 Iterator<DispatchType> dispatches = null;

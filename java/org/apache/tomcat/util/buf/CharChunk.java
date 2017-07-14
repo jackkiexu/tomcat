@@ -386,11 +386,11 @@ public final class CharChunk implements Cloneable, Serializable, CharSequence {
         throws IOException
     {
         //assert out!=null
-        if( out==null ) {
+        if( out==null ) {                                             // 这里 out 是 org.apache.catalina.connector.OutputBuffer
             throw new IOException( "Buffer overflow, no sink " + limit + " " +
                                    buff.length  );
         }
-        out.realWriteChars( buff, start, end - start );
+        out.realWriteChars( buff, start, end - start );             // 这里的 out 是 OutputBuffer
         end=start;
     }
 

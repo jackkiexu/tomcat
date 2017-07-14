@@ -110,7 +110,7 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
         // Use random free port
         connector.setPort(0);
         // Mainly set to reduce timeouts during async tests
-        connector.setAttribute("connectionTimeout", "3000");
+        connector.setAttribute("connectionTimeout", "3000000");
         tomcat.getService().addConnector(connector);                                        // 初始化 server, service
         tomcat.setConnector(connector);
 

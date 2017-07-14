@@ -406,7 +406,7 @@ public class Response
     public void finishResponse()
         throws IOException {
         // Writing leftover bytes
-        outputBuffer.close();
+        outputBuffer.close();               // 将数据刷到远端 org.apache.catalina.connector.OutputBuffer
     }
 
 

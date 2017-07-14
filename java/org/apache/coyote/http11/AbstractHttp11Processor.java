@@ -727,7 +727,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             // End the processing of the current request
 
             try {
-                getOutputBuffer().endRequest();
+                getOutputBuffer().endRequest();     // 将数据刷到远端
             } catch (IOException e) {
                 // Set error flag
                 error = true;
@@ -744,7 +744,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             /**
              * 下面主要分成 2步:
              * 1. 准备一个 response, 就是通过 Tomcat 的配置, 对响应头进行解析并设置,
-             * 2. 电泳 OutputBuffer  进行 commit
+             * 2. 调用 OutputBuffer  进行 commit
              */
             try {
                 prepareResponse();
@@ -1391,14 +1391,14 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
         OutputFilter[] outputFilters = getOutputBuffer().getFilters();
 
-        if (http09 == true) {
+        if (http09 == true) {                                       //  若是 http 0.9 则加入 IdentifyOutputFilter
             // HTTP/0.9
             getOutputBuffer().addActiveFilter
                 (outputFilters[Constants.IDENTITY_FILTER]);
             return;
         }
 
-        int statusCode = response.getStatus();
+        int statusCode = response.getStatus();                      // 若 htto status 处于 if 中的判断, 则加入 VoidOutputFilter
         if (statusCode < 200 || statusCode == 204 || statusCode == 205 ||
                 statusCode == 304) {
             // No entity body
@@ -1408,7 +1408,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             contentDelimitation = true;
         }
 
-        MessageBytes methodMB = request.method();
+        MessageBytes methodMB = request.method();                   // 若 Http 请求的 method 是 HEAD, 则加入 VoidOutputFilter
         if (methodMB.equals("HEAD")) {
             // No entity body
             getOutputBuffer().addActiveFilter
@@ -1417,7 +1417,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         }
 
         // Sendfile support
-        boolean sendingWithSendfile = false;
+        boolean sendingWithSendfile = false;                       // 这个是 Tomcat 的 sendFile 的功能
         if (getEndpoint().getUseSendfile()) {
             sendingWithSendfile = prepareSendfile(outputFilters);
         }
@@ -1498,7 +1498,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         // Add date header unless application has already set one (e.g. in a
         // Caching Filter)
         if (headers.getValue("Date") == null) {
-            headers.setValue("Date").setString(
+            headers.setValue("Date").setString(                                 // http 的 header 里面设置 日期
                     FastHttpDateFormat.getCurrentDate());
         }
 
@@ -1532,14 +1532,14 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             headers.setValue("Server").setString(server);
         } else if (headers.getValue("Server") == null) {
             // If app didn't set the header, use the default
-            getOutputBuffer().write(Constants.SERVER_BYTES);
+            getOutputBuffer().write(Constants.SERVER_BYTES);            // 写入服务端的信息 InternalOutputBuffer
         }
 
         int size = headers.size();
         for (int i = 0; i < size; i++) {
             getOutputBuffer().sendHeader(headers.getName(i), headers.getValue(i));
         }
-        getOutputBuffer().endHeaders();
+        getOutputBuffer().endHeaders();                                  //  response 中最后加入 换行 + 回车
 
     }
 

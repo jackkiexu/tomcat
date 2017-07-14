@@ -273,10 +273,10 @@ public class OutputBuffer extends Writer
         // If there are chars, flush all of them to the byte buffer now as bytes are used to
         // calculate the content-length (if everything fits into the byte buffer, of course).
         if (cb.getLength() > 0) {
-            cb.flushBuffer();
+            cb.flushBuffer();               // 将 CharChunk 里面的数据刷到 OutputBuffer
         }
 
-        if ((!coyoteResponse.isCommitted())
+        if ((!coyoteResponse.isCommitted())                         // 这里的 coyoteResponse 是 coyote 的 response
             && (coyoteResponse.getContentLengthLong() == -1)) {
             // If this didn't cause a commit of the response, the final content
             // length can be calculated
@@ -300,7 +300,7 @@ public class OutputBuffer extends Writer
                 CoyoteAdapter.ADAPTER_NOTES);
         req.inputBuffer.close();
 
-        coyoteResponse.finish();
+        coyoteResponse.finish();                    // 这边才是正真写出数据的地方
 
     }
 
@@ -461,7 +461,7 @@ public class OutputBuffer extends Writer
 
         outputCharChunk.setChars(buf, off, len);
         while (outputCharChunk.getLength() > 0) {
-            conv.convert(outputCharChunk, bb);
+            conv.convert(outputCharChunk, bb);          // 用 字符编码转化器 转换一下 ( bb 是 ByteChunk)
             if (bb.getLength() == 0) {
                 // Break out of the loop if more chars are needed to produce any output
                 break;

@@ -423,7 +423,7 @@ public final class ByteChunk implements Cloneable, Serializable {
             throw new IOException( "Buffer overflow, no sink " + limit + " " +
                                    buff.length  );
         }
-        out.realWriteBytes( buff, start, end-start );
+        out.realWriteBytes( buff, start, end-start );                   // 这里的 out 其实就是 InternalOutputBuffer
         end=start;
     }
 

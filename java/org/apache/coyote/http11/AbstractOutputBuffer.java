@@ -61,7 +61,7 @@ public abstract class AbstractOutputBuffer<S> implements OutputBuffer {
     /**
      * The buffer used for header composition.
      */
-    protected byte[] headerBuffer;
+    protected byte[] headerBuffer;          // header 里面的数据
 
 
     /**
@@ -291,7 +291,7 @@ public abstract class AbstractOutputBuffer<S> implements OutputBuffer {
 
         // go through the filters and if there is gzip filter
         // invoke it to flush
-        for (int i = 0; i <= lastActiveFilter; i++) {
+        for (int i = 0; i <= lastActiveFilter; i++) {                           // 在将数据流刷到 client 之前, 需要经过过滤器处理一下
             if (activeFilters[i] instanceof GzipOutputFilter) {
                 if (log.isDebugEnabled()) {
                     log.debug("Flushing the gzip filter at position " + i +
@@ -378,7 +378,7 @@ public abstract class AbstractOutputBuffer<S> implements OutputBuffer {
         if (lastActiveFilter != -1)
             activeFilters[lastActiveFilter].end();
 
-        flushBuffer(true);
+        flushBuffer(true);          // 将数据刷到远端
 
         finished = true;
     }
@@ -431,7 +431,7 @@ public abstract class AbstractOutputBuffer<S> implements OutputBuffer {
         } else {
             write(message);
         }
-
+        // 结束 Response 的header 里面的数据, 最后 要加上换行
         // End the response status line
         if (org.apache.coyote.Constants.IS_SECURITY_ENABLED){
            AccessController.doPrivileged(
@@ -460,12 +460,12 @@ public abstract class AbstractOutputBuffer<S> implements OutputBuffer {
      */
     public void sendHeader(MessageBytes name, MessageBytes value) {
 
-        write(name);
-        headerBuffer[pos++] = Constants.COLON;
-        headerBuffer[pos++] = Constants.SP;
-        write(value);
-        headerBuffer[pos++] = Constants.CR;
-        headerBuffer[pos++] = Constants.LF;
+        write(name);                                       // 写入 Header 里面的 name
+        headerBuffer[pos++] = Constants.COLON;          // 冒号
+        headerBuffer[pos++] = Constants.SP;             // 空格
+        write(value);                                      // 写入 Header 里面的 value
+        headerBuffer[pos++] = Constants.CR;             // 换行
+        headerBuffer[pos++] = Constants.LF;             // 回车
 
     }
 
@@ -488,7 +488,7 @@ public abstract class AbstractOutputBuffer<S> implements OutputBuffer {
      *
      * @param mb data to be written
      */
-    protected void write(MessageBytes mb) {
+    protected void write(MessageBytes mb) {         // 写入 MessageBytes 数据s
 
         if (mb.getType() == MessageBytes.T_BYTES) {
             ByteChunk bc = mb.getByteChunk();
@@ -615,7 +615,7 @@ public abstract class AbstractOutputBuffer<S> implements OutputBuffer {
      * requested number of bytes.
      */
     private void checkLengthBeforeWrite(int length) {
-        if (pos + length > headerBuffer.length) {
+        if (pos + length > headerBuffer.length) {       // 判断输出 header 的大小 是否超限
             throw new HeadersTooLargeException(
                     sm.getString("iob.responseheadertoolarge.error"));
         }

@@ -23,6 +23,7 @@ import java.net.Socket;
 
 import org.apache.coyote.OutputBuffer;
 import org.apache.coyote.Response;
+import org.apache.log4j.Logger;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.AbstractEndpoint;
 import org.apache.tomcat.util.net.SocketWrapper;
@@ -34,7 +35,7 @@ import org.apache.tomcat.util.net.SocketWrapper;
  */
 public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
     implements ByteChunk.ByteOutputChannel {
-
+    private Logger logger = Logger.getLogger(InternalOutputBuffer.class);
     // ----------------------------------------------------------- Constructors
 
     /**
@@ -148,7 +149,7 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
         committed = true;
         response.setCommitted(true);
 
-        if (pos > 0) {
+        if (pos > 0) {                  // pos > 0 说明要写入数据
             // Sending the response header buffer
             if (useSocketBuffer) {
                 socketBuffer.append(headerBuffer, 0, pos);
@@ -166,7 +167,7 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
     @Override
     public void realWriteBytes(byte cbuf[], int off, int len)
         throws IOException {
-        if (len > 0) {
+        if (len > 0) { logger.info(new String(cbuf, "utf-8"));
             outputStream.write(cbuf, off, len);
         }
     }
