@@ -37,6 +37,7 @@ import org.apache.tomcat.util.res.StringManager;
 /**
  * This valve allows to detect requests that take a long time to process, which
  * might indicate that the thread that is processing it is stuck.
+ * 这个 Valve 主要是捕获 程序中处理时间长的 Thread, 并且在满足条件的情况下 进行 Thread.interupted()
  */
 public class StuckThreadDetectionValve extends ValveBase {
 
@@ -59,7 +60,7 @@ public class StuckThreadDetectionValve extends ValveBase {
     /**
      * In seconds. Default 600 (10 minutes).
      */
-    private int threshold = 600;
+    private int threshold = 600;            // 10 分钟
 
     /**
      * The only references we keep to actual running Thread objects are in
@@ -156,7 +157,7 @@ public class StuckThreadDetectionValve extends ValveBase {
     public void invoke(Request request, Response response)
             throws IOException, ServletException {
 
-        if (threshold <= 0) {
+        if (threshold <= 0) {                   // 默认  是 10 分钟 (单位 秒)
             // short-circuit if not monitoring stuck threads
             getNext().invoke(request, response);
             return;
@@ -174,22 +175,22 @@ public class StuckThreadDetectionValve extends ValveBase {
         }
         MonitoredThread monitoredThread = new MonitoredThread(Thread.currentThread(),
             requestUrl.toString());
-        activeThreads.put(key, monitoredThread);
+        activeThreads.put(key, monitoredThread);                // 将 线程 Id 与 MonitorThread 放入一个 Map 中
 
         try {
             getNext().invoke(request, response);
         } finally {
             activeThreads.remove(key);
-            if (monitoredThread.markAsDone() == MonitoredThreadState.STUCK) {
+            if (monitoredThread.markAsDone() == MonitoredThreadState.STUCK) {       // 这里的 markAsDone 返回 先前 MonitorThread 的状态
                 completedStuckThreadsQueue.add(
                         new CompletedStuckThread(monitoredThread.getThread(),
-                            monitoredThread.getActiveTimeInMillis()));
+                            monitoredThread.getActiveTimeInMillis()));              // 这里存储的就是 这个工作线程运行的时间
             }
         }
     }
 
     @Override
-    public void backgroundProcess() {
+    public void backgroundProcess() {               // Tomcat 容器执行的后台任务
         super.backgroundProcess();
 
         long thresholdInMillis = threshold * 1000;
@@ -199,14 +200,14 @@ public class StuckThreadDetectionValve extends ValveBase {
         for (MonitoredThread monitoredThread : activeThreads.values()) {
             long activeTime = monitoredThread.getActiveTimeInMillis();
 
-            if (activeTime >= thresholdInMillis && monitoredThread.markAsStuckIfStillRunning()) {
-                int numStuckThreads = stuckCount.incrementAndGet();
-                notifyStuckThreadDetected(monitoredThread, activeTime, numStuckThreads);
+            if (activeTime >= thresholdInMillis && monitoredThread.markAsStuckIfStillRunning()) {      // 若线程执行的时间超过了设定的阀值, 并且当前的线程还是处于 RUNNING 状态
+                int numStuckThreads = stuckCount.incrementAndGet();                                  // 阻塞线程计算器 + 1
+                notifyStuckThreadDetected(monitoredThread, activeTime, numStuckThreads);               // 先打印对应线程的信息
             }
         }
         // Check if any threads previously reported as stuck, have finished.
         for (CompletedStuckThread completedStuckThread = completedStuckThreadsQueue.poll();
-            completedStuckThread != null; completedStuckThread = completedStuckThreadsQueue.poll()) {
+            completedStuckThread != null; completedStuckThread = completedStuckThreadsQueue.poll()) {   // 工作线程的任务执行 OK, 打印出来对应的信息
 
             int numStuckThreads = stuckCount.decrementAndGet();
             notifyStuckThreadCompleted(completedStuckThread, numStuckThreads);
@@ -243,10 +244,10 @@ public class StuckThreadDetectionValve extends ValveBase {
         /**
          * Reference to the thread to get a stack trace from background task
          */
-        private final Thread thread;
-        private final String requestUri;
-        private final long start;
-        private final AtomicInteger state = new AtomicInteger(
+        private final Thread thread;            // 当前监控的线程
+        private final String requestUri;       // 此次请求的 URI
+        private final long start;              // 进行线程 monitor 的时间点
+        private final AtomicInteger state = new AtomicInteger(  // Monitor 线程的初始状态
             MonitoredThreadState.RUNNING.ordinal());
 
         public MonitoredThread(Thread thread, String requestUri) {

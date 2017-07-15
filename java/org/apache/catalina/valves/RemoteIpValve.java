@@ -418,7 +418,7 @@ public class RemoteIpValve extends ValveBase {
     /**
      * @see #setProtocolHeader(String)
      */
-    private String protocolHeader = null;
+    private String protocolHeader = null;                                    // 该字段记录从浏览器发出请求时, 使用的是什么协议
 
     /**
      * @see #setProtocolHeaderHttpsValue(String)
@@ -430,17 +430,17 @@ public class RemoteIpValve extends ValveBase {
     /**
      * @see #setProxiesHeader(String)
      */
-    private String proxiesHeader = "X-Forwarded-By";
+    private String proxiesHeader = "X-Forwarded-By";                        // 负载均衡服务的可信  IP
 
     /**
      * @see #setRemoteIpHeader(String)
      */
-    private String remoteIpHeader = "X-Forwarded-For";
+    private String remoteIpHeader = "X-Forwarded-For";                      // 将客户端及反向代理服务器的 IP 地址, 添加在其中 (一般格式 client1, proxy1, proxy2, proxy3, 最左边的 client 就是客户端的原始 IP, 后面一个一个都是代理服务器的 IP)
 
     /**
      * @see #setRequestAttributesEnabled(boolean)
      */
-    private boolean requestAttributesEnabled = true;
+    private boolean requestAttributesEnabled = true;                       // 这个值代表 通过 request.getAttribute(XXX) 拿到的信息是客户端的原始信息, 而不是代理服务器的信息
 
     /**
      * @see RemoteIpValve#setTrustedProxies(String)
@@ -564,20 +564,20 @@ public class RemoteIpValve extends ValveBase {
      */
     @Override
     public void invoke(Request request, Response response) throws IOException, ServletException {
-        final String originalRemoteAddr = request.getRemoteAddr();
+        final String originalRemoteAddr = request.getRemoteAddr();                                              // 获取 Request 里面关于 client, 及通信协议 的信息
         final String originalRemoteHost = request.getRemoteHost();
         final String originalScheme = request.getScheme();
         final boolean originalSecure = request.isSecure();
         final int originalServerPort = request.getServerPort();
 
         if (internalProxies !=null &&
-                internalProxies.matcher(originalRemoteAddr).matches()) {
+                internalProxies.matcher(originalRemoteAddr).matches()) {                                     // 通过  internalProxies  进行 IP 的过滤
             String remoteIp = null;
             // In java 6, proxiesHeaderValue should be declared as a java.util.Deque
             LinkedList<String> proxiesHeaderValue = new LinkedList<>();
             StringBuilder concatRemoteIpHeaderValue = new StringBuilder();
 
-            for (Enumeration<String> e = request.getHeaders(remoteIpHeader); e.hasMoreElements();) {
+            for (Enumeration<String> e = request.getHeaders(remoteIpHeader); e.hasMoreElements();) {        // 获取 http header 里面 X-Forwarded-For 的信息
                 if (concatRemoteIpHeaderValue.length() > 0) {
                     concatRemoteIpHeaderValue.append(", ");
                 }
@@ -590,10 +590,10 @@ public class RemoteIpValve extends ValveBase {
             // loop on remoteIpHeaderValue to find the first trusted remote ip and to build the proxies chain
             for (idx = remoteIpHeaderValue.length - 1; idx >= 0; idx--) {
                 String currentRemoteIp = remoteIpHeaderValue[idx];
-                remoteIp = currentRemoteIp;
+                remoteIp = currentRemoteIp;                                                                   // 通过这里获取真实的 IP
                 if (internalProxies.matcher(currentRemoteIp).matches()) {
                     // do nothing, internalProxies IPs are not appended to the
-                } else if (trustedProxies != null &&
+                } else if (trustedProxies != null &&                                                     // trustedProxies 存放的是 内部可信任的 proxy 的 IP 地址
                         trustedProxies.matcher(currentRemoteIp).matches()) {
                     proxiesHeaderValue.addFirst(currentRemoteIp);
                 } else {
@@ -607,7 +607,7 @@ public class RemoteIpValve extends ValveBase {
                 String currentRemoteIp = remoteIpHeaderValue[idx];
                 newRemoteIpHeaderValue.addFirst(currentRemoteIp);
             }
-            if (remoteIp != null) {
+            if (remoteIp != null) {                                                                        // 在 Request 里面设置请求真实的 IP 等信息
 
                 request.setRemoteAddr(remoteIp);
                 request.setRemoteHost(remoteIp);
@@ -629,7 +629,7 @@ public class RemoteIpValve extends ValveBase {
             }
 
             if (protocolHeader != null) {
-                String protocolHeaderValue = request.getHeader(protocolHeader);
+                String protocolHeaderValue = request.getHeader(protocolHeader);                         // 处理 请求的协议
                 if (protocolHeaderValue == null) {
                     // don't modify the secure,scheme and serverPort attributes
                     // of the request
@@ -660,7 +660,7 @@ public class RemoteIpValve extends ValveBase {
                         + request.getRemoteAddr() + "'");
             }
         }
-        if (requestAttributesEnabled) {
+        if (requestAttributesEnabled) {                                                     // 设置 Request 的属性, 供 Accesslog 使用
             request.setAttribute(AccessLog.REMOTE_ADDR_ATTRIBUTE,
                     request.getRemoteAddr());
             request.setAttribute(Globals.REMOTE_ADDR_ATTRIBUTE,
@@ -673,8 +673,8 @@ public class RemoteIpValve extends ValveBase {
                     Integer.valueOf(request.getServerPort()));
         }
         try {
-            getNext().invoke(request, response);
-        } finally {
+            getNext().invoke(request, response);                                                // 执行 PipeLine 里面的信息
+        } finally {                                                                            // 将 Request 里面的信息恢复过来
             request.setRemoteAddr(originalRemoteAddr);
             request.setRemoteHost(originalRemoteHost);
 

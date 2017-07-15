@@ -45,6 +45,7 @@ import org.apache.tomcat.util.res.StringManager;
  * @author <a href="mailto:nicolaken@supereva.it">Nicola Ken Barozzi</a> Aisa
  * @author <a href="mailto:stefano@apache.org">Stefano Mazzocchi</a>
  * @author Yoav Shapira
+ * 检测 Http 请求过程中是否出现过什么异常, 有异常的话, 直接拼装 html 页面, 输出到客户端
  */
 public class ErrorReportValve extends ValveBase {
 
@@ -71,9 +72,9 @@ public class ErrorReportValve extends ValveBase {
         throws IOException, ServletException {
 
         // Perform the request
-        getNext().invoke(request, response);                // 先将 请求转发给下一个 Valve
+        getNext().invoke(request, response);                                                   // 先将 请求转发给下一个 Valve
 
-        if (response.isCommitted()) {
+        if (response.isCommitted()) {                                                         // 这里的 isCommitted 表明, 请求是正常处理结束
             return;
         }
 
@@ -92,7 +93,7 @@ public class ErrorReportValve extends ValveBase {
 
             // Reset the response (if possible)
             try {
-                response.reset();
+                response.reset();                                                           // 重置 response 里面的数据(此时 Response 里面可能有些数据)
             } catch (IllegalStateException e) {
                 // Ignore
             }
@@ -127,7 +128,7 @@ public class ErrorReportValve extends ValveBase {
      * @param throwable The exception that occurred (which possibly wraps
      *  a root cause exception
      */
-    protected void report(Request request, Response response,
+    protected void report(Request request, Response response,                           // 将异常的堆栈信息组织成 Html 输出到客户端
                           Throwable throwable) {
 
         // Do nothing on non-HTTP responses
@@ -254,7 +255,7 @@ public class ErrorReportValve extends ValveBase {
             if (writer != null) {
                 // If writer is null, it's an indication that the response has
                 // been hard committed already, which should never happen
-                writer.write(sb.toString());
+                writer.write(sb.toString());            // 将错误信息, 写到浏览器上
             }
         } catch (IOException e) {
             // Ignore

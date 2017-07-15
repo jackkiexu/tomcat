@@ -35,6 +35,7 @@ import org.apache.catalina.connector.Response;
  * async requests may require multiple serial requests to complete what - to the
  * user - appears as a single request.</p>
  *
+ * 可以附属于任何 Container 的,  用于控制并发请求 的 Valve (内部使用 Semaphore 来实现)
  * @author Remy Maucherat
  */
 public class SemaphoreValve extends ValveBase {
@@ -59,7 +60,7 @@ public class SemaphoreValve extends ValveBase {
     /**
      * Concurrency level of the semaphore.
      */
-    protected int concurrency = 10;
+    protected int concurrency = 10;         // 默认的并发请求度 10个并发
     public int getConcurrency() { return concurrency; }
     public void setConcurrency(int concurrency) { this.concurrency = concurrency; }
 
@@ -135,7 +136,7 @@ public class SemaphoreValve extends ValveBase {
     public void invoke(Request request, Response response)
         throws IOException, ServletException {
 
-        if (controlConcurrency(request, response)) {
+        if (controlConcurrency(request, response)) {                // 供子类扩展, 加一些 进入 并发控制 程序的条件
             boolean shouldRelease = true;
             try {
                 if (block) {
@@ -148,12 +149,12 @@ public class SemaphoreValve extends ValveBase {
                             return;
                         }
                     } else {
-                        semaphore.acquireUninterruptibly();
+                        semaphore.acquireUninterruptibly();     // 不支持中断请求式的 获取 permit
                     }
                 } else {
-                    if (!semaphore.tryAcquire()) {
+                    if (!semaphore.tryAcquire()) {             // 这里就是尝试获取 一下 permit, 获取不成功也不会阻塞
                         shouldRelease = false;
-                        permitDenied(request, response);
+                        permitDenied(request, response);        // 获取不成功, 执行什么程序, 这个由子类扩展
                         return;
                     }
                 }

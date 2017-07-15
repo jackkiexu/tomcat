@@ -565,7 +565,7 @@ public class CoyoteAdapter implements Adapter {
                 request.finishRequest();
                 // 完成此次请求, 并提交响应信息
                 // 如果 response 已经提交, 则直接返回, 否则提交 response
-                response.finishResponse();              // 这里会组装 Http Response 中的 header 与 body 里面的数据, 并且刷到远端
+                response.finishResponse();              // 跟过源码的兄弟会发现, 这里有点绕, 主要是将 org.apache.catalina.connector.Response对应的 OutputBuffer 中的数据 刷到 org.apache.coyote.Response 对应的 InternalOutputBuffer 中, 并且最终调用 socket对应的 outputStream 将数据刷出去( 这里会组装 Http Response 中的 header 与 body 里面的数据, 并且刷到远端 )
                 if (postParseSuccess &&
                         request.getMappingData().context != null) {
                     // Log only if processing was invoked.

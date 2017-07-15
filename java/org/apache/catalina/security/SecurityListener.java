@@ -139,8 +139,8 @@ public class SecurityListener implements LifecycleListener {
      * Execute the security checks. Each check should be in a separate method.
      */
     protected void doChecks() {
-        checkOsUser();
-        checkUmask();
+        checkOsUser();                                  // 检测操作系统里面的用户
+        checkUmask();                                   // 检测 linux 下用户创建文件时需要用到的 umask 值
     }
 
 

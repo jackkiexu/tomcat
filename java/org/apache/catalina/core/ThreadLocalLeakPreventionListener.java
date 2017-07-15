@@ -197,7 +197,7 @@ public class ThreadLocalLeakPreventionListener implements LifecycleListener,
      *            the context being stopped, used to discover all the Connectors
      *            of its parent Service.
      */
-    private void stopIdleThreads(Context context) {
+    private void stopIdleThreads(Context context) {                                       // 下面的 ThreadLocal 保护操作很简单, 就是将 connector 里面 protocolHandler 对应的 executor 里面的线程全部关闭掉
         if (serverStopping) return;                 // 如果没有配置该属性, 直接 return
 
         if (context instanceof StandardContext &&

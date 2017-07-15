@@ -717,7 +717,7 @@ public class StandardHost extends ContainerBase implements Host {
             if (event.getType().equals(Lifecycle.AFTER_START_EVENT)) {
                 if (event.getSource() instanceof Context) {
                     Context context = ((Context) event.getSource());
-                    childClassLoaders.put(context.getLoader().getClassLoader(),
+                    childClassLoaders.put(context.getLoader().getClassLoader(),             // 用 WeakHashMap 装载 WebAppClassLoader, 等关闭 StandardContext 之后, 在看看 与之对应的 WebappClassLoader 是否存活, 若还存在, 则说明 WebappClassLoader 没有没 GC, 存在 Perm 区域内存泄露
                             context.getServletContext().getContextPath());
                 }
             }

@@ -225,17 +225,17 @@ public class JreMemoryLeakPreventionListener implements LifecycleListener {
 
 
     @Override
-    public void lifecycleEvent(LifecycleEvent event) {
+    public void lifecycleEvent(LifecycleEvent event) {      // 这里所做的 保护内存泄露 无非就是 将 本来在 每个 WebappClassLoader 中都进行加载的 class, 事先在 commonClassLoader 里面进行加载一遍
         // Initialise these classes when Tomcat starts
         if (Lifecycle.BEFORE_INIT_EVENT.equals(event.getType())) {
 
-            ClassLoader loader = Thread.currentThread().getContextClassLoader();
+            ClassLoader loader = Thread.currentThread().getContextClassLoader();        // 这里获取当先 线程的 contextClassLoader
 
             try
             {
                 // Use the system classloader as the victim for all this
                 // ClassLoader pinning we're about to do.
-                Thread.currentThread().setContextClassLoader(
+                Thread.currentThread().setContextClassLoader(                           // 将 Thread 的 contextClassLoader 切换成 系统的 AppClassloader
                         ClassLoader.getSystemClassLoader());
 
                 /*
@@ -469,7 +469,7 @@ public class JreMemoryLeakPreventionListener implements LifecycleListener {
                 }
 
             } finally {
-                Thread.currentThread().setContextClassLoader(loader);
+                Thread.currentThread().setContextClassLoader(loader);                               // 将 Thread 的 contextClassLoader 切换回来 (上面所有的操作中加载的 class 都会被加载到 commonClassLoader 中)
             }
         }
     }

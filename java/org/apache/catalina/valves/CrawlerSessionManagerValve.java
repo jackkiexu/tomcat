@@ -39,6 +39,8 @@ import org.apache.juli.logging.LogFactory;
  * ensures that crawlers are associated with a single session - just like normal
  * users - regardless of whether or not they provide a session token with their
  * requests.
+ *
+ * 通过解析 Http header 里面的 user-agent 来实现反爬虫的 Valve, 其实可以加上 refer(这个作用不大), 主要目的还是为了防止 大量爬虫请求, 而导致创建大量 Session
  */
 public class CrawlerSessionManagerValve extends ValveBase
         implements HttpSessionBindingListener {
@@ -126,7 +128,7 @@ public class CrawlerSessionManagerValve extends ValveBase
     public void invoke(Request request, Response response) throws IOException,
             ServletException {
 
-        boolean isBot = false;
+        boolean isBot = false;                                                              // 识别这个请求是否是爬虫
         String sessionId = null;
         String clientIp = null;
 
@@ -140,7 +142,7 @@ public class CrawlerSessionManagerValve extends ValveBase
         if (request.getSession(false) == null) {
 
             // Is this a crawler - check the UA headers
-            Enumeration<String> uaHeaders = request.getHeaders("user-agent");
+            Enumeration<String> uaHeaders = request.getHeaders("user-agent");           // 通过 user-agent 来识别是否是爬虫 ( 没有 user-agent 肯定是 爬虫)
             String uaHeader = null;
             if (uaHeaders.hasMoreElements()) {
                 uaHeader = uaHeaders.nextElement();
@@ -153,7 +155,7 @@ public class CrawlerSessionManagerValve extends ValveBase
                     log.debug(request.hashCode() + ": UserAgent=" + uaHeader);
                 }
 
-                if (uaPattern.matcher(uaHeader).matches()) {
+                if (uaPattern.matcher(uaHeader).matches()) {                           // 有 user-agent, 但 uaPattern 匹配了, 那其实也是爬虫
                     isBot = true;
 
                     if (log.isDebugEnabled()) {
@@ -166,7 +168,7 @@ public class CrawlerSessionManagerValve extends ValveBase
             // If this is a bot, is the session ID known?
             if (isBot) {
                 clientIp = request.getRemoteAddr();
-                sessionId = clientIpSessionId.get(clientIp);
+                sessionId = clientIpSessionId.get(clientIp);                        // 若是爬虫, 则直接设置 sessionId (省得程序再创建了)
                 if (sessionId != null) {
                     request.setRequestedSessionId(sessionId);
                     if (log.isDebugEnabled()) {
@@ -184,7 +186,7 @@ public class CrawlerSessionManagerValve extends ValveBase
                 // Has bot just created a session, if so make a note of it
                 HttpSession s = request.getSession(false);
                 if (s != null) {
-                    clientIpSessionId.put(clientIp, s.getId());
+                    clientIpSessionId.put(clientIp, s.getId());                         // 是爬虫的话, 记录对应的 IP 与 sessionId
                     sessionIdClientIp.put(s.getId(), clientIp);
                     // #valueUnbound() will be called on session expiration
                     s.setAttribute(this.getClass().getName(), this);
