@@ -52,6 +52,8 @@ import org.apache.tomcat.util.res.StringManager;
  * Locked files usually occur when a resource inside a JAR is accessed without
  * first disabling Jar URL connection caching. The workaround is to disable this
  * caching by default.
+ *
+ * 何时出发这个 Listener
  */
 public class JreMemoryLeakPreventionListener implements LifecycleListener {
 

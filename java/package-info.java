@@ -30,6 +30,7 @@
  * 4. Tomcat线程模型 (bio, nio)
  *
  * 5. Tomcat 中使用的设计模式
+ *      (1) AccessLogAdapter 组装 AccessLog (适配器)
  *
  * 6. Tomcat Session 生成,追踪及管理(持久化)策略(涉及 cookie, request.getAttribute 触发什么动作)
  *
