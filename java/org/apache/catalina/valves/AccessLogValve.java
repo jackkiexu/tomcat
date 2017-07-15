@@ -82,18 +82,18 @@ public class AccessLogValve extends AbstractAccessLogValve {
     /**
      * The directory in which log files are created.
      */
-    private String directory = "logs";
+    private String directory = "logs";                                  // tomcat 里面 access_log 存放的位置, 这里用的是相对的位置
 
     /**
      * The prefix that is added to log file filenames.
      */
-    protected String prefix = "access_log";
+    protected String prefix = "access_log";                            // 创建日志文件的前缀
 
 
     /**
      * Should we rotate our log file? Default is true (like old behavior)
      */
-    protected boolean rotatable = true;
+    protected boolean rotatable = true;                               // access 日志会不会进行滚动, 默认是按照天进行滚动
 
     /**
      * Should we defer inclusion of the date stamp in the file
@@ -105,13 +105,13 @@ public class AccessLogValve extends AbstractAccessLogValve {
     /**
      * Buffered logging.
      */
-    private boolean buffered = true;
+    private boolean buffered = true;                                    // 刷日志信息时是否使用 buffer
 
 
     /**
      * The suffix that is added to log file filenames.
      */
-    protected String suffix = "";
+    protected String suffix = "";                                       // 创建日志文件的后缀
 
 
     /**
@@ -147,14 +147,14 @@ public class AccessLogValve extends AbstractAccessLogValve {
     /**
      * Date format to place in log file name.
      */
-    protected String fileDateFormat = ".yyyy-MM-dd";
+    protected String fileDateFormat = ".yyyy-MM-dd";            // log 文件会基于这种时间格式进行滚动日志
 
     /**
      * Character set used by the log file. If it is <code>null</code>, the
      * system default character set will be used. An empty string will be
      * treated as <code>null</code> when this property is assigned.
      */
-    protected String encoding = null;
+    protected String encoding = null;                             // 日志文件的字符编码集
 
     // ------------------------------------------------------------- Properties
 
@@ -356,7 +356,7 @@ public class AccessLogValve extends AbstractAccessLogValve {
     /**
      * Rotate the log file if necessary.
      */
-    public void rotate() {
+    public void rotate() {                                                  // 进行日志文件的滚动(就是创建日志文件) (默认每天创建一个日志文件)
         if (rotatable) {
             // Only do a logfile switch check once a second, max.
             long systime = System.currentTimeMillis();
@@ -370,10 +370,10 @@ public class AccessLogValve extends AbstractAccessLogValve {
                         tsDate = fileDateFormatter.format(new Date(systime));
 
                         // If the date has changed, switch log files
-                        if (!dateStamp.equals(tsDate)) {
-                            close(true);
+                        if (!dateStamp.equals(tsDate)) {                // 看看 日志文件是否需要 rotate
+                            close(true);                                 // 关闭当前的日志文件
                             dateStamp = tsDate;
-                            open();
+                            open();                                      // 开启一个新的日志文件
                         }
                     }
                 }
@@ -429,7 +429,7 @@ public class AccessLogValve extends AbstractAccessLogValve {
 
         // Create the directory if necessary
         File dir = new File(directory);
-        if (!dir.isAbsolute()) {
+        if (!dir.isAbsolute()) {                                                // 若文件指定的不是 绝对路径, 则在 Tomcat 的 ${catalina.base} 下面进行
             dir = new File(getContainer().getCatalinaBase(), directory);
         }
         if (!dir.mkdirs() && !dir.isDirectory()) {

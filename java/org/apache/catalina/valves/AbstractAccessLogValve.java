@@ -130,6 +130,8 @@ import org.apache.tomcat.util.collections.SynchronizedStack;
  * @author Remy Maucherat
  * @author Takayuki Kaneko
  * @author Peter Rossbach
+ *
+ * 这个类主要做的就是 Pattern 解析的功能
  */
 public abstract class AbstractAccessLogValve extends ValveBase implements AccessLog {
 
@@ -151,7 +153,7 @@ public abstract class AbstractAccessLogValve extends ValveBase implements Access
     /**
      * The pattern used to format our access log lines.
      */
-    protected String pattern = null;
+    protected String pattern = null;                            // 日志的格式化方式
 
     /**
      * The size of our global date format cache
@@ -433,7 +435,7 @@ public abstract class AbstractAccessLogValve extends ValveBase implements Access
     /**
      * @see #setRequestAttributesEnabled(boolean)
      */
-    protected boolean requestAttributesEnabled = false;
+    protected boolean requestAttributesEnabled = false;                         // 日志中记录的访问信息是从 request 里面获取, 还是通过 RemoteIpValve 里面获取
 
     /**
      * Buffer pool used for log message generation. Pool used to reduce garbage
@@ -448,7 +450,7 @@ public abstract class AbstractAccessLogValve extends ValveBase implements Access
      * discarded. The default is 256 characters. This should be set to larger
      * than the typical access log message size.
      */
-    private int maxLogMessageBufferSize = 256;
+    private int maxLogMessageBufferSize = 256;                                  // buffer 输出日志的大小
 
     // ------------------------------------------------------------- Properties
 
@@ -639,7 +641,7 @@ public abstract class AbstractAccessLogValve extends ValveBase implements Access
             logElements[i].addElement(result, date, request, response, time);
         }
 
-        log(result);
+        log(result);                                                                // 这里面有对日志文件的滚动操作
 
         if (result.size() <= maxLogMessageBufferSize) {
             result.reset();

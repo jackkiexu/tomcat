@@ -108,6 +108,8 @@ import org.apache.tomcat.util.ExceptionUtils;
  *
  * @author Andre de Jesus
  * @author Peter Rossbach
+ *
+ * 将 Tomcat 访问的日志记录信息记录到 数据库里面
  */
 
 public final class JDBCAccessLogValve extends ValveBase implements AccessLog {

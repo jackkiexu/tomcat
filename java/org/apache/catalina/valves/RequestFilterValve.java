@@ -277,13 +277,13 @@ public abstract class RequestFilterValve extends ValveBase {
     protected void process(String property, Request request, Response response)
             throws IOException, ServletException {
 
-        if (isAllowed(property)) {
+        if (isAllowed(property)) {                      // 若属性通过, 则执行 pipeline 里面的valve
             getNext().invoke(request, response);
             return;
         }
 
         // Deny this request
-        denyRequest(request, response);
+        denyRequest(request, response);                 // deny 请求
 
     }
 
@@ -317,7 +317,7 @@ public abstract class RequestFilterValve extends ValveBase {
         Pattern allow = this.allow;
 
         // Check the deny patterns, if any
-        if (deny != null && deny.matcher(property).matches()) {
+        if (deny != null && deny.matcher(property).matches()) {         // 正则匹配 IP 是否允许
             return false;
         }
 

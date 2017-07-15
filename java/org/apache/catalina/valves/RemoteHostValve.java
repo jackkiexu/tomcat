@@ -51,7 +51,7 @@ public final class RemoteHostValve extends RequestFilterValve {
     public void invoke(Request request, Response response)
         throws IOException, ServletException {
 
-        process(request.getRequest().getRemoteHost(), request, response);
+        process(request.getRequest().getRemoteHost(), request, response);           // 这里过滤的就是 request.getRequest().getRemoteHost()
 
     }
 }

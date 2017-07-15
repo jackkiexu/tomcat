@@ -1057,7 +1057,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
         boolean logged = false;
 
-        if (getAccessLog() != null) {
+        if (getAccessLog() != null) {                               // 这里会遍历当前容器的 accesslog 装到一个 adapter 里面 进行日志记录
             getAccessLog().log(request, response, time);
             logged = true;
         }
