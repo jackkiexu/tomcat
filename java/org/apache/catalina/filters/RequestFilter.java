@@ -63,18 +63,18 @@ public abstract class RequestFilter extends FilterBase implements CometFilter {
     /**
      * The regular expression used to test for allowed requests.
      */
-    protected Pattern allow = null;
+    protected Pattern allow = null;                             // 设置 允许请求的 客户端 IP 地址(这是一个正则匹配)
 
     /**
      * The regular expression used to test for denied requests.
      */
-    protected Pattern deny = null;
+    protected Pattern deny = null;                              // 设置 不允许请求的 客户端 IP 地址(这是一个正则匹配)
 
     /**
      * The HTTP response status code that is used when rejecting denied
      * request. It is 403 by default, but may be changed to be 404.
      */
-    protected int denyStatus = HttpServletResponse.SC_FORBIDDEN;
+    protected int denyStatus = HttpServletResponse.SC_FORBIDDEN;        // 当客户端的请求不允许通过时, 返回给客户端的 http status 码
 
     /**
      * mime type -- "text/plain"
