@@ -623,6 +623,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      *  generated
      * @exception IllegalStateException if a new session cannot be
      *  instantiated for any reason
+     *  通过这个方法创建出一个 Session
      */
     @Override
     public Session createSession(String sessionId) {
@@ -809,6 +810,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
 
     /**
      * Generate and return a new session identifier.
+     * Session Id 生成器, 若想改成 Tomcat 的分布式集群, 也需要将 SessionId 的生成改写 (若 Twitter 的 snowFlake 等)
      */
     protected String generateSessionId() {
 
