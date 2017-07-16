@@ -497,7 +497,7 @@ public class TestExpiresFilter extends TomcatBaseTest {
     }
 
     @Test
-    public void testIntsToCommaDelimitedString() {
+    public void testIntsToCommaDelimitedString() {          // 用 逗号分隔 数组元素 编程字符串
         String actual = ExpiresFilter.intsToCommaDelimitedString(new int[] {
                 500, 503 });
         String expected = "500, 503";
