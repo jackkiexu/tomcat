@@ -236,7 +236,7 @@ public class StandardSession implements HttpSession, Session, Serializable {
      * the servlet container may invalidate this session.  A negative time
      * indicates that the session should never time out.
      *
-     * 默认值就是 ManagerBase.maxInactiveInterval
+     * 默认值就是 ManagerBase.maxInactiveInterval, 这个时间间隔就是 最大的 Session 失效超时时间, 每次调用 StandardSession.access() 方法, 都会改变这个时间
      */
     protected int maxInactiveInterval = -1;
 
@@ -701,7 +701,7 @@ public class StandardSession implements HttpSession, Session, Serializable {
             } else {
                 timeIdle = (int) ((timeNow - thisAccessedTime) / 1000L);
             }
-            if (timeIdle >= maxInactiveInterval) {
+            if (timeIdle >= maxInactiveInterval) {              // 说明 这个 Session 已经超过 maxInactiveInterval 这么长的时间没有没访问了
                 expire(true);
             }
         }
@@ -826,7 +826,7 @@ public class StandardSession implements HttpSession, Session, Serializable {
             // Make sure the webapp's class loader is set when calling the
             // listeners
             ClassLoader oldContextClassLoader = null;
-            try {
+            try {                                                               // 进行 Session 事件触发
                 oldContextClassLoader = context.bind(Globals.IS_SECURITY_ENABLED, null);
                 if (notify) {
                     Object listeners[] = context.getApplicationLifecycleListeners();
@@ -868,10 +868,10 @@ public class StandardSession implements HttpSession, Session, Serializable {
             }
 
             // Remove this session from our manager's active sessions
-            manager.remove(this, true);
+            manager.remove(this, true);                                             // 从这里就看出, 为什么 StandardSession 要引用管理它的 StandardManager
 
             // Notify interested session event listeners
-            if (notify) {
+            if (notify) {                                                             // 进行事件通知
                 fireSessionEvent(Session.SESSION_DESTROYED_EVENT, null);
             }
 
@@ -892,7 +892,7 @@ public class StandardSession implements HttpSession, Session, Serializable {
             expiring = false;
 
             // Unbind any objects associated with this session
-            String keys[] = keys();
+            String keys[] = keys();                                                 // 获取 Session 里面所有 attribute 属性
             for (int i = 0; i < keys.length; i++)
                 removeAttributeInternal(keys[i], notify);
 

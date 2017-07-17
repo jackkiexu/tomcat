@@ -339,6 +339,7 @@ public class StandardContext extends ContainerBase
 
     /**
      * Should we attempt to use cookies for session id communication?
+     * Tomcat 是否尝试通过 cookie 的方式来追踪 Session 的信息
      */
     private boolean cookies = true;
 

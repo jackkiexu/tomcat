@@ -139,7 +139,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
 
     protected static final int TIMING_STATS_CACHE_SIZE = 100;
 
-    protected final Deque<SessionTiming> sessionCreationTiming =
+    protected final Deque<SessionTiming> sessionCreationTiming =            // 计算 每分钟 Session 创建的个数
             new LinkedList<>();
 
     protected final Deque<SessionTiming> sessionExpirationTiming =
@@ -629,7 +629,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
     public Session createSession(String sessionId) {
 
         if ((maxActiveSessions >= 0) &&
-                (getActiveSessions() >= maxActiveSessions)) {
+                (getActiveSessions() >= maxActiveSessions)) {       // 判断 单节点的 Session 个数是否超过限制
             rejectedSessions++;
             throw new TooManyActiveSessionsException(
                     sm.getString("managerBase.createSession.ise"),
@@ -645,18 +645,18 @@ public abstract class ManagerBase extends LifecycleMBeanBase
         session.setNew(true);
         session.setValid(true);
         session.setCreationTime(System.currentTimeMillis());
-        session.setMaxInactiveInterval(this.maxInactiveInterval);
+        session.setMaxInactiveInterval(this.maxInactiveInterval);       // StandardSession 最大的默认 Session 激活时间
         String id = sessionId;
         if (id == null) {
-            id = generateSessionId();   // 生成 sessionId
+            id = generateSessionId();                                       // 生成 sessionId (这里通过随机数来生成)
         }
         session.setId(id);
         sessionCounter++;
 
         SessionTiming timing = new SessionTiming(session.getCreationTime(), 0);
         synchronized (sessionCreationTiming) {
-            sessionCreationTiming.add(timing);
-            sessionCreationTiming.poll();
+            sessionCreationTiming.add(timing);                          // 每次创建 Session 都会创建一个 SessionTiming, 并且 push 到 链表 sessionCreationTiming 的最后
+            sessionCreationTiming.poll();                               // 并且将 链表 最前面的节点删除
         }
         return (session);
 
@@ -733,13 +733,13 @@ public abstract class ManagerBase extends LifecycleMBeanBase
             long timeNow = System.currentTimeMillis();
             int timeAlive =
                 (int) (timeNow - session.getCreationTimeInternal())/1000;
-            updateSessionMaxAliveTime(timeAlive);
-            expiredSessions.incrementAndGet();
+            updateSessionMaxAliveTime(timeAlive);                                  // 更新一下存活时间最长的 Session 存活时间
+            expiredSessions.incrementAndGet();                                  // 更新一下 Session 过期的个数
             /**
              * SessionTiming 是一个标识 Session 创建时间和 经历多长时间的对象
-             * SessionTiming 是什么作用 ?
+             * SessionTiming 是什么作用 ? 统计作用 将 ManagerBase.getSessionExpireRate(0 统计  每分钟 超时的 Session 个数
              */
-            SessionTiming timing = new SessionTiming(timeNow, timeAlive);
+            SessionTiming timing = new SessionTiming(timeNow, timeAlive);           // 寄一个时间是放入链表的时间, 第二个时间是 Session 存活的时间
             synchronized (sessionExpirationTiming) {
                 sessionExpirationTiming.add(timing);
                 sessionExpirationTiming.poll();
@@ -990,7 +990,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      * @param sessionAliveTime  The candidate value (in seconds) for the new
      *                          sessionMaxAliveTime value.
      */
-    public void updateSessionMaxAliveTime(int sessionAliveTime) {
+    public void updateSessionMaxAliveTime(int sessionAliveTime) {               // 这里记录的是 存活时间最长的 Session 存活时间
         if (sessionAliveTime > this.sessionMaxAliveTime) {
             synchronized (sessionMaxAliveTimeUpdateLock) {
                 if (sessionAliveTime > this.sessionMaxAliveTime) {
@@ -1009,7 +1009,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      * alive.
      */
     @Override
-    public int getSessionAverageAliveTime() {
+    public int getSessionAverageAliveTime() {                   // 计算每个 Session 平均存活的时间
         // Copy current stats
         List<SessionTiming> copy = new ArrayList<>();
         synchronized (sessionExpirationTiming) {
@@ -1044,7 +1044,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      * @return  The current rate (in sessions per minute) of session creation
      */
     @Override
-    public int getSessionCreateRate() {
+    public int getSessionCreateRate() {                         // 这个根据 现在系统统计的数据(100个数据) , 来统计 每分钟创建的 Session 的个数
         long now = System.currentTimeMillis();
         // Copy current stats
         List<SessionTiming> copy = new ArrayList<>();
@@ -1070,7 +1070,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
         }
         if (counter > 0) {
             if (oldest < now) {
-                result = (1000*60*counter)/(int) (now - oldest);
+                result = (1000*60*counter)/(int) (now - oldest);        // 计算 每分钟创建的 Session 的个数
             } else {
                 result = Integer.MAX_VALUE;
             }
@@ -1087,7 +1087,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      * @return  The current rate (in sessions per minute) of session expiration
      */
     @Override
-    public int getSessionExpireRate() {
+    public int getSessionExpireRate() {                                     // 获取 每分钟 超时的 Session 个数
         long now = System.currentTimeMillis();
         // Copy current stats
         List<SessionTiming> copy = new ArrayList<>();

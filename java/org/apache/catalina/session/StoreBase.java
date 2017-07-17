@@ -146,7 +146,7 @@ public abstract class StoreBase extends LifecycleBase implements Store {
                     continue;
                 }
                 int timeIdle = (int) ((timeNow - session.getThisAccessedTime()) / 1000L);
-                if (timeIdle < session.getMaxInactiveInterval()) {
+                if (timeIdle < session.getMaxInactiveInterval()) {          // 下面的代码就是 大于 MaxInactiveInterval, 说明Session 已经超时, 则直接调用 Store 对应的方法, 进行删除
                     continue;
                 }
                 if (manager.getContext().getLogger().isDebugEnabled()) {

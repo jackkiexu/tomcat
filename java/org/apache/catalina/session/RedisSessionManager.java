@@ -344,7 +344,7 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
         }
       } else {
         do {
-          sessionId = sessionIdWithJvmRoute(generateSessionId(), jvmRoute);
+          sessionId = sessionIdWithJvmRoute(generateSessionId(), jvmRoute);       // 生成分布式环境中唯一的 SessionId 值
         } while (jedis.setnx(sessionId.getBytes(), NULL_SESSION) == 0L); // 1 = key set; 0 = key already existed
       }
 

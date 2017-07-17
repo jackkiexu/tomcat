@@ -2164,7 +2164,7 @@ public class Request
             return null;
         }
 
-        return session.getSession();
+        return session.getSession();        // 最后返回的是 StandardSessionFacade
     }
 
 

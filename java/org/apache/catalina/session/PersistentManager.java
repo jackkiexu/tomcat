@@ -30,6 +30,9 @@ package org.apache.catalina.session;
  *     swapping less active sessions out to disk.</li>
  *
  * @author Kief Morris (kief@kief.com)
+ *
+ * 将 超过 maxIdleTime 的 Session 放到持久化文件中
+ * 持久化了 的Session, 在对应的 sessions(ConcurrentHashMap)里面就不存在了, 但在 Manager.findSession() 时, 若找不到, 则会到 持久化的文件/数据库 里面恢复出来
  */
 public final class PersistentManager extends PersistentManagerBase {
 

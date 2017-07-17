@@ -56,6 +56,7 @@ import org.apache.tomcat.util.ExceptionUtils;
  * <code>stop()</code> methods of this class at the correct times.
  *
  * StandardManager 最简单的 session 持久层
+ * 启动时从文件读取 Session 的持久化信息, Tomcat 停止时 持久化 Session 到对应的文件中
  *
  * @author Craig R. McClanahan
  */
@@ -319,6 +320,7 @@ public class StandardManager extends ManagerBase {
      * returns without doing anything.
      *
      * @exception IOException if an input/output error occurs
+     * 持久化 当前运用的 Session
      */
     @Override
     public void unload() throws IOException {
@@ -536,13 +538,14 @@ public class StandardManager extends ManagerBase {
     /**
      * Return a File object representing the pathname to our
      * persistence file, if any.
+     * // 返回 Session 持久化存储的文件地址
      */
     protected File file() {
 
         if ((pathname == null) || (pathname.length() == 0))
             return (null);
         File file = new File(pathname);
-        if (!file.isAbsolute()) {
+        if (!file.isAbsolute()) {                               // 判断是否是绝对路径, 若不是, 则文件会存储在 ServletContext.TEMPDIR 下面
             Context context = getContext();
             if (context != null) {
                 ServletContext servletContext = context.getServletContext();

@@ -175,6 +175,7 @@ public abstract class PersistentManagerBase extends ManagerBase
      * should not be forced out.
      *
      * 该值是 maxIdleSwap + session 从持久化状态变成内存状态的时间, 肯定比 maxIdleBackup 大
+     *  Session 最大的 idle 时间, 超过这个时间, 就意味着 将被持久化
      */
     protected int maxIdleSwap = -1;
 
@@ -444,7 +445,7 @@ public abstract class PersistentManagerBase extends ManagerBase
      */
     public void processPersistenceChecks() {
 
-        processMaxIdleSwaps();      // 空闲的如 store
+        processMaxIdleSwaps();      // 空闲的放入 store
         processMaxActiveSwaps();    // 活跃移除 store
         processMaxIdleBackups();    // 备份
 
@@ -817,7 +818,7 @@ public abstract class PersistentManagerBase extends ManagerBase
                               + exception, exception);
                 }
             } else {
-                 store.save(session);
+                 store.save(session);                   // 这个存储有两种方式 (1. 一个Session 一个文件(Oh My Glod), 2. 存储到数据库里面)
             }
         } catch (IOException e) {
             log.error(sm.getString
@@ -919,7 +920,7 @@ public abstract class PersistentManagerBase extends ManagerBase
                     // 若短, 说明session经常被更新时间戳, 从而代表其请求次数较多, 这种情况 processMaxActiveSwap 方法就会判断session是否应该从 Store 存储中解出来
                     //
                     if (timeIdle > maxIdleSwap && timeIdle > minIdleSwap) {
-                        if (session.accessCount != null &&
+                        if (session.accessCount != null &&      // 这意味着 Session 现在正在被访问
                                 session.accessCount.get() > 0) {
                             // Session is currently being accessed - skip it
                             continue;
@@ -961,7 +962,7 @@ public abstract class PersistentManagerBase extends ManagerBase
                 ("persistentManager.tooManyActive",
                  Integer.valueOf(sessions.length)));
 
-        int toswap = sessions.length - getMaxActiveSessions();
+        int toswap = sessions.length - getMaxActiveSessions();                              // 这个的 maxActiveSessions 指最大的 active 的 Session 个数, 那 toswap 就是要进行持久化的 Session 的个数
         long timeNow = System.currentTimeMillis();
 
         for (int i = 0; i < sessions.length && toswap > 0; i++) {
@@ -973,9 +974,9 @@ public abstract class PersistentManagerBase extends ManagerBase
                 } else {
                     timeIdle = (int) ((timeNow - session.getThisAccessedTime()) / 1000L);
                 }
-                if (timeIdle > minIdleSwap) {
+                if (timeIdle > minIdleSwap) {                                               // timeIdle > minIdleSwap 说明 Session Idle 的时间太长了
                     if (session.accessCount != null &&
-                            session.accessCount.get() > 0) {
+                            session.accessCount.get() > 0) {        // 这里 If 里面的条件, 说明 Session 正在被访问
                         // Session is currently being accessed - skip it
                         continue;
                     }
