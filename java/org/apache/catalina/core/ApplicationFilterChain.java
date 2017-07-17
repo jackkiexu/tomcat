@@ -238,8 +238,8 @@ final class ApplicationFilterChain implements FilterChain, CometFilterChain {
                         ("doFilter", filter, classType, args, principal);
 
                 } else {
-                    // 执行过滤器 Filter的 doFilter(Request, Response, FilterChain) 方法
-                    filter.doFilter(request, response, this);                               // 这里的 filter 的执行 有点递归的感觉, 只是通过 pos 来控制从 filterChain 里面拿出那个 filter 来进行操作
+                    // 执行过滤器 Filter的 doFilter(Request, Response, FilterChain) 方法     // 一个小建议 在 Fiter 下面加一个 FilterBase, 做些基础工作
+                    filter.doFilter(request, response, this);                               // 这里的 filter 的执行 有点递归的感觉, 只是通过 pos 来控制从 filterChain 里面拿出那个 filter 来进行操作 (所以在 Filter 里面所调用 return, 则会终止 Filter 的调用, 而下面的 Servlet.service 更本就没有调用到)
                 }
 
                 support.fireInstanceEvent(InstanceEvent.AFTER_FILTER_EVENT,
@@ -268,7 +268,7 @@ final class ApplicationFilterChain implements FilterChain, CometFilterChain {
                 throw new ServletException
                   (sm.getString("filterChain.filter"), e);
             }
-            return;
+            return;                                                                             // 这里的 return 只有报异常了才会执行到这边
         }
 
         // 程序运行到这里, 其实就是 Filter 已经运行完成了

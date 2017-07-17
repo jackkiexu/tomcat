@@ -39,6 +39,7 @@
  * 8. Tomcat JSP 创建, 解析过程, 动态编译过程, 动态加载
  *
  * 9. Tomcta 里面的主要 Valve, Filter, Listener (JreMemoryLeakPreventionListener, ThreadLocalLeakPreventionListener ...)
+ *      ApplicationFilterChain 的递归调用 和 用 Loop 与 ThreadLocal
  *
  * 10. tomcat 默认 bash 处理
  *
