@@ -128,7 +128,7 @@ public abstract class StoreBase extends LifecycleBase implements Store {
         }
 
         try {
-            keys = keys();  // 查出所有要检查过期的 session
+            keys = keys();                          // 查出所有要检查过期的 session
         } catch (IOException e) {
             manager.getContext().getLogger().error("Error getting keys", e);
             return;
@@ -139,7 +139,7 @@ public abstract class StoreBase extends LifecycleBase implements Store {
 
         long timeNow = System.currentTimeMillis();
 
-        for (int i = 0; i < keys.length; i++) {
+        for (int i = 0; i < keys.length; i++) {                            // 遍历所有的 Session 做检查
             try {
                 StandardSession session = (StandardSession) load(keys[i]);
                 if (session == null) {

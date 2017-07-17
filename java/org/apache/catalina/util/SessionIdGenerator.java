@@ -171,7 +171,7 @@ public class SessionIdGenerator {
             }
         }
 
-        if (jvmRoute != null && jvmRoute.length() > 0) {
+        if (jvmRoute != null && jvmRoute.length() > 0) {    // jvmRoute 就是 Tomcat 在集群中的 identify
             buffer.append('.').append(jvmRoute);
         }
 
