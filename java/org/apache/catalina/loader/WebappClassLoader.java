@@ -120,6 +120,9 @@ import org.apache.tomcat.util.res.StringManager;
  *
  * @author Remy Maucherat
  * @author Craig R. McClanahan
+ *
+ * 参考资料
+ * https://wiki.apache.org/tomcat/MemoryLeakProtection
  */
 public class WebappClassLoader extends URLClassLoader
         implements Lifecycle, InstrumentableClassLoader {
@@ -183,7 +186,7 @@ public class WebappClassLoader extends URLClassLoader
      * Regular expression of package names which are not allowed to be loaded
      * from a webapp class loader without delegating first.
      */
-    protected final Matcher packageTriggersDeny = Pattern.compile(
+    protected final Matcher packageTriggersDeny = Pattern.compile(              // 被这个正则匹配到的 class 不会被 WebappClassLoader 进行加载
             "^javax\\.el\\.|" +
             "^javax\\.servlet\\.|" +
             "^org\\.apache\\.(catalina|coyote|el|jasper|juli|naming|tomcat)\\."
@@ -280,7 +283,7 @@ public class WebappClassLoader extends URLClassLoader
      * TODO Review the use of resources in this class to see if further
      *      simplifications can be made.
      */
-    protected WebResourceRoot resources = null;
+    protected WebResourceRoot resources = null;                             // 这个 WebappClassLoader 加载的资源
 
 
     /**
@@ -303,6 +306,9 @@ public class WebappClassLoader extends URLClassLoader
      * delegate to the parent only if the class or resource is not
      * found locally. Note that the default, <code>false</code>, is
      * the behavior called for by the servlet specification.
+     *
+     * 是否在 WebappClassLoader 进行加载资源之前 让其 parentClassLoader 尝试代理加载一下
+     * 默认值 false:
      */
     protected boolean delegate = false;
 
@@ -342,7 +348,7 @@ public class WebappClassLoader extends URLClassLoader
      * those cases {@link ClassLoader#getParent()} will be called recursively on
      * the system class loader and the last non-null result used.
      */
-    protected final ClassLoader j2seClassLoader;            // 这个 classLoader 其实就是 AppClassLoader
+    protected final ClassLoader j2seClassLoader;            // 这个 classLoader 其实就是 ExtClassLoader (具体看 WebAppClassLoader 的构造方法)
 
 
     /**
@@ -1204,7 +1210,7 @@ public class WebappClassLoader extends URLClassLoader
         // (0.2) Try loading the class with the system class loader, to prevent
         //       the webapp from overriding J2SE classes
         String resourceName = binaryNameToPath(name, false);
-        if (j2seClassLoader.getResource(resourceName) != null) {
+        if (j2seClassLoader.getResource(resourceName) != null) {                // 这里的 j2seClassLoader 其实就是 ExtClassLoader
             try {
                 clazz = j2seClassLoader.loadClass(name);
                 if (clazz != null) {
@@ -1217,7 +1223,7 @@ public class WebappClassLoader extends URLClassLoader
             }
         }
 
-        // (0.5) Permission to access this class when using a SecurityManager
+        // (0.5) Permission to access this class when using a SecurityManager     // 这里的 securityManager 与 Java 安全策略是否有关, 默认 (securityManager == null)
         if (securityManager != null) {
             int i = name.lastIndexOf('.');
             if (i >= 0) {
@@ -1232,10 +1238,10 @@ public class WebappClassLoader extends URLClassLoader
             }
         }
 
-        boolean delegateLoad = delegate || filter(name);                    // 读取 delegate 的配置信息
+        boolean delegateLoad = delegate || filter(name);                    // 读取 delegate 的配置信息, filter
 
         // (1) Delegate to our parent if requested
-        // 如果配置了 parent-first 模式, 那么委托给父加载器
+        // 如果配置了 parent-first 模式, 那么委托给父加载器                   // 当进行加载 javax 下面的包 就直接交给 parent(ExtClassLoader) 来进行加载 (为什么? 主要是 这些公共加载的资源统一由 extclassLoader 来进行加载, 能减少 Perm 区域的大小)
         if (delegateLoad) {                                                   // 若 delegate 开启, 优先使用 parent classloader( delegate 默认是 false)
             if (log.isDebugEnabled())
                 log.debug("  Delegating to parent classloader1 " + parent);
@@ -1276,7 +1282,7 @@ public class WebappClassLoader extends URLClassLoader
             if (log.isDebugEnabled())
                 log.debug("  Delegating to parent classloader at end: " + parent);
             try {
-                clazz = Class.forName(name, false, parent);
+                clazz = Class.forName(name, false, parent);               // 用 WebappClassLoader 的 parent(ExtClassLoader) 来进行加载
                 if (clazz != null) {
                     if (log.isDebugEnabled())
                         log.debug("  Loading class from parent");
@@ -1289,7 +1295,7 @@ public class WebappClassLoader extends URLClassLoader
             }
         }
 
-        throw new ClassNotFoundException(name);
+        throw new ClassNotFoundException(name);                          // 若还是加载不到, 那就抛出异常吧
 
     }
 
@@ -1829,7 +1835,7 @@ public class WebappClassLoader extends URLClassLoader
 
                         // "java.util.concurrent" code is in public domain,
                         // so all implementations are similar
-                        if (target != null &&
+                        if (target != null &&                                       // 若是线程池里面的线程, 则直接调用 ThreadPoolExecutor.shutdownNow()
                                 target.getClass().getCanonicalName() != null
                                 && target.getClass().getCanonicalName().equals(
                                 "java.util.concurrent.ThreadPoolExecutor.Worker")) {
@@ -2191,10 +2197,10 @@ public class WebappClassLoader extends URLClassLoader
             }
         }
 
-        // 然后 搞一个Thread集合返回, 因为不知道究竟有多少的线程
+        // 然后 搞一个Thread集合返回
         int threadCountGuess = tg.activeCount() + 50;
         Thread[] threads = new Thread[threadCountGuess];
-        int threadCountActual = tg.enumerate(threads);
+        int threadCountActual = tg.enumerate(threads); // 将 线程组里面的 active 的线程 copy 到 threads 里面
         // Make sure we don't miss any threads
         while (threadCountActual == threadCountGuess) {
             threadCountGuess *=2;
@@ -2718,6 +2724,8 @@ public class WebappClassLoader extends URLClassLoader
      *
      * @param name class name
      * @return true if the class should be filtered
+     *
+     * 这个函数主要是 对加载的包进行过滤 具体看 packageTriggersDeny 与 packageTriggersPermit
      */
     protected synchronized boolean filter(String name) {
 
