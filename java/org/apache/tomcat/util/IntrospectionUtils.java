@@ -25,6 +25,7 @@ import java.util.Hashtable;
 
 /**
  * Utils for introspection and reflection
+ * 反射工具类, 可用于将 properties 里面的属性解析到 实体对象的属性里面
  */
 public final class IntrospectionUtils {
 
