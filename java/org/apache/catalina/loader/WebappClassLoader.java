@@ -2040,12 +2040,12 @@ public class WebappClassLoader extends URLClassLoader
                     // Clear the first map
                     threadLocalMap = threadLocalsField.get(threads[i]);
                     if (null != threadLocalMap){
-                        expungeStaleEntriesMethod.invoke(threadLocalMap);
+                        expungeStaleEntriesMethod.invoke(threadLocalMap);                       // expunge (擦去), stale (陈腐的) 其实就是删除 threadLocalMap 里面 key 是 null 的 Entry
                         checkThreadLocalMapForLeaks(threadLocalMap, tableField);
                     }
 
                     // Clear the second map
-                    threadLocalMap =inheritableThreadLocalsField.get(threads[i]);
+                    threadLocalMap =inheritableThreadLocalsField.get(threads[i]);              // 删除 inheritableThreadLocals 里面 key 是 null 的 Entry
                     if (null != threadLocalMap){
                         expungeStaleEntriesMethod.invoke(threadLocalMap);
                         checkThreadLocalMapForLeaks(threadLocalMap, tableField);
@@ -2550,7 +2550,7 @@ public class WebappClassLoader extends URLClassLoader
 
         boolean fileNeedConvert = false;
 
-        resource = resources.getClassLoaderResource(path);
+        resource = resources.getClassLoaderResource(path);        // 经查询, 发现要加载的类 不存在
 
         if (!resource.exists()) {
             return null;
@@ -2579,7 +2579,7 @@ public class WebappClassLoader extends URLClassLoader
          * excessive memory usage if large resources are present (see
          * https://issues.apache.org/bugzilla/show_bug.cgi?id=53081).
          */
-        if (isClassResource || fileNeedConvert) {
+        if (isClassResource || fileNeedConvert) {                               // 获取对应资源的二进制字节流, 当需要进行转码时, 进行相应的转码操作
             byte[] binaryContent = resource.getContent();
             if (binaryContent != null) {
                  if (fileNeedConvert) {
@@ -2627,7 +2627,7 @@ public class WebappClassLoader extends URLClassLoader
         }
 
         // Add the entry in the local resource repository
-        synchronized (resourceEntries) {
+        synchronized (resourceEntries) {                                        // 将生成的 entry 放入 resourceEntries 中
             // Ensures that all the threads which may be in a race to load
             // a particular class all end up with the same ResourceEntry
             // instance
