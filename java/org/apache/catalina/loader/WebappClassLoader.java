@@ -72,6 +72,7 @@ import org.apache.catalina.LifecycleState;
 import org.apache.catalina.WebResource;
 import org.apache.catalina.WebResourceRoot;
 import org.apache.catalina.webresources.TomcatURLStreamHandlerFactory;
+import org.apache.log4j.Logger;
 import org.apache.tomcat.InstrumentableClassLoader;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.IntrospectionUtils;
@@ -126,9 +127,9 @@ import org.apache.tomcat.util.res.StringManager;
  */
 public class WebappClassLoader extends URLClassLoader
         implements Lifecycle, InstrumentableClassLoader {
-
-    private static final org.apache.juli.logging.Log log=
-        org.apache.juli.logging.LogFactory.getLog( WebappClassLoader.class );
+    public static Logger log = Logger.getLogger(WebappClassLoader.class);
+//    private static final org.apache.juli.logging.Log log=
+//        org.apache.juli.logging.LogFactory.getLog( WebappClassLoader.class );
 
     /**
      * List of ThreadGroup names to ignore when scanning for web application
@@ -186,7 +187,7 @@ public class WebappClassLoader extends URLClassLoader
      * Regular expression of package names which are not allowed to be loaded
      * from a webapp class loader without delegating first.
      */
-    protected final Matcher packageTriggersDeny = Pattern.compile(              // 被这个正则匹配到的 class 不会被 WebappClassLoader 进行加载
+    protected final Matcher packageTriggersDeny = Pattern.compile(              // 被这个正则匹配到的 class 不会被 WebappClassLoader 进行加载 (其实就是 Tomcat 中的代码不能被 WebappClassLoader 来加载)
             "^javax\\.el\\.|" +
             "^javax\\.servlet\\.|" +
             "^org\\.apache\\.(catalina|coyote|el|jasper|juli|naming|tomcat)\\."
@@ -198,7 +199,7 @@ public class WebappClassLoader extends URLClassLoader
      * webapp class loader without delegating first and override any set by
      * {@link #packageTriggersDeny}.
      */
-    protected final Matcher packageTriggersPermit =
+    protected final Matcher packageTriggersPermit =                            // WebappClassLoader 允许被加载的 javax 下面的 class
             Pattern.compile("^javax\\.servlet\\.jsp\\.jstl\\.").matcher("");
 
 
@@ -250,16 +251,16 @@ public class WebappClassLoader extends URLClassLoader
      *
      * @param parent Our parent class loader
      */
-    public WebappClassLoader(ClassLoader parent) {
+    public WebappClassLoader(ClassLoader parent) {                  // 在 Tomcat 8.x.x 中运行时, 会发现 parent 就是 commonClassLoader
 
         super(new URL[0], parent);
 
-        ClassLoader p = getParent();
+        ClassLoader p = getParent();                                // 这里做个检查, 若构造函数传来的 parent 是 null, 则 将 AppClassLoader 赋值给 WebAppClassLoader 的 parent
         if (p == null) {
             p = getSystemClassLoader();
         }
         this.parent = p;
-
+                                                                    // 下面几步是 获取 Launcher.ExtClassLoader 赋值给 j2seClassLoader
         ClassLoader j = String.class.getClassLoader();
         if (j == null) {
             j = getSystemClassLoader();
@@ -267,9 +268,9 @@ public class WebappClassLoader extends URLClassLoader
                 j = j.getParent();
             }
         }
-        this.j2seClassLoader = j;
+        this.j2seClassLoader = j;                               // 这里进行赋值的就是 Launcher.ExtClassLoader
 
-        securityManager = System.getSecurityManager();
+        securityManager = System.getSecurityManager();          // 这里的操作主要是判断 Java 程序是否启动安全策略
         if (securityManager != null) {
             refreshPolicy();
         }
@@ -887,21 +888,21 @@ public class WebappClassLoader extends URLClassLoader
                         + ") security exception: " + ace.getMessage(), ace);
                 throw new ClassNotFoundException(name, ace);
             } catch (RuntimeException e) {
-                if (log.isTraceEnabled())
+                if (log.isInfoEnabled())
                     log.trace("      -->RuntimeException Rethrown", e);
                 throw e;
             }
         } catch (ClassNotFoundException e) {
-            if (log.isTraceEnabled())
+            if (log.isInfoEnabled())
                 log.trace("    --> Passing on ClassNotFoundException");
             throw e;
         }
 
         // Return the class we have located
-        if (log.isTraceEnabled())
+        if (log.isInfoEnabled())
             log.debug("      Returning class " + clazz);
 
-        if (log.isTraceEnabled()) {
+        if (log.isInfoEnabled()) {                                                 // 进行一些日志打印操作
             ClassLoader cl;
             if (Globals.IS_SECURITY_ENABLED){
                 cl = AccessController.doPrivileged(
@@ -1168,6 +1169,18 @@ public class WebappClassLoader extends URLClassLoader
      *
      * @exception ClassNotFoundException if the class was not found
      */
+    /** WebappClassLoader loadClass class 流程
+     *  1. 判断当前运用是否已经启动, 未启动, 则直接抛异常
+     *  2. 调用 findLocaledClass0 从 resourceEntries 中判断 class 是否已经加载 OK
+     *  3. 调用 findLoadedClass(内部调用一个 native 方法) 直接查看对应的 WebappClassLoader 是否已经加载过
+     *  4. 调用 binaryNameToPath 判断是否 当前 class 是属于 J2SE 范围中的, 若是的则直接通过 ExtClassLoader, BootstrapClassLoader 进行加载 (这里是双亲委派)
+     *  5. 在设置 JVM 权限校验的情况下, 调用 securityManager 来进行权限的校验(当前类是否有权限加载这个类, 默认的权限配置文件是 ${catalina.base}/conf/catalina.policy)
+     *  6. 判断是否设置了双亲委派机制 或 当前 WebappClassLoader 是否能加载这个 class (通过 filter(name) 来决定), 将最终的值赋值给 delegateLoad
+     *  7. 根据上一步中的 delegateLoad 来决定是否用 WebappClassloader.parent(也就是 sharedClassLoader) 来进行加载, 若加载成功, 则直接返回
+     *  8. 上一步若未加载成功, 则调用 WebappClassloader.findClass(name) 来进行加载
+     *  9. 若上一还是没有加载成功, 则通过 parent 调用 Class.forName 来进行加载
+     *  10. 若还没加载成功的话, 那就直接抛异常
+     */
     @Override
     public synchronized Class<?> loadClass(String name, boolean resolve)
         throws ClassNotFoundException {
@@ -1176,7 +1189,7 @@ public class WebappClassLoader extends URLClassLoader
             log.debug("loadClass(" + name + ", " + resolve + ")");
         Class<?> clazz = null;
 
-        // Log access to stopped classloader
+        // Log access to stopped classloader                                    // 判断程序是否已经启动了, 未启动 OK, 就进行加载, 则直接抛异常
         if (!started) {
             try {
                 throw new IllegalStateException();
@@ -1186,7 +1199,7 @@ public class WebappClassLoader extends URLClassLoader
         }
 
         // (0) Check our previously loaded local class cache
-        // 当前对象缓存中检查是否已经加载该类
+                                                                                 // 当前对象缓存中检查是否已经加载该类, 有的话直接返回 Class
         clazz = findLoadedClass0(name);
         if (clazz != null) {
             if (log.isDebugEnabled())
@@ -1197,7 +1210,7 @@ public class WebappClassLoader extends URLClassLoader
         }
 
         // (0.1) Check our previously loaded class cache
-        // 检查 JVM 缓存 是否已经加载过该类
+                                                                                 // 是否已经加载过该类 (这里的加载最终会调用一个 native 方法, 意思就是检查这个 ClassLoader 是否已经加载过对应的 class 了哇)
         clazz = findLoadedClass(name);
         if (clazz != null) {
             if (log.isDebugEnabled())
@@ -1207,10 +1220,10 @@ public class WebappClassLoader extends URLClassLoader
             return (clazz);
         }
 
-        // (0.2) Try loading the class with the system class loader, to prevent
-        //       the webapp from overriding J2SE classes
-        String resourceName = binaryNameToPath(name, false);
-        if (j2seClassLoader.getResource(resourceName) != null) {                // 这里的 j2seClassLoader 其实就是 ExtClassLoader
+        // (0.2) Try loading the class with the system class loader, to prevent // 代码到这里发现, 上面两步是 1. 查看 resourceEntries 里面的信息, 判断 class 是否加载过, 2. 通过 findLoadedClass 判断 JVM 中是否已经加载过, 但现在 直接用 j2seClassLoader(Luancher.ExtClassLoader 这里的加载过程是双亲委派模式) 来进行加载
+        //       the webapp from overriding J2SE classes                        // 这是为什么呢 ? 主要是 这里直接用 ExtClassLoader 来加载 J2SE 所对应的 class, 防止被 WebappClassLoader 加载了
+        String resourceName = binaryNameToPath(name, false);                    // 进行 class 名称 转路径的操作 (文件的尾缀是 .class)
+        if (j2seClassLoader.getResource(resourceName) != null) {             // 这里的 j2seClassLoader 其实就是 ExtClassLoader, 这里就是 查找 BootstrapClassloader 与 ExtClassLoader 是否有权限加载这个 class (通过 URLClassPath 来确认)
             try {
                 clazz = j2seClassLoader.loadClass(name);
                 if (clazz != null) {
@@ -1223,12 +1236,12 @@ public class WebappClassLoader extends URLClassLoader
             }
         }
 
-        // (0.5) Permission to access this class when using a SecurityManager     // 这里的 securityManager 与 Java 安全策略是否有关, 默认 (securityManager == null)
+        // (0.5) Permission to access this class when using a SecurityManager     // 这里的 securityManager 与 Java 安全策略是否有关, 默认 (securityManager == null), 所以一开始看代码就不要关注这里
         if (securityManager != null) {
             int i = name.lastIndexOf('.');
             if (i >= 0) {
                 try {
-                    securityManager.checkPackageAccess(name.substring(0,i));
+                    securityManager.checkPackageAccess(name.substring(0,i));  // 通过 securityManager 对 是否能加载 name 的权限进行检查 (对应的策略都在 ${catalina.base}/conf/catalina.policy 里面进行定义)
                 } catch (SecurityException se) {
                     String error = "Security Violation, attempt to use " +
                         "Restricted Class: " + name;
@@ -1238,21 +1251,21 @@ public class WebappClassLoader extends URLClassLoader
             }
         }
 
-        boolean delegateLoad = delegate || filter(name);                    // 读取 delegate 的配置信息, filter
+        boolean delegateLoad = delegate || filter(name);                    // 读取 delegate 的配置信息, filter 主要判断这个 class 是否能由这个 WebappClassLoader 进行加载 (false: 能进行加载, true: 不能被加载)
 
         // (1) Delegate to our parent if requested
-        // 如果配置了 parent-first 模式, 那么委托给父加载器                   // 当进行加载 javax 下面的包 就直接交给 parent(ExtClassLoader) 来进行加载 (为什么? 主要是 这些公共加载的资源统一由 extclassLoader 来进行加载, 能减少 Perm 区域的大小)
-        if (delegateLoad) {                                                   // 若 delegate 开启, 优先使用 parent classloader( delegate 默认是 false)
+        // 如果配置了 parent-first 模式, 那么委托给父加载器                   // 当进行加载 javax 下面的包 就直接交给 parent(sharedClassLoader) 来进行加载 (为什么? 主要是 这些公共加载的资源统一由 sharedClassLoader 来进行加载, 能减少 Perm 区域的大小)
+        if (delegateLoad) {                                                   // 若 delegate 开启, 优先使用 parent classloader( delegate 默认是 false); 这里还有一种可能, 就是 经过 filter(name) 后, 还是返回 true, 那说明 WebappClassLoader 不应该进行加载, 应该交给其 parent 进行加载
             if (log.isDebugEnabled())
                 log.debug("  Delegating to parent classloader1 " + parent);
             try {
-                clazz = Class.forName(name, false, parent);
+                clazz = Class.forName(name, false, parent);                 // 通过 parent ClassLoader 来进行加载 (这里构造函数中第二个参数 false 表示: 使用 parent 加载 classs 时不进行初始化操作, 也就是 不会执行这个 class 中 static 里面的初始操作 以及 一些成员变量ed赋值操作, 这一动作也符合 JVM 一贯的 lazy-init 策略)
                 if (clazz != null) {
                     if (log.isDebugEnabled())
                         log.debug("  Loading class from parent");
                     if (resolve)
                         resolveClass(clazz);
-                    return (clazz);
+                    return (clazz);                                         // 通过 parent ClassLoader 加载成功, 则直接返回
                 }
             } catch (ClassNotFoundException e) {
                 // Ignore
@@ -1412,11 +1425,12 @@ public class WebappClassLoader extends URLClassLoader
      * Start the class loader.
      *
      * @exception LifecycleException if a lifecycle error occurs
+     * 将 /WEB-INF/classes 及 /WEB-INF/lib 封装成 URL 加入到 ClassLoader 的 URLClassPath 里面
      */
     @Override
     public void start() throws LifecycleException {
-        // 下面的 resources 其实就是  StandardRoot
-        // WebappClassLoader 进行资源/类的加载操作 (/WEB-INF/classes  与 WEB-INF/lib 下面的资源)
+                                                                                    // 下面的 resources 其实就是  StandardRoot
+                                                                                    // WebappClassLoader 进行资源/类的加载操作 (/WEB-INF/classes  与 WEB-INF/lib 下面的资源)
         WebResource classes = resources.getResource("/WEB-INF/classes");
         if (classes.isDirectory() && classes.canRead()) {
             addURL(classes.getURL());
@@ -1425,7 +1439,7 @@ public class WebappClassLoader extends URLClassLoader
         for (WebResource jar : jars) {
             if (jar.getName().endsWith(".jar") && jar.isFile() && jar.canRead()) {
                 addURL(jar.getURL());                                               // 这一步就是将 ClassLoader需要加载的 classPath 路径 加入到 URLClassLoader.URLClassPath 里面
-                jarModificationTimes.put(                                           // 放一下 jar 文件的 lastModified
+                jarModificationTimes.put(                                       // 放一下 jar 文件的 lastModified
                         jar.getName(), Long.valueOf(jar.getLastModified()));
             }
         }
@@ -2384,10 +2398,10 @@ public class WebappClassLoader extends URLClassLoader
     protected Class<?> findClassInternal(String name)
         throws ClassNotFoundException {
 
-        if (!validate(name))
+        if (!validate(name))                                    // 对于 J2SE 下面的 Class, 不能通过这个 WebappClassloader 来进行加载
             throw new ClassNotFoundException(name);
 
-        String path = binaryNameToPath(name, true);
+        String path = binaryNameToPath(name, true);            // 将类名转化成路径名称
 
         ResourceEntry entry = null;
 
@@ -2396,7 +2410,7 @@ public class WebappClassLoader extends URLClassLoader
                 new PrivilegedFindResourceByName(name, path);
             entry = AccessController.doPrivileged(dp);
         } else {
-            entry = findResourceInternal(name, path);
+            entry = findResourceInternal(name, path);          // 调用 findResourceInternal  返回 class 的包装类 entry
         }
 
         if (entry == null)
@@ -2461,7 +2475,7 @@ public class WebappClassLoader extends URLClassLoader
             }
 
             try {
-                clazz = defineClass(name, entry.binaryContent, 0,
+                clazz = defineClass(name, entry.binaryContent, 0,                       // 最终调用 ClassLoader.defineClass 来将 class 对应的 二进制数据加载进来, 进行 "加载, 连接(解析, 验证, 准备), 初始化" 操作, 最终返回 class 对象
                         entry.binaryContent.length,
                         new CodeSource(entry.codeBase, entry.certificates));
             } catch (UnsupportedClassVersionError ucve) {
@@ -2542,7 +2556,7 @@ public class WebappClassLoader extends URLClassLoader
             return null;
         }
 
-        entry = new ResourceEntry();
+        entry = new ResourceEntry();                                // 若所查找的 class 对应的 ResourceEntry 不存在, 则进行构建一个
         entry.source = resource.getURL();
         entry.codeBase = entry.source;
         entry.lastModified = resource.getLastModified();
@@ -2688,13 +2702,13 @@ public class WebappClassLoader extends URLClassLoader
      *
      * @param name The binary name of the resource to return
      */
-    protected Class<?> findLoadedClass0(String name) {
+    protected Class<?> findLoadedClass0(String name) {                  // 根据加载的 className 来加载 类
 
-        String path = binaryNameToPath(name, true);
+        String path = binaryNameToPath(name, true);                     // 将 类名转化成 类的全名称
 
-        ResourceEntry entry = resourceEntries.get(path);
+        ResourceEntry entry = resourceEntries.get(path);              // resourceEntries 是 WebappClassLoader 加载好的 class 存放的地址
         if (entry != null) {
-            return entry.loadedClass;
+            return entry.loadedClass;                                 // 将 加载好的 class 直接返回
         }
         return null;
     }
@@ -2726,6 +2740,8 @@ public class WebappClassLoader extends URLClassLoader
      * @return true if the class should be filtered
      *
      * 这个函数主要是 对加载的包进行过滤 具体看 packageTriggersDeny 与 packageTriggersPermit
+     * 返回 false 表示 能进行加载
+     * 返回 true 表示 不能被加载
      */
     protected synchronized boolean filter(String name) {
 

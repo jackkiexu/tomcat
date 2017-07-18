@@ -83,7 +83,7 @@ public class WebappLoader extends LifecycleMBeanBase
      */
     public WebappLoader(ClassLoader parent) {
         super();
-        this.parentClassLoader = parent;            // debug 了一下代码,  看到这里是 AppClassLoader
+        this.parentClassLoader = parent;            // debug 了一下代码,  看到这里是 AppClassLoader (就是 sharedClassLoader)
     }
 
 
@@ -574,9 +574,9 @@ public class WebappLoader extends LifecycleMBeanBase
         StringBuilder classpath = new StringBuilder();
 
         // Assemble the class path information from our class loader chain
-        ClassLoader loader = getClassLoader();
+        ClassLoader loader = getClassLoader();                                          // 获取当前 StandardContext 对应的 WebappClassLoader
 
-        if (delegate && loader != null) {
+        if (delegate && loader != null) {                                             // 从这里我们可以看出 若 delegate = true, 则 加载de classPath 先从 其 parent 开始计算
             // Skip the webapp loader for now as delegation is enabled
             loader = loader.getParent();
         }
@@ -585,10 +585,10 @@ public class WebappLoader extends LifecycleMBeanBase
             if (!buildClassPath(classpath, loader)) {
                 break;
             }
-            loader = loader.getParent();                // 递归的设置 全局的 classpath
+            loader = loader.getParent();                                                // 递归的设置 全局的 classpath
         }
 
-        if (delegate) {
+        if (delegate) {                                                               // 当 delegate = true 时, 上面先计算了 parent 的 classpath, 这里才开始 计算对应的 WebAppClassLoader 的 classpath
             // Delegation was enabled, go back and add the webapp paths
             loader = getClassLoader();
             if (loader != null) {
@@ -596,10 +596,10 @@ public class WebappLoader extends LifecycleMBeanBase
             }
         }
 
-        this.classpath = classpath.toString();                                  // 这里的 classpath 是从底层的 WebappClassLoader 一直递归到 BootstrapClassLoader 合并在一起的 classpath
+        this.classpath = classpath.toString();                                       // 这里的 classpath 是从底层的 WebappClassLoader 一直递归到 BootstrapClassLoader 合并在一起的 classpath
 
         // Store the assembled class path as a servlet context attribute
-        servletContext.setAttribute(Globals.CLASS_PATH_ATTR, this.classpath);   // 在 ServletContext 里面设置 classpath
+        servletContext.setAttribute(Globals.CLASS_PATH_ATTR, this.classpath);     // 在 ApplicationContext 里面设置 classpath
     }
 
 

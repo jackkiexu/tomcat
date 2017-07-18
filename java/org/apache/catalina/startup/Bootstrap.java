@@ -145,16 +145,24 @@ public final class Bootstrap {
 
     // -------------------------------------------------------- Private Methods
 
-
+    /**
+     * 下面是 这几个 Classloader 是 Tomcat 对老版本的兼容
+     * commonLoader     : 可被 Tomcat 和 所有的 Web 应用程序共同获取
+     * catalinaLoader   : 只能被 Tomcat 获取(但 所有 WebappClassLoader 不能获取到 catalinaLoader 加载的类)
+     * sharedLoader     : 这个类是所有 WebappClassLoader 的父类, sharedLoader 所加载的类将被所有的 WebappClassLoader 共享获取
+     *
+     * 这个版本 (Tomcat 8.x.x) 中, 默认情况下 commonLoader = catalinaLoader = sharedLoader
+     * (PS: 为什么这样设计, 主要这样这样设计 ClassLoader 的层级后, WebAppClassLoader 就能直接访问 tomcat 的公共资源, 若需要tomcat 有些资源不让 WebappClassLoader 加载, 则直接在 ${catalina.base}/conf/catalina.properties 中的 server.loader 配置一下 加载路径就可以了)
+     */
     private void initClassLoaders() {
-        try {
-            commonLoader = createClassLoader("common", null);               // 根据 catalina.properties 指定的 加载jar包的目录, 生成对应的 URLClassLoader(这个Tomcat 中加载公共jar包的 classLoader)
-            if( commonLoader == null ) {
+        try {                                                                   // 补充: createClassLoader 中代码最后调用 new URLClassLoader(array) 来生成 commonLoader, 此时 commonLoader.parent 采用的是默认的策略 Launcher.AppClassLoader
+            commonLoader = createClassLoader("common", null);               // 根据 catalina.properties 指定的 加载jar包的目录, 生成对应的 URLClassLoader( 加载 Tomcat 中公共jar包的 classLoader, 这里的 parent 参数虽然是 null, 但最终 commonLoader.parent 是 AppClassLoader)
+            if( commonLoader == null ) {                                     // 若 commonLoader = null, 则说明在 catalina.properties 里面 common.loader 是空的
                 // no config file, default to this loader - we might be in a 'single' env.
                 commonLoader=this.getClass().getClassLoader();
             }
-            catalinaLoader = createClassLoader("server", commonLoader);   // 将 commonClassLoader 作为父 ClassLoader, 生成 catalinaLoader，这个类就是加载 Tomcat bootstrap.jar, tomcat-juli.jar 包的 classLoader (PS; 在 catalina.properties 里面 server.loader 是空的， 说明 其实 代码运行到这边时 catalinaClassLoader 与 commonClassLoader 可加载 class 的路径是一样的), 当没事 在外层程序会调用  Thread.currentThread().setContextClassLoader(daemon.catalinaLoader) 来将 catalinaClassLoader 设置为 Tomcat启动线程的 contextClassLoader
-            sharedLoader = createClassLoader("shared", commonLoader);     //  将 commonClassLoader 作为父 ClassLoader, 生成 sharedLoader, 这个类最后会作为所有 WebappClassLoader 的父类
+            catalinaLoader = createClassLoader("server", commonLoader);   // 将 commonClassLoader 作为父 ClassLoader, 生成 catalinaLoader，这个类就是加载 Tomcat bootstrap.jar, tomcat-juli.jar 包的 classLoader (PS; 在 catalina.properties 里面 server.loader 是空的， 则代码中将直接将 commonLoader 赋值给 catalinaLoader)
+            sharedLoader = createClassLoader("shared", commonLoader);     // 将 commonClassLoader 作为父 ClassLoader, 生成 sharedLoader, 这个类最后会作为所有 WebappClassLoader 的父类 ( PS: 因为 catalina.properties 里面 shared.loader 是空的, 所以代码中直接将 commonLoader 赋值给 sharedLoader)
         } catch (Throwable t) {
             handleThrowable(t);
             log.error("Class loader creation threw exception", t);
@@ -166,8 +174,8 @@ public final class Bootstrap {
     private ClassLoader createClassLoader(String name, ClassLoader parent)
         throws Exception {
 
-        String value = CatalinaProperties.getProperty(name + ".loader");        // 这里加载 properties 信息的位置是 ${catalina.base}/conf/catalina.properties
-        if ((value == null) || (value.equals("")))
+        String value = CatalinaProperties.getProperty(name + ".loader");        // 获取 catalina.properties 里面 common.loader 对应的数据 (PS: 这里加载 properties 信息的位置是 ${catalina.base}/conf/catalina.properties)
+        if ((value == null) || (value.equals("")))                              // 注意 前方高能(在 ${catalina.base}/conf/catalina.properties 中 server.loader 与 shared.loader 是空的, 那意味着什么呢? 意味着 这里将直接返回 parent, 也就是 catalinaLoadeer = commonLoader = sharedLoader, Tomcat 下面的 WebAppClassLoader 能加载到 Tomcat 自身 ${catalina.base}/lib 下面的 class )
             return parent;
 
         value = replace(value);                                                  // 替换 ${catalina.base}, 获取绝对的路径
@@ -261,7 +269,7 @@ public final class Bootstrap {
 
         initClassLoaders();                                                 // 初始化 commonClassLoader, catalinaClassLoader, sharedClassLoader (其中commonClassLoader作为另外两个 classLoader 的 parent, 并且其加载了 ${catalina.base}/bin 下面的公共 jar 包) (PS: catalina.base 其实就是 Tomcat 的安装目录, catalina.home 与 catalina.base 其实是一样的)
 
-        Thread.currentThread().setContextClassLoader(catalinaLoader);    // 设置当前线程的 classLoader 为 catalinaClassLoader
+        Thread.currentThread().setContextClassLoader(catalinaLoader);    // 设置当前线程的 classLoader 为 catalinaClassLoader(这是对 Tomcat 运用程序来说的); 对应的 StandardContext 来说, 就是其对应的  WebappClassLoader
 
         SecurityClassLoad.securityClassLoad(catalinaLoader);             // 让 catalinaLoader 来加载 Tomcat 下面几个核心的 类 (PS: 这里用 catalinaClassLoader 来加载的, 意味着 sharedClassLoader 是获取不到)
 
