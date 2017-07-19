@@ -745,12 +745,12 @@ public class WebappClassLoader extends URLClassLoader
 
         if (log.isDebugEnabled())
             log.debug("modified()");
-                                                                                        // 除了 classes, 还包括 web.xml
-        for (Entry<String,ResourceEntry> entry : resourceEntries.entrySet()) {
+
+        for (Entry<String,ResourceEntry> entry : resourceEntries.entrySet()) {      // 遍历已经加载的资源
             long cachedLastModified = entry.getValue().lastModified;
             long lastModified = resources.getClassLoaderResource(
                     entry.getKey()).getLastModified();                                  // 对比 file 的 lastModified的属性
-            if (lastModified != cachedLastModified) {                                   // 若修改时间不对
+            if (lastModified != cachedLastModified) {                                   // 若修改时间不对, 则说明文件被修改过, StandardContext 需要重新部署
                 if( log.isDebugEnabled() )
                     log.debug(sm.getString("webappClassLoader.resourceModified",
                             entry.getKey(),
@@ -775,7 +775,7 @@ public class WebappClassLoader extends URLClassLoader
                             resources.getContext().getName()));
                     return true;
                 }
-                if (recordedLastModified.longValue() != jar.getLastModified()) {
+                if (recordedLastModified.longValue() != jar.getLastModified()) {        // 比较一下这次的文件修改时间 与 上次文件的修改时间是否一样, 不一样的话, 直接返回 true, StandardContext 需要重新部署
                     // Jar has been changed
                     log.info(sm.getString("webappClassLoader.jarsModified",
                             resources.getContext().getName()));
@@ -784,7 +784,7 @@ public class WebappClassLoader extends URLClassLoader
             }
         }
 
-        if (jarCount < jarModificationTimes.size()){                    // 判断 WebappClassloader文件是够有增加/减少
+        if (jarCount < jarModificationTimes.size()){                                 // 判断 WebappClassloader文件是够有增加/减少, 若有变化的话, 直接返回 true, StandardContext 需要重新部署
             log.info(sm.getString("webappClassLoader.jarsRemoved",
                     resources.getContext().getName()));
             return true;
@@ -831,7 +831,7 @@ public class WebappClassLoader extends URLClassLoader
     /**
      * Expose this method for use by the unit tests.
      */
-    protected final Class<?> doDefineClass(String name, byte[] b, int off, int len,
+    protected final Class<?> doDefineClass(String name, byte[] b, int off, int len,     // 这个就是调用父类的 defineClass 来加载二进制文件到内存中生成 class 对象
             ProtectionDomain protectionDomain) {
         return super.defineClass(name, b, off, len, protectionDomain);
     }
@@ -856,7 +856,7 @@ public class WebappClassLoader extends URLClassLoader
         }
 
         // (1) Permission to define this class when using a SecurityManager
-        if (securityManager != null) {
+        if (securityManager != null) {                                          // 趟若设置安全管理器, 则用 securityManager 来进行检测 加载的数据名
             int i = name.lastIndexOf('.');
             if (i >= 0) {
                 try {
@@ -878,7 +878,7 @@ public class WebappClassLoader extends URLClassLoader
             if (log.isTraceEnabled())
                 log.trace("      findClassInternal(" + name + ")");
             try {
-                clazz = findClassInternal(name);
+                clazz = findClassInternal(name);                                // 调用 findClassInternal 进行资源的查找
             } catch(ClassNotFoundException cnfe) {
                 if (log.isDebugEnabled())
                     log.debug("    --> Returning ClassNotFoundException");
@@ -902,7 +902,7 @@ public class WebappClassLoader extends URLClassLoader
         if (log.isInfoEnabled())
             log.debug("      Returning class " + clazz);
 
-        if (log.isInfoEnabled()) {                                                 // 进行一些日志打印操作
+        if (log.isInfoEnabled()) {                                                      // 进行一些日志打印操作
             ClassLoader cl;
             if (Globals.IS_SECURITY_ENABLED){
                 cl = AccessController.doPrivileged(
