@@ -2416,7 +2416,7 @@ public class WebappClassLoader extends URLClassLoader
         if (entry == null)
             throw new ClassNotFoundException(name);
 
-        Class<?> clazz = entry.loadedClass;
+        Class<?> clazz = entry.loadedClass;                 // 若程序已经生成了 class, 则直接返回
         if (clazz != null)
             return clazz;
 
@@ -2432,14 +2432,14 @@ public class WebappClassLoader extends URLClassLoader
             String packageName = null;
             int pos = name.lastIndexOf('.');
             if (pos != -1)
-                packageName = name.substring(0, pos);
+                packageName = name.substring(0, pos);         // 获取包名
 
             Package pkg = null;
 
             if (packageName != null) {
-                pkg = getPackage(packageName);
+                pkg = getPackage(packageName);                // 通过 包名 获取对应的 Package 对象
                 // Define the package (if null)
-                if (pkg == null) {
+                if (pkg == null) {                          // 若还不存在, 则definePackage
                     try {
                         if (entry.manifest == null) {
                             definePackage(packageName, null, null, null, null,
@@ -2451,11 +2451,11 @@ public class WebappClassLoader extends URLClassLoader
                     } catch (IllegalArgumentException e) {
                         // Ignore: normal error due to dual definition of package
                     }
-                    pkg = getPackage(packageName);
+                    pkg = getPackage(packageName);              // 获取 Package
                 }
             }
 
-            if (securityManager != null) {
+            if (securityManager != null) {                  // 若程序运行配置了 securityManager, 则进行一些权限方面的检查
 
                 // Checking sealing
                 if (pkg != null) {
@@ -2495,7 +2495,7 @@ public class WebappClassLoader extends URLClassLoader
             // the class file after the class has been defined.
         }
 
-        return clazz;
+        return clazz;                                                                   // return 加载了的 clazz
     }
 
 
@@ -2505,8 +2505,8 @@ public class WebappClassLoader extends URLClassLoader
         if (withLeadingSlash) {
             path.append('/');
         }
-        path.append(binaryName.replace('.', '/'));
-        path.append(CLASS_FILE_SUFFIX);
+        path.append(binaryName.replace('.', '/'));              // 将 . 替换成 slash
+        path.append(CLASS_FILE_SUFFIX);                       // 加上文件的尾缀
         return path.toString();
     }
 
@@ -2540,7 +2540,7 @@ public class WebappClassLoader extends URLClassLoader
         if ((name == null) || (path == null))
             return null;
 
-        ResourceEntry entry = resourceEntries.get(path);
+        ResourceEntry entry = resourceEntries.get(path);        // resourceEntries 里面会存储所有已经加载了的 文件的信息
         if (entry != null)
             return entry;
 
@@ -2550,13 +2550,13 @@ public class WebappClassLoader extends URLClassLoader
 
         boolean fileNeedConvert = false;
 
-        resource = resources.getClassLoaderResource(path);        // 经查询, 发现要加载的类 不存在
+        resource = resources.getClassLoaderResource(path);      // 通过 JNDI 来进行查找 资源 (想知道 resources 里面到底是哪些资源, 可以看 StandardRoot 类)
 
-        if (!resource.exists()) {
+        if (!resource.exists()) {                                // 若资源不存在, 则进行返回
             return null;
         }
 
-        entry = new ResourceEntry();                                // 若所查找的 class 对应的 ResourceEntry 不存在, 则进行构建一个
+        entry = new ResourceEntry();                             // 若所查找的 class 对应的 ResourceEntry 不存在, 则进行构建一个
         entry.source = resource.getURL();
         entry.codeBase = entry.source;
         entry.lastModified = resource.getLastModified();
@@ -2589,15 +2589,15 @@ public class WebappClassLoader extends URLClassLoader
                     // http://svn.apache.org/viewvc?view=revision&revision=303915
                     String str = new String(binaryContent);
                     try {
-                        binaryContent = str.getBytes(StandardCharsets.UTF_8);
+                        binaryContent = str.getBytes(StandardCharsets.UTF_8); // 进行资源转码为 UTF-8
                     } catch (Exception e) {
                         return null;
                     }
                 }
-                entry.binaryContent = binaryContent;
+                entry.binaryContent = binaryContent;                        // 获取资源对应的 二进制数据信息
                 // The certificates and manifest are made available as a side
                 // effect of reading the binary content
-                entry.certificates = resource.getCertificates();
+                entry.certificates = resource.getCertificates();            // 获取资源的证书
             }
         }
         entry.manifest = resource.getManifest();
