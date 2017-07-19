@@ -185,7 +185,7 @@ public class WebappClassLoader extends URLClassLoader
 
     /**
      * Regular expression of package names which are not allowed to be loaded
-     * from a webapp class loader without delegating first.
+     * from a webapp class loader without delegating first.                          // 在 delegating = false 的情况下, 下面正则匹配到的类不会被 WebappClassLoader 进行加载
      */
     protected final Matcher packageTriggersDeny = Pattern.compile(              // 被这个正则匹配到的 class 不会被 WebappClassLoader 进行加载 (其实就是 Tomcat 中的代码不能被 WebappClassLoader 来加载)
             "^javax\\.el\\.|" +
@@ -197,7 +197,7 @@ public class WebappClassLoader extends URLClassLoader
     /**
      * Regular expression of package names which are allowed to be loaded from a
      * webapp class loader without delegating first and override any set by
-     * {@link #packageTriggersDeny}.
+     * {@link #packageTriggersDeny}.                                                // 在 delegating = false 的情况下, 下面正则匹配到的类会被 WebappClassLoader 进行加载
      */
     protected final Matcher packageTriggersPermit =                            // WebappClassLoader 允许被加载的 javax 下面的 class
             Pattern.compile("^javax\\.servlet\\.jsp\\.jstl\\.").matcher("");
@@ -206,7 +206,7 @@ public class WebappClassLoader extends URLClassLoader
     /**
      * The string manager for this package.
      */
-    protected static final StringManager sm =
+    protected static final StringManager sm =                                   // 日志记录工具
         StringManager.getManager(Constants.Package);
 
 
@@ -220,14 +220,14 @@ public class WebappClassLoader extends URLClassLoader
 
         super(new URL[0]);
 
-        ClassLoader p = getParent();
+        ClassLoader p = getParent();                            // 这里做个检查, 若构造函数传来的 parent 是 null, 则 将 AppClassLoader 赋值给 WebAppClassLoader 的 parent
         if (p == null) {
             p = getSystemClassLoader();
         }
         this.parent = p;
 
         ClassLoader j = String.class.getClassLoader();
-        if (j == null) {
+        if (j == null) {                                       // 下面几步是 获取 Launcher.ExtClassLoader 赋值给 j2seClassLoader (主要是在类加载时会被用到)
             j = getSystemClassLoader();
             while (j.getParent() != null) {
                 j = j.getParent();
@@ -235,7 +235,7 @@ public class WebappClassLoader extends URLClassLoader
         }
         this.j2seClassLoader = j;
 
-        securityManager = System.getSecurityManager();
+        securityManager = System.getSecurityManager();      // 这里的操作主要是判断 Java 程序是否启动安全策略
         if (securityManager != null) {
             refreshPolicy();
         }
@@ -260,7 +260,7 @@ public class WebappClassLoader extends URLClassLoader
             p = getSystemClassLoader();
         }
         this.parent = p;
-                                                                    // 下面几步是 获取 Launcher.ExtClassLoader 赋值给 j2seClassLoader
+                                                                    // 下面几步是 获取 Launcher.ExtClassLoader 赋值给 j2seClassLoader (主要是在类加载时会被用到)
         ClassLoader j = String.class.getClassLoader();
         if (j == null) {
             j = getSystemClassLoader();
@@ -294,7 +294,7 @@ public class WebappClassLoader extends URLClassLoader
      * resources such as property files) and the mapping from binary name to
      * path is unambiguous but the reverse mapping is ambiguous.
      */
-    // 加载资源的时候会将 文件缓存在这个 Map 里面, 下次就可以根据 modifiedTime 来判断是否需要热部署
+                                                                                // 加载资源的时候会将 文件缓存在这个 Map 里面, 下次就可以根据 modifiedTime 来判断是否需要热部署
     protected final Map<String, ResourceEntry> resourceEntries =
             new ConcurrentHashMap<>();
 
@@ -313,7 +313,7 @@ public class WebappClassLoader extends URLClassLoader
      */
     protected boolean delegate = false;
 
-
+                                                                                // 保存每个加载的资源, 上次修改的时间
     private final HashMap<String,Long> jarModificationTimes = new HashMap<>();
 
 
@@ -745,12 +745,12 @@ public class WebappClassLoader extends URLClassLoader
 
         if (log.isDebugEnabled())
             log.debug("modified()");
-                                                                                    // 除了 classes, 还包括 web.xml
+                                                                                        // 除了 classes, 还包括 web.xml
         for (Entry<String,ResourceEntry> entry : resourceEntries.entrySet()) {
             long cachedLastModified = entry.getValue().lastModified;
             long lastModified = resources.getClassLoaderResource(
-                    entry.getKey()).getLastModified();                               // 对比 file 的 lastModified的属性
-            if (lastModified != cachedLastModified) {                               // 若修改时间不对
+                    entry.getKey()).getLastModified();                                  // 对比 file 的 lastModified的属性
+            if (lastModified != cachedLastModified) {                                   // 若修改时间不对
                 if( log.isDebugEnabled() )
                     log.debug(sm.getString("webappClassLoader.resourceModified",
                             entry.getKey(),
@@ -1476,11 +1476,11 @@ public class WebappClassLoader extends URLClassLoader
 
         started = false;
 
-        resourceEntries.clear();
-        jarModificationTimes.clear();
+        resourceEntries.clear();        // 清空各种 WebappClassLoader 加载的数据
+        jarModificationTimes.clear();  // 清空各种 监视的资源(监视的资源一旦有变动, 就会触发 StandardContext 的重新加载机制)
         resources = null;
 
-        permissionList.clear();
+        permissionList.clear();         // 下面两个清空的是与 Java 权限相关的资源
         loaderPC.clear();
     }
 
@@ -2066,7 +2066,7 @@ public class WebappClassLoader extends URLClassLoader
      * points to the internal table to save re-calculating it on every
      * call to this method.
      */
-    private void checkThreadLocalMapForLeaks(Object map,
+    private void checkThreadLocalMapForLeaks(Object map,                        // 检测 ThreadLocal 里面的数据是否有可能造成 WebappClassloader 内存泄露, 若有可能的话, 就直接打印日志
             Field internalTableField) throws IllegalAccessException,
             NoSuchFieldException {
         if (map != null) {
@@ -2232,7 +2232,7 @@ public class WebappClassLoader extends URLClassLoader
      * This depends on the internals of the Sun JVM so it does everything by
      * reflection.
      */
-    private void clearReferencesRmiTargets() {
+    private void clearReferencesRmiTargets() {                      // 清空 RMI 相关的线程引用
         try {
             // Need access to the ccl field of sun.rmi.transport.Target
             Class<?> objectTargetClass =
@@ -2675,7 +2675,7 @@ public class WebappClassLoader extends URLClassLoader
      *
      * @param name Name of the resource to return
      */
-    protected InputStream findLoadedResource(String name) {
+    protected InputStream findLoadedResource(String name) {                         // 查找资源时, 从本地资源库里面进行查找
 
         String path = nameToPath(name);
 
