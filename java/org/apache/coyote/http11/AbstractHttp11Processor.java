@@ -1732,7 +1732,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
      */
     protected abstract void setCometTimeouts(SocketWrapper<S> socketWrapper);
 
-    public void endRequest() {
+    public void endRequest() {                      // 在业务逻辑处理完成之后 ,通过调用这里的 endRequest 来完成最终的 Http Header 的封装, 及数据的封装, 最后将数据刷到 浏览器上
 
         // Finish the handling of the request
         try {

@@ -91,6 +91,8 @@ public class NioSelectorPool {
      * 只能使用池中现有的 selector
      *
      * 下面的 active 与 space 是原子变量 作用是实现 自增, 自减 来实现 selector 控制
+     * 下面的操作返回一个 Selector 主要是用于 NioChannel 在第一次写数据不成功后, 注册到 selector 上, 以便进行再次的 写操作
+     * 用多个 Selector 的好处, 主要是 selector.select() selector.register() 两者操作的都是 相同的几个 all-keys,  而底层为了编发安全, 在这些操作的代码块上进行了同步, 从而避免对共享资源的竞争
      */
     @SuppressWarnings("resource") // s is closed in put()
     public Selector get() throws IOException{
@@ -184,6 +186,8 @@ public class NioSelectorPool {
      * @throws EOFException if write returns -1
      * @throws SocketTimeoutException if the write times out
      * @throws IOException if an IO Exception occurs in the underlying socket logic
+     *
+     * NioSelectorPool 承担了 Nio 模式下的 阻塞与 非阻塞的写操作 (what nio 还有阻塞的写, 这个主要是 Servlet 规范规定 Servlet 的写数据要是 阻塞的, 所以... )
      */
     public int write(ByteBuffer buf, NioChannel socket, Selector selector,
                      long writeTimeout, boolean block) throws IOException {
@@ -208,11 +212,11 @@ public class NioSelectorPool {
                     if (cnt == -1) throw new EOFException();
 
                     written += cnt;
-                    if (cnt > 0) {                                                                  // 已经写入成功的数据, continue 再写数据
+                    if (cnt > 0) {                                                                  // cnt > 0 表示 已经写入成功的数据, continue 再写数据
                         time = System.currentTimeMillis(); //reset our timeout timer
                         continue; //we successfully wrote, try again without a selector
                     }
-                    if (cnt==0 && (!block)) break; //don't block
+                    if (cnt==0 && (!block)) break; //don't block                                   // 没有写入成功数据
                 }
                 /**
                  * 基于低并发来讲, 一次 SocketChannel 写入就会成功 ， guoru 是高并发, 非组赛模式的写入, 需要开启一个 NIO 通道
@@ -226,7 +230,7 @@ public class NioSelectorPool {
                     if (writeTimeout==0) {
                         timedout = buf.hasRemaining();
                     } else if (writeTimeout<0) {
-                        keycount = selector.select();
+                        keycount = selector.select();                                             // 其实这里也是阻塞的 (PS: java NIO cpu 空转的 bug 若发生了 ， 那怎么办??? )
                     } else {
                         keycount = selector.select(writeTimeout);
                     }

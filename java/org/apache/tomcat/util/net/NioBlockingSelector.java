@@ -121,7 +121,7 @@ public class NioBlockingSelector {
                 try {               // 写入不成功
                     if ( att.getWriteLatch()==null || att.getWriteLatch().getCount()==0) att.startWriteLatch(1);
                     poller.add(att,SelectionKey.OP_WRITE,reference);                // 这一步就是就是将事件交由子线程进行处理
-                    if (writeTimeout < 0) { // 进行一段时间的 wait
+                    if (writeTimeout < 0) {                                           // 在写入不成功的情况下, 进行一段时间的 wait (这里也就是阻塞模式的体验)
                         att.awaitWriteLatch(Long.MAX_VALUE,TimeUnit.MILLISECONDS);
                     } else {
                         att.awaitWriteLatch(writeTimeout,TimeUnit.MILLISECONDS);

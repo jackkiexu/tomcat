@@ -136,7 +136,7 @@ public class InternalNioOutputBuffer extends AbstractOutputBuffer<NioChannel> {
             //ignore
         }
         try {
-            written = pool.write(bytebuffer, socket, selector, writeTimeout, block);
+            written = pool.write(bytebuffer, socket, selector, writeTimeout, block);                // 通过 NioSelectorPool 进行刷数据到 浏览器上
             //make sure we are flushed
             do {
                 if (socket.flush(true,selector,writeTimeout)) break;
