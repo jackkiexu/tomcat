@@ -159,17 +159,17 @@ public class SecureNioChannel extends NioChannel  {
 
         while (!handshakeComplete) {
             switch ( handshakeStatus ) {
-                case NOT_HANDSHAKING: {
+                case NOT_HANDSHAKING: {                                                 // 握手没成功
                     //should never happen
                     throw new IOException("NOT_HANDSHAKING during handshake");
                 }
-                case FINISHED: {
+                case FINISHED: {                                                        // 握手结束
                     //we are complete if we have delivered the last package
                     handshakeComplete = !netOutBuffer.hasRemaining();
                     //return 0 if we are complete, otherwise we still have data to write
                     return handshakeComplete?0:SelectionKey.OP_WRITE;
                 }
-                case NEED_WRAP: {
+                case NEED_WRAP: {                                                      // 需要 SSLEngine 执行入栈操作
                     //perform the wrap function
                     handshake = handshakeWrap(write);
                     if ( handshake.getStatus() == Status.OK ){
@@ -187,7 +187,7 @@ public class SecureNioChannel extends NioChannel  {
                     //BUFFER_UNDERFLOW if it needs data
                 }
                 //$FALL-THROUGH$
-                case NEED_UNWRAP: {
+                case NEED_UNWRAP: {                                                 // 需要进行出栈操作
                     //perform the unwrap function
                     handshake = handshakeUnwrap(read);
                     if ( handshake.getStatus() == Status.OK ) {

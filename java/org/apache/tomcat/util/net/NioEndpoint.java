@@ -571,13 +571,13 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                 // 不过这里如果没有可用的就初始化一个的话, 请求数陡然增高再慢慢回落的时候不就浪费了内存了
                 // NioBufferHandler 里分别分配了读缓冲区和写缓冲区
                 // SSL setup
-                if (sslContext != null) {
-                    SSLEngine engine = createSSLEngine();
+                if (sslContext != null) {                                                   // 是否是 Https 的请求    (这里需要注意一下, 对应的 SSL 的握手其实是在 工作线程里面 SocketProcessor, 其实最后调用的就是 Http11NioProcessor)
+                    SSLEngine engine = createSSLEngine();                                      // 是 Https 则创建相应的 SSLEngine
                     int appbufsize = engine.getSession().getApplicationBufferSize();
                     NioBufferHandler bufhandler = new NioBufferHandler(Math.max(appbufsize,socketProperties.getAppReadBufSize()),       // socket 读取的最大 BufferSize 默认 8M
                                                                        Math.max(appbufsize,socketProperties.getAppWriteBufSize()),      // socket 写会数据, 最大 8M
                                                                        socketProperties.getDirectBuffer());                             // 是否启用堆外的内存
-                    channel = new SecureNioChannel(socket, engine, bufhandler, selectorPool);
+                    channel = new SecureNioChannel(socket, engine, bufhandler, selectorPool);// 这里创建的也是 SecureNioChannel (SecureNioChannel 继承 NioChannel)
                 } else {
                     // normal tcp setup
                     NioBufferHandler bufhandler = new NioBufferHandler(socketProperties.getAppReadBufSize(),
@@ -1656,11 +1656,11 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                     if (key != null) {
                         // For STOP there is no point trying to handshake as the
                         // Poller has been stopped.
-                        if (socket.isHandshakeComplete() ||                     // 针对 SSL 的握手
+                        if (socket.isHandshakeComplete() ||                     // 如果 SecureioChannel已经是 SSL 建立完毕, 则直接 handshake = 0
                                 status == SocketStatus.STOP) {
                             handshake = 0;
                         } else {
-                            handshake = socket.handshake(
+                            handshake = socket.handshake(                       // SSL 通过需要建立, 执行握手
                                     key.isReadable(), key.isWritable());
                             // The handshake process reads/writes from/to the
                             // socket. status may therefore be OPEN_WRITE once
@@ -1678,7 +1678,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                 } catch (CancelledKeyException ckx) {
                     handshake = -1;
                 }
-                if (handshake == 0) {                                             // 针对 SSL 的握手
+                if (handshake == 0) {                                             // SSL 握手成功
                     SocketState state = SocketState.OPEN;
                     // Process the request from this socket
                     if (status == null) {
@@ -1706,7 +1706,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
                         //we are async, and we are interested in operations
                         ka.getPoller().add(socket, ka.interestOps()); // 如果是 KeepAlive 的话, 那么下一次, Poller 轮询, 这个 Socket 还需要参与
                     }
-                } else if (handshake == -1 ) {
+                } else if (handshake == -1 ) {                                  // 握手失败 (像 socket 突然关闭了)
                     if (key != null) {
                         socket.getPoller().cancelledKey(key, SocketStatus.DISCONNECT);
                     }
