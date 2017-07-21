@@ -19,6 +19,12 @@
  * https://wiki.apache.org/tomcat/MemoryLeakProtection
  * http://blog.xiaohansong.com/2016/08/09/ThreadLocal-leak-analyze/
  *
+ * Tomcat catalina.sh 注解
+ * http://vekergu.blog.51cto.com/9966832/1621396
+ * http://vekergu.blog.51cto.com/9966832/1622442
+ * http://www.chongchonggou.com/g_28629056.html
+ * http://www.10tiao.com/html/308/201603/402124388/1.html
+ *
  * 学习计划
  *
  * 1. Tomcat 启动过程
@@ -42,6 +48,7 @@
  *      ApplicationFilterChain 的递归调用 和 用 Loop 与 ThreadLocal
  *
  * 10. tomcat 默认 bash 处理
+ *      http://vekergu.blog.51cto.com/9966832/1622442
  *
  * Created by xjk on 5/31/17.
  *
