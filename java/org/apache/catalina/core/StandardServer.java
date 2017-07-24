@@ -742,6 +742,12 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
      */
+    /**
+     * 操作步骤:
+     * 1. 触发一下容器生命周期的事件, 设置现在容器的状态
+     * 2. 调用 NamingResourcesImpl.start (这里面的start, 只是设置一下状态, 触发一下事件 CONFIGURE_START_EVENT)
+     * 3. 调用 StandardService.start 来触发下面的各个组件/容器 (Engine, Host, Context, Wrapper)
+     */
     @Override
     protected void startInternal() throws LifecycleException {
 
@@ -785,6 +791,11 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
     /**
      * Invoke a pre-startup initialization. This is used to allow connectors
      * to bind to restricted ports under Unix operating environments.
+     *
+     * 调用步骤:
+     * 1. 调用 super.initInternal 将自己注册到 JMX 中
+     * 2. 初始化 StandardServer 的 JNDI 全局命名服务 (这个整个 Tomcat 只存在一个, 而与之对应的 Context 也是 每一个 Context 一个对应的 Namingresources)
+     * 3. 调用 service.init 进行初始化
      */
     @Override
     protected void initInternal() throws LifecycleException {

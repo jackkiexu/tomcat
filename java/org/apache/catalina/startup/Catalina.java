@@ -507,16 +507,24 @@ public class Catalina {
 
     /**
      * Start a new server instance.
+     * Tomcat 服务的初始化步骤
+     * 1.初始化 临时目录 (一开始以为这里是生成 JSP 对应 Servlet 的地方, 后来, 发现不对, 放  Servlet d的地方是 在 StandardContext.postWorkDirectory 中创建的)
+     * 2. 这里设置是否 Tomcat 开启命名服务, 以及服务用哪一个 ContextFactory
+     * 3. 创建 digester 对象, 用于解析 xml
+     * 4. 创建 digester 对象, 用于解析 xml
+     * 5. 获取 server.xml
+     * 6. 构造 日志 handler, SystemLogHandler, 并调用 System.out/err, 这样系统的日志输出 就会 经过 SystemLogHandler 来处理
+     * 7. 调用 getServer().init() 来初始化 StandardServer 及 service
      */
     public void load() {
 
         long t1 = System.nanoTime();
 
-        initDirs();                                              // 初始化 临时目录 (对应的 JSP 编译成 servlet 的输出目录)
+        initDirs();                                              // 初始化 临时目录 (一开始以为这里是生成 JSP 对应 Servlet 的地方, 后来, 发现不对, 放  Servlet d的地方是 在 StandardContext.postWorkDirectory 中创建的)
 
         // Before digester - it may be needed
 
-        initNaming();
+        initNaming();                                           // 这里设置是否 Tomcat 开启命名服务, 以及服务用哪一个 ContextFactory
 
         // Create and execute our Digester
         Digester digester = createStartDigester();              // 创建 digester 对象, 用于解析 xml
@@ -582,7 +590,7 @@ public class Catalina {
 
         try {
             inputSource.setByteStream(inputStream);
-            digester.push(this);                    // 这里将当前对象 push 到 Digester 的最底部, 那调用 digester.parse 时会将 server.xml 里面的信息解析出来, 并映射到 当前的 Catalina 上
+            digester.push(this);                    // 这里将当前对象(Catalina) push 到 Digester 的最底部, 那调用 digester.parse 时会将 server.xml 里面的信息解析出来, 并映射到 当前的 Catalina 上
             digester.parse(inputSource);
         } catch (SAXParseException spe) {
             log.warn("Catalina.start using " + getConfigFile() + ": " +
@@ -600,8 +608,8 @@ public class Catalina {
         }
 
         getServer().setCatalina(this);                                  // 设置 server 的 catalina 对象
-        getServer().setCatalinaHome(Bootstrap.getCatalinaHomeFile());
-        getServer().setCatalinaBase(Bootstrap.getCatalinaBaseFile());
+        getServer().setCatalinaHome(Bootstrap.getCatalinaHomeFile());   // 设置 catalina.home
+        getServer().setCatalinaBase(Bootstrap.getCatalinaBaseFile());   // 设置 catalina.base
 
         // Stream redirection
         initStreams();                                                 // 这里的设置就是让程序里面 log 的信息输出到 catalina.out 文件里面
@@ -643,7 +651,9 @@ public class Catalina {
 
     /**
      * Start a new server instance.
-     * 创建一个 tomcat Server 的实例
+     * 操作步骤:
+     * 1. 调用 StandardServer.start 启动tomcat 下面的子容器
+     * 2. 注册 JMX 的 hook 方法 (PS: 发现这里的 hook 所做的就是 Catalina.stop())
      */
     public void start() {
 

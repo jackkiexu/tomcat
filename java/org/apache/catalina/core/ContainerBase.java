@@ -896,6 +896,14 @@ public abstract class ContainerBase extends LifecycleMBeanBase
      *
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
+     *
+     *  操作步骤
+     *  1. 初始化 容器对应的 Logger
+     *  2. 若配置了 Tomcat cluster, 则start
+     *  3. 开启 Tomcat 验证服务 Realm
+     *  4. 通过线程池 start 其对应的 子容器
+     *  5. 调用 StandardPipeline.start 初始化 currentValve, 其中也会 调用 Valve.start 来启动对应的所有 Valve
+     *  6. 开启 容器的后台定时任务(其会递归的执行其子容器)
      */
     @Override
     protected synchronized void startInternal() throws LifecycleException {

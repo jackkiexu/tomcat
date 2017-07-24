@@ -64,6 +64,9 @@ public class StandardEngine extends ContainerBase implements Engine {
 
     /**
      * Create a new StandardEngine component with the default basic Valve.
+     * 初始化步骤
+     * 1. 初始化 Valve 处理管道 Pipeline, 并且加入 对应的 StandardEngineValve(StandardEngineValve 主要是通过 org.apache.catalina.connector.Request 里面的信息, 进行路由到对应的 StandardHost)
+     * 2. 初始化 后台任务的执行间隔
      */
     public StandardEngine() {
 
@@ -254,6 +257,9 @@ public class StandardEngine extends ContainerBase implements Engine {
      *
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
+     */
+    /**
+     * 这里面调用的是 ContainerBase 的 startInternal
      */
     @Override
     protected synchronized void startInternal() throws LifecycleException {

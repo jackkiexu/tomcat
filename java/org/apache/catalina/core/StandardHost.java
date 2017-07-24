@@ -60,6 +60,8 @@ public class StandardHost extends ContainerBase implements Host {
 
     /**
      * Create a new StandardHost component with the default basic Valve.
+     * 初始化步骤
+     * 1. 初始化 Valve 处理管道 Pipeline, 并且加入 对应的 StandardHostValve(StandardHostValve 主要是通过 org.apache.catalina.connector.Request 里面的信息, 进行路由到对应的 StandardContext, 并且将当前线程的 ContextClassLoader 设置为 Context 锁对应的 WebappClassLoader)
      */
     public StandardHost() {
 
@@ -828,6 +830,11 @@ public class StandardHost extends ContainerBase implements Host {
      *
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
+     */
+    /**
+     * 操作步骤
+     * 1. 将 ErrorReportValve 加入其对应的 pipeline (ErrorReportValve 主要是对服务器的一次啊错误进行处理, 错误的信息加载 Response 里面)
+     * 2. 调用父类 ContainerBase 的 startInternal 方法 进行启动一些公共属性
      */
     @Override
     protected synchronized void startInternal() throws LifecycleException {

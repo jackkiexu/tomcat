@@ -417,6 +417,11 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
      * and prevent invalid state transitions.
      */
 
+    /**
+     * 操作步骤:
+     * 1. 注册 JMX
+     * 2. 调用 endPoint 来初始化 I/O 操作 方面的动作
+     */
     @Override
     public void init() throws Exception {   // 这一块主要是 JMX + endpoint 初始化
         if (getLog().isInfoEnabled())
@@ -453,7 +458,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
         endpoint.setName(endpointName.substring(1, endpointName.length()-1));
 
         try {
-            endpoint.init();
+            endpoint.init();                                            // 初始化 endPoint
         } catch (Exception ex) {
             getLog().error(sm.getString("abstractProtocolHandler.initError",
                     getName()), ex);

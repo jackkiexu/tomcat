@@ -680,6 +680,9 @@ public abstract class AbstractEndpoint<S> {
     public abstract void startInternal() throws Exception;
     public abstract void stopInternal() throws Exception;
 
+    /**
+     * 这里其实就是个 策略 + 模板的模式 的方式(策略指 JioEndPoint, NioEndPoint, Nio2EndPoint), 模板指 不同的实现类有不同的 bind() 实现
+     */
     public final void init() throws Exception {
         if (bindOnInit) {
             bind();

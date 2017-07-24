@@ -422,6 +422,12 @@ public class StandardService extends LifecycleMBeanBase implements Service {
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
      */
+    /**操作步骤:
+     * 1. 设置容器的状态
+     * 2. 启动 对应的子组件/容器 (Engine/Host/Context/Wrapper 这里启动的 wrapper 只有在是配置了 loadOnStartUp 的 wrapper)
+     * 3. 启动 MapperListener 这里将 容器的信息加到 路由解析器 Mapper 上
+     * 4. 启动 IO 处理器 connector
+     */
     @Override
     protected void startInternal() throws LifecycleException {      // 注意一下的启动顺序, 为什么这么启动
 
@@ -436,7 +442,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
             }
         }
 
-        synchronized (executors) {              // 这里的 executors 是哪里来的 ?
+        synchronized (executors) {                               // 这里的 executors 是哪里来的 ? (后来发现, 这里默认是空的)
             for (Executor executor: executors) {
                 executor.start();
             }
@@ -535,6 +541,11 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     /**
      * Invoke a pre-startup initialization. This is used to allow connectors
      * to bind to restricted ports under Unix operating environments.
+     * 调用步骤:
+     * 1. 调用 super.initInternal 将自己注册到 JMX 中
+     * 2. 调用 container.init() 来初始化 对应的一层一层所有的容器 (Tomcat 的容器有 Engine, Host, Context, Wrapper)
+     * 3. 初始化 MapperListener(MapperListener 没有自己的  initInternal, 只是在父类里面注册一下 JMX 服务), 这里的 mapperListener 非常重要, 具体看其startInternal 方法, 里面有监听 各层容器的方法
+     * 4. 初始化 所有 connector (每一个 connector 代表一种通信协议， 现有协议 http, arp, 而每种协议又对应 3种IO模型 BIO, NIO, AIO)
      */
     @Override
     protected void initInternal() throws LifecycleException {
@@ -554,7 +565,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         }
 
         // Initialize mapper listener
-        mapperListener.init();                                   // 初始化 MapperListener(MapperListener 没有自己的  initInternal, 只是在父类里面注册一下 JMX 服务)
+        mapperListener.init();                                   // 初始化 MapperListener(MapperListener 没有自己的  initInternal, 只是在父类里面注册一下 JMX 服务), 这里的 mapperListener 非常重要, 具体看其startInternal 方法, 里面有监听 各层容器的方法
 
         // Initialize our defined Connectors
         synchronized (connectorsLock) {

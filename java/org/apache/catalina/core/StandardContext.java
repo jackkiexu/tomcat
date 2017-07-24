@@ -5041,9 +5041,36 @@ public class StandardContext extends ContainerBase
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
      *
-     *  负责启动 web app 应用, 在启动方法中要完成很多步骤
-     *  注册 JMX
-     *
+     * 操作步骤:
+     * 1. 发布 正在启动的 JMX 通知, 这样可以通过添加 NotificationListener 来监听 Web 应用的启动
+     * 2. NamingResourcesImpl.start 这里只是设置容器的生命周期状态 + 发送一下消息事件
+     * 3. 初始化 Context 对应的 StandardRoot (StandardRoot 收集了 web 服务的绝大部分资源 preResources, classResources, jarResources, postResources)
+     * 4. 判断是否 Servlet >= 3.0 && addWebinfClassesResources == true 则将 WEB-INF/classes/META-INF 下面的资源也加载进来
+     * 5. WebappLoader 初始化, 其中有设置是否完全遵循 parent-delegate 模式
+     * 6. 初始化 charsetMapper (Context 支持的字符集, 负责处理本地字符问题)
+     * 7. 初始化临时目录, 默认 为 $CATALINA_BASE/work/<Engine名称>/<Host名称>/<Context名称> (其中也涉及到 编译 JSP 生成 Servlet 及对应 class 的临时目录)
+     *      (1). 这里面还调用 getServletContext() 来生成 ApplicationContext, ApplicationContextFacade
+     *      (2). 初始化 Session 的追踪模式 Cookie 与 URl 模式 (也有可能会有 SSL 方式)
+     *  8. 开启  JNDI 的监听器 NamingContextListener
+     *  9. 调用 bindThread 进行绑定 ClassLoader (这里返回的 ClassLoader 是一个 null, 主要因为 这时 WebappClassLoader 是 null, 所以 这一步操作其实没有什么作用)
+     *  10. loader.start() 触发 WebappLoader 启动 -> WebappClassloader 启动 (主要是通过反射生成  WebappClassLoader, 并且设置对应 URLClassPath 里面的 URL)
+     *  11. 设置 StandardContext stop 时需要清除的一下属性 clearReferencesStatic, clearReferencesStopThreads, clearReferencesStopTimerThreads, clearReferencesHttpClientKeepAliveThread
+     *  12. 调用  bindThread 将WebappClassLoader 绑定到 当前 StandardContext 上
+     *  13. 初始化 StandardContext 对应的 Logger
+     *  14. 若 Tomcat 配置 cluster 的话, 则进行启动
+     *  15. 启动 Tomcat 默认的 Realm
+     *  16. 初始化 StandardPipeline(其内部就是一个 StandardPipelineValve), 现在我们发现, Tomcat 里面的 valve 主要功能是路由, 记录日志, 对错误信息进行处理
+     *  17. 创建 buildInjectionMap, 将 EJB, Env, 驱动 Bean, JNDI 资源, 全部注入进入(那什么时候拿出来呢, 这就是在组装对象的时候需要用到, 比如用 DefaultInstanceManager 来实例化 Servlet 对象)
+     *  18. 生成 DefaultInstanceManager(Tomcat 中的实例化管理器, 像我们有时在 Servlet 上加一点 注解, 通过 DefaultInstanceManager 来生成, 则会将 buildInjectionMap 里面对应信息注入进去, 是不是很像 IOC啊..... )
+     *  19. 调用 mergeParameters 合并 server.xml 与 context.xml 里面设置参数到 ApplicationContext 里面
+     *  20. 启动对应的 ServletContainerInitializer (好像 Spring 里面有些类继承了这个类)
+     *  21. 启动 ApplicationListener 监听器
+     *  22. 启动 StandardManager(默认的 Session 生成, 及管理器(超时管理), 其中也创建了一个 SessionIdGenerator, 用于生成 sessionId)
+     *  23. 将所有的 Filter 封装成 ApplicationFilterConfig, 在servlet 请求到时会进行实例化(而真正的 Filter 实例化是在 ApplicationFilterConfig.getFilter() 时生成的, 也是通过 DefaultInstanceManager 的, 具体可看 ApplicationFilterChain.internalDoFilter方法)
+     *  24. 实例化 load-on-start-up 的 servlet(PS: 默认Tomcat 中的 Servlet 是单例模式, 另一种是对象池, 默认一个 Servlet Class 最多 20 Servlet 对象)
+     *  25. 通过 super.threadStart() 启动 StandardContext 的后台定时任务线程
+     *  26. 调用 unbindThread 将原来的 ClassLoader 替换回来
+     *  27. 发布 JMX 通知事件 + 设置容器状态
      */
     @Override
     protected synchronized void startInternal() throws LifecycleException {
@@ -5144,7 +5171,7 @@ public class StandardContext extends ContainerBase
 
 
         // Binding thread
-        ClassLoader oldCCL = bindThread();                          // 第一次获取 ClassLoader 是一个 null ?????
+        ClassLoader oldCCL = bindThread();                          // 第一次获取 ClassLoader 是一个 null, 而且这时 WebappClassLoader 是 null, 所以 这一步操作其实没有什么作用
 
         try {
             if (ok) {
@@ -5342,7 +5369,7 @@ public class StandardContext extends ContainerBase
             super.threadStart();// 启动周期后台线程
         } finally {
             // Unbinding thread
-            unbindThread(oldCCL);
+            unbindThread(oldCCL);                                   // 将来源的 ClassLoader 替换掉 StandardContext 对应的 WebappClassLoader
         }
 
         // Set available status depending upon startup success
@@ -6413,21 +6440,31 @@ public class StandardContext extends ContainerBase
         return result.toString();
     }
 
+    /**
+     * 操作步骤:
+     * 1. 调用 super.initInternal() 初始化 startStopExecutor 线程池(主要来异步的处理一些 子容器的 start, stop 事件), 以及注册 JMX 服务信息
+     * 2. StandardContext 启动, 加载web项目对应的资源
+     *      StandardRoot 主要做了以下几步
+     *      2.1. 基于 War 部署或是目录部署, 初始化 DirResourceSet 或 FileResourceSet
+     *      2.2. 基于 web 应用的 根目录的路径, 会准备 JarResourceSet, 这个集合中都是 jar 包
+     *      2.3. classResource 可以通过自定义加入进来, 作为一个 web 应用 中需要引入的 class 集合
+     *      2.4. CacheResource 准备好, 为通过 StandardRoot 查找资源做准备
+     */
     @Override
     protected void initInternal() throws LifecycleException {
         super.initInternal();
 
         // Register the naming resources
-        if (namingResources != null) {
+        if (namingResources != null) {                          // 初始化命名服务
             namingResources.init();
         }
 
-        if (resources != null) {
+        if (resources != null) {                                // 这里的 resources 其实就是 StandardRoot
             resources.start();
         }
 
         // Send j2ee.object.created notification
-        if (this.getObjectName() != null) {
+        if (this.getObjectName() != null) {                     // 这里也是与 JMX 相关的操作
             Notification notification = new Notification("j2ee.object.created",
                     this.getObjectName(), sequenceNumber.getAndIncrement());
             broadcaster.sendNotification(notification);

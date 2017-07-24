@@ -401,6 +401,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
     // -------------------- Public methods --------------------
 
+    /**操作步骤
+     * 1. 初始化 接收请求线程数
+     * 2. 初始化工作线程数
+     * 3. java 程序绑定对应的端口
+     */
     @Override
     public void bind() throws Exception {
 

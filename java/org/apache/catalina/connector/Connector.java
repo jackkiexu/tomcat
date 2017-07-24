@@ -944,13 +944,18 @@ public class Connector extends LifecycleMBeanBase  {
     }
 
 
+    /**
+     * 操作步骤
+     * 1. 调用 super.initInternal() 注册 JMX 服务
+     * 2. 构建 一个 CoyoteAdapter (CoyoteAdapter 是tomcat 前后端分离的标志, 其中也涉及到了适配器模式, 这个后续会说明)
+     */
     @Override
     protected void initInternal() throws LifecycleException {
 
         super.initInternal();                                   // 注册 JMX 信息
 
         // Initialize adapter
-        adapter = new CoyoteAdapter(this);                    // CoyoTeAdapter 里面就一个 ThreadLocal 来记录 线程的名称
+        adapter = new CoyoteAdapter(this);                    // 构建 一个 CoyoteAdapter (CoyoteAdapter 是tomcat 前后端分离的标志, 其中也涉及到了适配器模式, 这个后续会说明)
         protocolHandler.setAdapter(adapter);                 // 设置 ProtocolHandler Request, Response 的 Adapter
 
         // Make sure parseBodyMethodsSet has a default
@@ -966,7 +971,7 @@ public class Connector extends LifecycleMBeanBase  {
         }
 
         try {
-            protocolHandler.init();
+            protocolHandler.init();                        // 初始化 EndPoint (绑定端口, 创建 Accepter 线程, 其实光光 protocol 里面的处理就一大坨, 但没事, 后面会慢慢分析 )
         } catch (Exception e) {
             throw new LifecycleException
                 (sm.getString
