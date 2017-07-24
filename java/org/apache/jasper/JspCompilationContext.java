@@ -73,7 +73,7 @@ public class JspCompilationContext {
     private ServletWriter writer;
     private final Options options;
     private final JspServletWrapper jsw;
-    private Compiler jspCompiler;
+    private Compiler jspCompiler;                               // 这里有两种 Compiler (JDTCompiler 与 AntCompiler)
     private String classPath;
 
     private final String baseURI;
@@ -238,7 +238,7 @@ public class JspCompilationContext {
         return jspCompiler;
     }
 
-    protected Compiler createCompiler(String className) {
+    protected Compiler createCompiler(String className) {                   // Tomcat 存在两种类型的编译器, JDT 与 ANT 编译器
         Compiler compiler = null;
         try {
             compiler = (Compiler) Class.forName(className).newInstance();

@@ -479,7 +479,7 @@ public final class Bootstrap {
             // a range of class not found exceptions.
             Thread.currentThread().setContextClassLoader(daemon.catalinaLoader);
         }
-                                                                       // 程序运行到这边时 Thread.currentThread().contextClassLoader 就是 catalinaClassLoader 了, 下面的所有加载 class操作, 都是由这个 classloader 来进行加载
+                                                                       // 程序运行到这边时 Thread.currentThread().contextClassLoader 就是 catalinaClassLoader 了, 下面的所有加载 class操作, 都是由这个 classloader 来进行加载 (PS: 则在 Tomcat 8.0.x 里面, 这里的 catalinaClassLoader 其实就是 commonClassLoader)
         try {
             String command = "start";                                 // 命令参数
             if (args.length > 0) {                                    // 这里可能是其他的参数, 但默认命令就是 start
@@ -495,11 +495,11 @@ public final class Bootstrap {
                 daemon.stop();
             } else if (command.equals("start")) {
                 daemon.setAwait(true);                                // Tomcat 启动程序 stop程序代码, 程序会 hold 住, 直到有向 Tomcat 发送 stop 命令, 程序就会停止 (详情将 Catalina.start() 方法)
-                daemon.load(args);                                    // 启动的时候加载传进来的参数
+                daemon.load(args);                                    // 直接调用 Catalina.load 方法, 进行初始化 各个文件, 命名服务, 用 Digester 来解析 XML 文件, 并且  init Tomcat 容器里面的各个组件
                 daemon.start();                                       // 启动当前 bootstrap 对象, 其实主要是调用前面生成的 org.apache.catalina.startup.Catalina 的 start 方法
             } else if (command.equals("stop")) {                    // 停止 Tomcat (并清理对应的 关闭 Tomcat 的监听程序)
                 daemon.stopServer(args);
-            } else if (command.equals("configtest")) {             // 这个只是 将 Tomcat 的配置文件加载进来, 并对 Tomcat 相关主键进行 init 操作, 从而检测 程序对应的配置文件是否正确
+            } else if (command.equals("configtest")) {             // 这个只是 将 Tomcat 的配置文件加载进来, 通过反射调用 Catalina.init, 从而检测 程序对应的配置文件是否正确
                 daemon.load(args);
                 if (null==daemon.getServer()) {
                     System.exit(1);
@@ -508,7 +508,7 @@ public final class Bootstrap {
             } else {
                 log.warn("Bootstrap: command \"" + command + "\" does not exist.");
             }
-        } catch (Throwable t) {
+        } catch (Throwable t) {                                     // 抛出异常一直退出
             // Unwrap the Exception for clearer error reporting
             if (t instanceof InvocationTargetException &&
                     t.getCause() != null) {

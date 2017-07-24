@@ -175,7 +175,7 @@ public class JspServletWrapper {
 
                     try {
                         InstanceManager instanceManager = InstanceManagerFactory.getInstanceManager(config);
-                        servlet = (Servlet) instanceManager.newInstance(ctxt.getFQCN(), ctxt.getJspLoader());
+                        servlet = (Servlet) instanceManager.newInstance(ctxt.getFQCN(), ctxt.getJspLoader());               // 通过 JSP 的 JspClassLoader 进行加载
                     } catch (Exception e) {
                         Throwable t = ExceptionUtils
                                 .unwrapInvocationTargetException(e);
@@ -243,7 +243,7 @@ public class JspServletWrapper {
             if (options.getDevelopment() || firstTime ) {
                 synchronized (this) {
                     firstTime = false;
-                    ctxt.compile();
+                    ctxt.compile();                             // 进行 Jsp 页面的编译
                 }
             } else {
                 if (compileException != null) {
@@ -360,11 +360,11 @@ public class JspServletWrapper {
              * 1. 开发者模式
              * 2. 生产模式: JSP 不能被修改, 随着 Tomcat 启动就会被编译, 编译OK后, firstTime 变成 false
              */
-            if (options.getDevelopment() || firstTime ) {
+            if (options.getDevelopment() || firstTime ) {       // 是否是第一次请求, 若是的话, 则需要进行编译
                 synchronized (this) {
                     firstTime = false;
 
-                    // The following sets reload to true, if necessary
+                    // The following sets reload to true, if necessary 这里的 JspCompilationContext 是在 JspServletWrapper 构造的时候创建出来ed
                     ctxt.compile();     // 首先就是调用 JSPCompilationContext 进行编译, 编译的条件是要么是开发者模式, 要么是第一次 firstTime
 
                 }

@@ -390,7 +390,7 @@ public class JspServlet extends HttpServlet implements PeriodicEventListener {
                                 boolean precompile)
         throws ServletException, IOException {
 
-        JspServletWrapper wrapper = rctxt.getWrapper(jspUri);
+        JspServletWrapper wrapper = rctxt.getWrapper(jspUri);                   // 根据处理的 URI, JspRuntimeContext 去查找一个合适的 JspServletWrapper 来进行处理
         if (wrapper == null) {
             synchronized(this) {
                 wrapper = rctxt.getWrapper(jspUri);

@@ -161,6 +161,7 @@ public final class JspRuntimeContext {
 
     /**
      * Maps JSP pages to their JspServletWrapper's
+     * 每一个 JSP 页面， 对应缓存一个 JspServletWrapper 类
      */
     private final Map<String, JspServletWrapper> jsps =
             new ConcurrentHashMap<>();
@@ -367,7 +368,7 @@ public final class JspRuntimeContext {
             // it detects it has to do a reload
             synchronized(jsw) {
                 try {
-                    ctxt.compile();
+                    ctxt.compile();                         // 进行 JSP 页面的编译
                 } catch (FileNotFoundException ex) {
                     ctxt.incrementRemoved();
                 } catch (Throwable t) {

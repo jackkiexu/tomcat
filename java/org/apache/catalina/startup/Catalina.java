@@ -512,7 +512,7 @@ public class Catalina {
 
         long t1 = System.nanoTime();
 
-        initDirs();                                              // 初始化 临时目录
+        initDirs();                                              // 初始化 临时目录 (对应的 JSP 编译成 servlet 的输出目录)
 
         // Before digester - it may be needed
 

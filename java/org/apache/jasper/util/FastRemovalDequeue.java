@@ -88,16 +88,16 @@ public class FastRemovalDequeue<T> {
     public synchronized Entry push(final T object) {
         Entry entry = new Entry(object);
         if (size >= maxSize) {
-            entry.setReplaced(pop());
+            entry.setReplaced(pop());           // 这一步是将 queue 里面, 最后的元素 pop 出来, 并且设置到最新元素的 replaced 值上
         }
         if (first == null) {
             first = last = entry;
         } else {
-            first.setPrevious(entry);
+            first.setPrevious(entry);          // 将刚刚生成的元素 entry 放在 queue 的最前面
             entry.setNext(first);
             first = entry;
         }
-        size++;
+        size++;                               // 增加队列的尺寸
 
         return entry;
     }
@@ -150,7 +150,7 @@ public class FastRemovalDequeue<T> {
 
     /**
      * Removes the last element of the list and returns its content.
-     *
+     *  将队列的最后一个元素 pop 出来, 并且返回对应的内容
      * @return the content of the last element of the list.
      **/
     public synchronized T pop() {

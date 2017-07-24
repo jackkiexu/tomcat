@@ -30,7 +30,7 @@ public final class SecurityClassLoad {
     public static void securityClassLoad(ClassLoader loader) throws Exception {
         securityClassLoad(loader, true);
     }
-    // 下面 为什么要预先加载, 主要是怕 更改了 catalina.policy 里面的安全策略, 导致 Tomcat 的核心的类加载不成功
+
     // 下面是 用 catalinaClassLoader tomcat中指定几个包中的指定几个 类 (个人认为, 这个其实不要这一步啊, 在使用到类的时候, 当前线程会通过 contextClassLoader 到加载对应 URL 下面的 查找class, 并加载进来)
     static void securityClassLoad(ClassLoader loader, boolean requireSecurityManager)
             throws Exception {
