@@ -63,7 +63,7 @@ public class Connector extends LifecycleMBeanBase  {
     }
 
     public Connector(String protocol) {
-        setProtocol(protocol);
+        setProtocol(protocol);                                      // 设置对应的协议
         // Instantiate protocol handler
         ProtocolHandler p = null;
         try {
@@ -997,7 +997,7 @@ public class Connector extends LifecycleMBeanBase  {
         setState(LifecycleState.STARTING);
 
         try {
-            protocolHandler.start();
+            protocolHandler.start();                        // 启动对应的 EndPoint,绑定监听的端口, 创建 Accepter 线程, 初始化限流阀
         } catch (Exception e) {
             String errPrefix = "";
             if(this.service != null) {

@@ -1748,6 +1748,10 @@ public class StandardWrapper extends ContainerBase
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
      */
+    /** 操作步骤
+     * 1. 发送 JMX 消息通知
+     * 2. 调用ContainerBase.startInternal 来初始化一些数据
+     */
     @Override
     protected synchronized void startInternal() throws LifecycleException {
 

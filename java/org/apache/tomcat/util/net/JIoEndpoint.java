@@ -464,7 +464,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                 createExecutor();       // 工作线程池
             }
 
-            initializeConnectionLatch();                // 初始化
+            initializeConnectionLatch();                // 初始化限流阀
 
             startAcceptorThreads(); // Accept 连接线程池
 

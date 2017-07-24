@@ -88,6 +88,11 @@ public class MapperListener extends LifecycleMBeanBase
 
     // ------------------------------------------------------- Lifecycle Methods
 
+    /** 步骤:
+     * 1. 通过 StandardEngine 来确认 Tomcat 默认的 host (这里的 defaultHost 就是在 server.xml 里面的 <Engine name="Catalina" defaultHost="localhost" />)
+     * 2. 将自己作为 Engine, Host, Context, Wrapper 的监听器
+     * 3. 通过registerHost, registerContext, registerWrapper 将 host, context, wrapper 的信息存储到 Mapper 里面, 以便下次路由时使用
+     */
     @Override
     public void startInternal() throws LifecycleException {
 
@@ -96,7 +101,7 @@ public class MapperListener extends LifecycleMBeanBase
         // Find any components that have already been initialized since the
         // MBean listener won't be notified as those components will have
         // already registered their MBeans
-        findDefaultHost();                                  // 获取对应的默认 Host
+        findDefaultHost();                                  // 获取对应的默认 Host (这里的 defaultHost 就是在 server.xml 里面的 <Engine name="Catalina" defaultHost="localhost" />)
 
         Engine engine = (Engine) service.getContainer();
         addListeners(engine);                               // 将 自己作为 StandardEngine 及其子容器 Container及 lifecycle 的 listener

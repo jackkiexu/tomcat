@@ -452,7 +452,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         mapperListener.start();                                  // 这里会将 Tomcat 里面的 Host, Context, Wrapper 的等等路由信息设置到 mapper
 
         // Start our defined Connectors second
-        synchronized (connectorsLock) {                         // 启动对应的 Connector
+        synchronized (connectorsLock) {                        // 启动对应的 Connector
             for (Connector connector: connectors) {
                 try {
                     // If it has already failed, don't try and start it
