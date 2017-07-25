@@ -774,18 +774,18 @@ public class ContextConfig implements LifecycleListener {
                     Boolean.valueOf(context.getXmlNamespaceAware())));
         }
 
-        webConfig();
+        webConfig();                            // 扫描 web.xml 文件, 在遇到全局 web.xml 或 host 层面的 web.xml, 则应用层面的 web.xml 的属性能覆盖上面两个, 这里面的知识点非常多, 通过 SPI 机制加载 ServletContainerInitializer, 并且将它们 set 到对应的 StandardContext
 
-        if (!context.getIgnoreAnnotations()) {  // 如果 ignoreAnnotations 为 false, 则解析应用程序注解配置, 添加相关的 JDNI 资源引用
+        if (!context.getIgnoreAnnotations()) {  // 如果 ignoreAnnotations 为 false, 则解析应用程序注解配置 主要是 (listener, Filter, Servlet类的, 最后会将这些资源信息加入到 StandardContext.NamingResourcesImpl 里面, 在实例化 Servlet/Filter/Listener 时会用到)
             applicationAnnotationsConfig();
         }
         if (ok) {
-            validateSecurityRoles();
+            validateSecurityRoles();            // 校验角色权限之类信息
         }
 
         // Configure an authenticator if we need one
         if (ok) {
-            authenticatorConfig();
+            authenticatorConfig();             // 配置权限限制
         }
 
         // Dump the contents of this pipeline if requested
