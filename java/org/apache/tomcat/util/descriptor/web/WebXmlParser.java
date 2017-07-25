@@ -57,12 +57,12 @@ public class WebXmlParser {
 
     public WebXmlParser(boolean namespaceAware, boolean validation,
             boolean blockExternal) {
-        webRuleSet = new WebRuleSet(false);
+        webRuleSet = new WebRuleSet(false);                             // 这里就是生成 用于解析 web.xml 的 digester
         webDigester = DigesterFactory.newDigester(validation,
                 namespaceAware, webRuleSet, blockExternal);
         webDigester.getParser();
 
-        webFragmentRuleSet = new WebRuleSet(true);
+        webFragmentRuleSet = new WebRuleSet(true);                    // 用于解析 Fragment web.xml 的 Digester
         webFragmentDigester = DigesterFactory.newDigester(validation,
                 namespaceAware, webFragmentRuleSet, blockExternal);
         webFragmentDigester.getParser();

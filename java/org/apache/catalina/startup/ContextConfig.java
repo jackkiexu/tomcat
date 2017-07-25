@@ -467,16 +467,16 @@ public class ContextConfig implements LifecycleListener {
         }
         // set the default if we don't have any overrides
         if (defaultContextXml == null) {
-            defaultContextXml = Constants.DefaultContextXml;
+            defaultContextXml = Constants.DefaultContextXml;                // 默认是 ${catalina.base}/config/context.xml (全局)
         }
 
         if (!context.getOverride()) {       // 设置是否 overide 已经设置好的 属性
             File defaultContextFile = new File(defaultContextXml);
-            if (!defaultContextFile.isAbsolute()) {
+            if (!defaultContextFile.isAbsolute()) {                           // 判断是否是绝对路径 (其实就是根据是否最前面是否是反斜杠)
                 defaultContextFile =                // conf/context.xml
                         new File(context.getCatalinaBase(), defaultContextXml);
             }
-            if (defaultContextFile.exists()) {
+            if (defaultContextFile.exists()) {                                // 判断 ${catalina.base}/config/context.xml 是否存在
                 try {
                     URL defaultContextUrl = defaultContextFile.toURI().toURL();
                     processContextConfig(digester, defaultContextUrl);
@@ -485,9 +485,9 @@ public class ContextConfig implements LifecycleListener {
                             "contextConfig.badUrl", defaultContextFile), e);
                 }
             }
-                                                                    // conf/host下面的 context.xml
+                                                                    // conf/host下面的 context.xml                     (当前host层面的 context.xml)
             File hostContextFile = new File(getHostConfigBase(), Constants.HostContextXml);
-            if (hostContextFile.exists()) {
+            if (hostContextFile.exists()) {                                                         // 判断文件是否存在
                 try {
                     URL hostContextUrl = hostContextFile.toURI().toURL();
                     processContextConfig(digester, hostContextUrl);
@@ -497,7 +497,7 @@ public class ContextConfig implements LifecycleListener {
                 }
             }
         }
-        if (context.getConfigFile() != null) {  // conf/host/context下面的 context.xml
+        if (context.getConfigFile() != null) {                                       // conf/host/context下面的 context.xml (StandardContext 层面的 context.xml)
             processContextConfig(digester, context.getConfigFile());
         }
 
@@ -602,7 +602,7 @@ public class ContextConfig implements LifecycleListener {
         file = new File(docBase);
         String origDocBase = docBase;
 
-        ContextName cn = new ContextName(context.getPath(),
+        ContextName cn = new ContextName(context.getPath(),                             // 每个 Context 都有一个对应的描述对象
                 context.getWebappVersion());
         String pathName = cn.getBaseName();
 
@@ -615,9 +615,9 @@ public class ContextConfig implements LifecycleListener {
         }
         // 如果 docBase 是一个 war 包, 且需要解压
         // 则 解压 war 包, 并更新 docBase 路径
-        if (docBase.toLowerCase(Locale.ENGLISH).endsWith(".war") && !file.isDirectory() && unpackWARs) {
+        if (docBase.toLowerCase(Locale.ENGLISH).endsWith(".war") && !file.isDirectory() && unpackWARs) {    // 是个 war 且不是目录, 而且还没有解压
             URL war = new URL("jar:" + (new File(docBase)).toURI().toURL() + "!/");
-            docBase = ExpandWar.expand(host, war, pathName);
+            docBase = ExpandWar.expand(host, war, pathName);                                                  // 这里就是进行 war 包的解压
             file = new File(docBase);
             docBase = file.getCanonicalPath();
             if (context instanceof StandardContext) {
@@ -628,7 +628,7 @@ public class ContextConfig implements LifecycleListener {
             URL war =
                 new URL("jar:" + (new File (docBase)).toURI().toURL() + "!/");
             ExpandWar.validate(host, war, pathName);
-        } else {
+        } else {                                                                       // 若直接以文件夹的形式进行部署
             File docDir = new File(docBase);
             if (!docDir.exists()) {
                 File warFile = new File(docBase + ".war");
@@ -1113,13 +1113,13 @@ public class ContextConfig implements LifecycleListener {
          * 2. 解析 Web 应用的 web.xml 文件
          */
         Set<WebXml> defaults = new HashSet<>();
-        defaults.add(getDefaultWebXmlFragment());                                       // 获取程序默认的 host 层面的 web.xml 与 全局的 web.xml
+        defaults.add(getDefaultWebXmlFragment());                                       // 获取程序默认的, 与 host 层面的 web.xml, 与 全局的 web.xml
 
-        WebXml webXml = createWebXml();
+        WebXml webXml = createWebXml();                                                 // 创建 WebXml 对象
 
         // Parse context level web.xml
-        InputSource contextWebXml = getContextWebXmlSource();
-        if (!webXmlParser.parseWebXml(contextWebXml, webXml, false)) {
+        InputSource contextWebXml = getContextWebXmlSource();                           // 获取 ${catalina.base}/webapps/${contextname}/Web-INF/web.xml 文件
+        if (!webXmlParser.parseWebXml(contextWebXml, webXml, false)) {              // 解析获取的 web.xml 文件
             ok = false;
         }
 
@@ -1189,7 +1189,7 @@ public class ContextConfig implements LifecycleListener {
             // provide JSP servlet definition.
             webXml.merge(defaults);
 
-            // Step 8. Convert explicitly mentioned jsps to servlets             // 将 jsps 转化成 servlets
+            // Step 8. Convert explicitly mentioned jsps to servlets             // 明确将 *.jsp 的处理交由 servlets, 而不是原先的 JspServlet
             if (ok) {
                 convertJsps(webXml);
             }
@@ -1232,7 +1232,7 @@ public class ContextConfig implements LifecycleListener {
                     resourceJars.add(fragment);
                 }
             }
-            processResourceJARs(resourceJars);
+            processResourceJARs(resourceJars);                          // 扫描 jar 包下面的静态资源
             // See also StandardContext.resourcesStart() for
             // WEB-INF/classes/META-INF/resources configuration
         }
@@ -1481,8 +1481,8 @@ public class ContextConfig implements LifecycleListener {
 
         DefaultWebXmlCacheEntry entry = hostWebXmlCache.get(host);
 
-        InputSource globalWebXml = getGlobalWebXmlSource();             // 得到全局的 web.xml 在 ${catalina.base}/conf/web.xml
-        InputSource hostWebXml = getHostWebXmlSource();                 // 得到 Host 层面的 web.xml 在 ${catalina.base}/config/engineName/hostName/web.xml.default
+        InputSource globalWebXml = getGlobalWebXmlSource();             // 得到全局的 web.xml 在 ${catalina.base}/conf/web.xml (默认 null)
+        InputSource hostWebXml = getHostWebXmlSource();                 // 得到 Host 层面的 web.xml 在 ${catalina.base}/config/engineName/hostName/web.xml.default(默认 null)
 
         long globalTimeStamp = 0;
         long hostTimeStamp = 0;
@@ -1524,8 +1524,8 @@ public class ContextConfig implements LifecycleListener {
                 return entry.getWebXml();
             }
 
-            WebXml webXmlDefaultFragment = createWebXml();
-            webXmlDefaultFragment.setOverridable(true);
+            WebXml webXmlDefaultFragment = createWebXml();                              // 创建一个 WebXml 对象
+            webXmlDefaultFragment.setOverridable(true);                                // 设置 Overridable = true, 表示其属性可以被覆盖
             // Set to distributable else every app will be prevented from being
             // distributable when the default fragment is merged with the main
             // web.xml
@@ -1549,7 +1549,7 @@ public class ContextConfig implements LifecycleListener {
             // Additive apart from welcome pages
             webXmlDefaultFragment.setReplaceWelcomeFiles(true);
 
-            if (!webXmlParser.parseWebXml(
+            if (!webXmlParser.parseWebXml(      // 调用 digester 进行解析
                     hostWebXml, webXmlDefaultFragment, false)) {
                 ok = false;
             }
@@ -1624,7 +1624,7 @@ public class ContextConfig implements LifecycleListener {
         try {
             WebappServiceLoader<ServletContainerInitializer> loader =
                     new WebappServiceLoader<>(servletContext, context.getContainerSciFilter());
-            detectedScis = loader.load(ServletContainerInitializer.class);
+            detectedScis = loader.load(ServletContainerInitializer.class);                          // 通过 SPI 机制加载 接口对应的实现类 (在这前面已经把所有包里面的 service 里面有 SPI 的配置都加载出来)
         } catch (IOException e) {
             log.error(sm.getString(
                     "contextConfig.servletContainerInitializerFail",
@@ -1639,7 +1639,7 @@ public class ContextConfig implements LifecycleListener {
 
             HandlesTypes ht;
             try {
-                ht = sci.getClass().getAnnotation(HandlesTypes.class);
+                ht = sci.getClass().getAnnotation(HandlesTypes.class);                  // 查看 ServletContainerInitializer的实现类 上面是否有注解
             } catch (Exception e) {
                 if (log.isDebugEnabled()) {
                     log.info(sm.getString("contextConfig.sci.debug",
@@ -1892,7 +1892,7 @@ public class ContextConfig implements LifecycleListener {
         if (!callback.isOk()) {
             ok = false;
         }
-        return callback.getFragments();
+        return callback.getFragments();                             // 这里的 Fragments 对应的是 classPath 对应下的 jar
     }
 
     protected void processAnnotations(Set<WebXml> fragments,

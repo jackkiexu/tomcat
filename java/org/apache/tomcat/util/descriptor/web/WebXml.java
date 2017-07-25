@@ -2126,7 +2126,7 @@ public class WebXml {
         // ordered list
         for (WebXml fragment : fragments.values()) {
             if (!fragment.getWebappJar()) {
-                containerFragments.add(fragment);
+                containerFragments.add(fragment);                                       // 将所有的 jar 都增加到容器里面
                 orderedFragments.remove(fragment);
             }
         }
