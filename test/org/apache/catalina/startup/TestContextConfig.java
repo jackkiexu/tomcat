@@ -159,7 +159,7 @@ public class TestContextConfig extends TomcatBaseTest {
         assertPageContains("/test/TesterServlet2", "OK");
     }
 
-    private static class CustomDefaultServletSCI
+    private static class CustomDefaultServletSCI                // ServletContainerInitializer 触发 在 StandardContext 中增加一个 Servlet
             implements ServletContainerInitializer {
 
         private String servletName;
