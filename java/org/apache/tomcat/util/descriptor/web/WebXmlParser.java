@@ -86,7 +86,7 @@ public class WebXmlParser {
         return parseWebXml(source, dest, fragment);
     }
 
-
+    // 使用 digester 解析web.xml 对象, 并将信息放到 WebXml 里面
     public boolean parseWebXml(InputSource source, WebXml dest,
             boolean fragment) {
 

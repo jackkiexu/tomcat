@@ -660,7 +660,7 @@ public class ContextConfig implements LifecycleListener {
             docBase = docBase.replace(File.separatorChar, '/');
         }
 
-        context.setDocBase(docBase);
+        context.setDocBase(docBase);                                        // 设置 StandardContext 的 baseDoc
 
     }
 
@@ -1076,6 +1076,10 @@ public class ContextConfig implements LifecycleListener {
      * where there is duplicate configuration, the most specific level wins. ie
      * an application's web.xml takes precedence over the host level or global
      * web.xml file.
+     *
+     * 参考资料
+     * http://dba10g.blog.51cto.com/764602/1775723
+     * 扫描 web.xml 文件, 在遇到全局 web.xml 或 host 层面的 web.xml, 则应用层面的 web.xml 的属性能覆盖上面两个
      */
     protected void webConfig() {
         /*
@@ -1084,7 +1088,7 @@ public class ContextConfig implements LifecycleListener {
          * - Handle as a web fragment that gets added after everything else so
          *   everything else takes priority
          * - Mark Servlets as overridable so SCI configuration can replace
-         *   configuration from the defaults
+         *   configuration from the defaults (SCI 指 ServletContainerInitializer)
          */
 
         /*
@@ -1109,7 +1113,7 @@ public class ContextConfig implements LifecycleListener {
          * 2. 解析 Web 应用的 web.xml 文件
          */
         Set<WebXml> defaults = new HashSet<>();
-        defaults.add(getDefaultWebXmlFragment());
+        defaults.add(getDefaultWebXmlFragment());                                       // 获取程序默认的 host 层面的 web.xml 与 全局的 web.xml
 
         WebXml webXml = createWebXml();
 
@@ -1128,13 +1132,13 @@ public class ContextConfig implements LifecycleListener {
         // web-fragment.xml it will be parsed at this point. web-fragment.xml
         // files are ignored for container provided JARs.
 
-        // 扫描 Web 应用所有的 JAR 包, 如果包含 META-INF/web-fragment.xml, 则解析文件并创建 WebXML 对象
-        Map<String,WebXml> fragments = processJarsForWebFragments(webXml);
+                                                                                    // 扫描 Web 应用所有的 JAR 包, 如果包含 META-INF/web-fragment.xml, 则解析文件并创建 WebXML 对象
+        Map<String,WebXml> fragments = processJarsForWebFragments(webXml);          // 其实做的就是扫描 jar 包下面是否有 META-INF/web-fragment.xml
 
         // Step 2. Order the fragments.
         Set<WebXml> orderedFragments = null;
         orderedFragments =
-                WebXml.orderWebFragments(webXml, fragments, sContext);
+                WebXml.orderWebFragments(webXml, fragments, sContext);              // 对所有扫描的 jar  包进行排序
 
         // Step 3. Look for ServletContainerInitializer implementations
         /**
@@ -1142,12 +1146,13 @@ public class ContextConfig implements LifecycleListener {
          *  1. Web应用下的 包, 如果是 javax.servlet.context.orderedLibs 不为空, 金搜索 该属性包含的包, 否则搜索 WEB-INF/lib下的所有的包
          *  2. 容器包: 搜索所有包
          */
+        // 基于SPI 机制查找 ServletContainerInitializer 的实现, web 中间件 中很多会运用到这个  SPI 机制 及 ServletContainerInitializer 机制
         if (ok) {
             processServletContainerInitializers(sContext);
         }
 
         if  (!webXml.isMetadataComplete() || typeInitializerMap.size() > 0) {
-            // Step 4. Process /WEB-INF/classes for annotations and
+            // Step 4. Process /WEB-INF/classes for annotations and                    // 处理 /WEB-INF/classes 下面的类的注解 (主要是 Servlet 及 Filter)
             // @HandlesTypes matches
             if (ok) {
                 WebResource[] webResources =
@@ -1163,7 +1168,7 @@ public class ContextConfig implements LifecycleListener {
             // @HandlesTypes matches - only need to process those fragments we
             // are going to use (remember orderedFragments includes any
             // container fragments)
-            if (ok) {
+            if (ok) {                                                               // 处理 jar 包文件的注解
                 processAnnotations(
                         orderedFragments, webXml.isMetadataComplete());
             }
@@ -1175,21 +1180,21 @@ public class ContextConfig implements LifecycleListener {
         if (!webXml.isMetadataComplete()) {
             // Step 6. Merge web-fragment.xml files into the main web.xml
             // file.
-            if (ok) {
+            if (ok) {                                                             // 将 web 配置文件合并到一起
                 ok = webXml.merge(orderedFragments);
             }
 
-            // Step 7. Apply global defaults
+            // Step 7. Apply global defaults                                      // 合并全局的 web.xml ${catalina.base}/conf/web.xml
             // Have to merge defaults before JSP conversion since defaults
             // provide JSP servlet definition.
             webXml.merge(defaults);
 
-            // Step 8. Convert explicitly mentioned jsps to servlets
+            // Step 8. Convert explicitly mentioned jsps to servlets             // 将 jsps 转化成 servlets
             if (ok) {
                 convertJsps(webXml);
             }
 
-            // Step 9. Apply merged web.xml to Context
+            // Step 9. Apply merged web.xml to Context                          // 将  web.xml 里面配置的信息运用到 Context 里面
             if (ok) {
                 configureContext(webXml);
             }
@@ -1212,7 +1217,7 @@ public class ContextConfig implements LifecycleListener {
         }
 
         // Always need to look for static resources
-        // Step 10. Look for static resources packaged in JARs
+        // Step 10. Look for static resources packaged in JARs                  // 搜索 jar 包里面的静态资源
         if (ok) {
             // Spec does not define an order.
             // Use ordered JARs followed by remaining JARs
@@ -1232,7 +1237,7 @@ public class ContextConfig implements LifecycleListener {
             // WEB-INF/classes/META-INF/resources configuration
         }
 
-        // Step 11. Apply the ServletContainerInitializer config to the
+        // Step 11. Apply the ServletContainerInitializer config to the      // 将 ServletContainerInitializer 配置运用到上下文中
         // context
         if (ok) {
             for (Map.Entry<ServletContainerInitializer,
@@ -1476,8 +1481,8 @@ public class ContextConfig implements LifecycleListener {
 
         DefaultWebXmlCacheEntry entry = hostWebXmlCache.get(host);
 
-        InputSource globalWebXml = getGlobalWebXmlSource();
-        InputSource hostWebXml = getHostWebXmlSource();
+        InputSource globalWebXml = getGlobalWebXmlSource();             // 得到全局的 web.xml 在 ${catalina.base}/conf/web.xml
+        InputSource hostWebXml = getHostWebXmlSource();                 // 得到 Host 层面的 web.xml 在 ${catalina.base}/config/engineName/hostName/web.xml.default
 
         long globalTimeStamp = 0;
         long hostTimeStamp = 0;

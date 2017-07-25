@@ -42,6 +42,8 @@ import java.util.regex.Pattern;
  * of Context (representing an individual servlet context).
  *
  * @author Craig R. McClanahan
+ * 参考资料
+ * http://blog.csdn.net/fjslovejhl/article/details/21107331
  */
 public interface Host extends Container {
 
@@ -72,6 +74,7 @@ public interface Host extends Container {
      * If null, defaults to
      * ${catalina.base}/conf/&lt;engine name&gt;/&lt;host name&gt; directory
      */
+    // 当前 host 配置的文件路径
     public String getXmlBase();
 
     /**
@@ -101,6 +104,7 @@ public interface Host extends Container {
      * will be canonical if possible. There is no guarantee that that the
      * appBase exists.
      */
+    // 获取 appBase 的绝对路径
     public File getAppBaseFile();
 
 
@@ -110,6 +114,7 @@ public interface Host extends Container {
      *
      * @param appBase The new application root
      */
+    // 设置 App 存放的路径
     public void setAppBase(String appBase);
 
 
@@ -118,6 +123,7 @@ public interface Host extends Container {
      * this host's child webapps should be discovered and automatically
      * deployed dynamically.
      */
+    // 是否自动部署 Host 的子容器
     public boolean getAutoDeploy();
 
 
@@ -142,6 +148,7 @@ public interface Host extends Container {
      *
      * @param configClass The new context configuration class
      */
+    // Context 对应的类名
     public void setConfigClass(String configClass);
 
 
@@ -150,6 +157,7 @@ public interface Host extends Container {
      * that this host's child webapps should be discovered and automatically
      * deployed.
      */
+    // 是否在启动的时候自动的部署
     public boolean getDeployOnStartup();
 
 
@@ -190,6 +198,7 @@ public interface Host extends Container {
      * is primarily for use by components deploying contexts that want to do
      * this in a multi-threaded manner.
      */
+    // 用于异步处理子容器 启动停止的 Execuotr
     public ExecutorService getStartStopExecutor();
 
 
@@ -205,6 +214,7 @@ public interface Host extends Container {
      * Set to true if the Host should attempt to create directories for xmlBase and appBase upon startup
      * @param createDirs
      */
+    // 尝试为 xmlBase appBase 创建临时目录
     public void setCreateDirs(boolean createDirs);
 
 
@@ -213,6 +223,7 @@ public interface Host extends Container {
      * versions of applications deployed using parallel deployment. This only
      * takes effect is {@link #getAutoDeploy()} also returns true.
      */
+    // 是否自动卸载程序的老版本
     public boolean getUndeployOldVersions();
 
 
@@ -231,6 +242,7 @@ public interface Host extends Container {
      *
      * @param alias The alias to be added
      */
+    // 为 Host 添加别名
     public void addAlias(String alias);
 
 
@@ -238,6 +250,7 @@ public interface Host extends Container {
      * Return the set of alias names for this Host.  If none are defined,
      * a zero length array is returned.
      */
+    // 获取 Host 当前的所有别名
     public String[] findAliases();
 
 
@@ -246,5 +259,6 @@ public interface Host extends Container {
      *
      * @param alias Alias name to be removed
      */
+    // 移除 Host 的别名
     public void removeAlias(String alias);
 }

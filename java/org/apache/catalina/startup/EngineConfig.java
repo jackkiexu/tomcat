@@ -33,6 +33,7 @@ import org.apache.tomcat.util.res.StringManager;
  * of that Engine, and the associated defined contexts.
  *
  * @author Craig R. McClanahan
+ * 这里 EngineConfig 是 StandardEngine 容器生命周期的监听器
  */
 public class EngineConfig
     implements LifecycleListener {

@@ -70,6 +70,7 @@ import org.apache.tomcat.util.res.StringManager;
  * of that Host, and the associated defined contexts.
  *
  * 参考资料
+ * http://blog.csdn.net/fjslovejhl/article/details/21107331
  * https://ci.apache.org/projects/tomcat/tomcat8/docs/config/host.html
  * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076425&idx=1&sn=1d29474d3c539990ae6d860ecb04a1de&chksm=878f9127b0f81831b6c679d253ff830818a1ea9824fb80ad8e9a57afd7e5c32e2264c1042671&mpshare=1&scene=23&srcid=0614EJPlk7NGkHROHzOKoy0Q#rd
  *
@@ -89,12 +90,14 @@ public class HostConfig
     /**
      * The Java class name of the Context implementation we should use.
      */
+    // Host 所使用的 默认 Context
     protected String contextClass = "org.apache.catalina.core.StandardContext";
 
 
     /**
      * The Host we are associated with.
      */
+    // 监听的 Host 对象
     protected Host host = null;
 
 
@@ -115,6 +118,7 @@ public class HostConfig
      * Should we deploy XML Context config files packaged with WAR files and
      * directories?
      */
+    // 是否部署 在 WAR 包中的 context.xml 文件
     protected boolean deployXML = false;
 
 
@@ -123,6 +127,7 @@ public class HostConfig
      * $CATALINA_BASE/conf/&lt;engine&gt;/&lt;host&gt; by default when
      * a web application is deployed?
      */
+    // 是否将 host.xml 拷贝到 $CATALINA_BASE/conf/&lt;engine&gt;/&lt;host 下面
     protected boolean copyXML = false;
 
 
@@ -130,12 +135,14 @@ public class HostConfig
      * Should we unpack WAR files when auto-deploying applications in the
      * <code>appBase</code> directory?
      */
+    // 是否需要解压 war
     protected boolean unpackWARs = false;
 
 
     /**
      * Map of deployed applications.
      */
+    // 当前Host下 所有已经部署的应用
     protected final Map<String, DeployedApplication> deployed =
             new ConcurrentHashMap<>();
 
@@ -150,6 +157,7 @@ public class HostConfig
     /**
      * The <code>Digester</code> instance used to parse context descriptors.
      */
+    // 用于解析 Context 的 Digester
     protected Digester digester = createDigester(contextClass);
     private final Object digesterLock = new Object();
 
@@ -157,6 +165,7 @@ public class HostConfig
      * The list of Wars in the appBase to be ignored because they are invalid
      * (e.g. contain /../ sequences).
      */
+    // 忽略的 war 包
     protected final Set<String> invalidWars = new HashSet<>();
 
     // ------------------------------------------------------------- Properties
@@ -165,6 +174,7 @@ public class HostConfig
     /**
      * Return the Context implementation class name.
      */
+    // 获取用到的 Context
     public String getContextClass() {
 
         return (this.contextClass);
@@ -264,13 +274,14 @@ public class HostConfig
      *
      * @param event The lifecycle event that has occurred
      */
+    // 监听 Host 生命周期的事件
     @Override
     public void lifecycleEvent(LifecycleEvent event) {
 
         // Identify the host we are associated with
         try {
             host = (Host) event.getLifecycle();
-            if (host instanceof StandardHost) {
+            if (host instanceof StandardHost) {                         // 根据监听的 Host 设置 对应的部署的属性
                 setCopyXML(((StandardHost) host).isCopyXML());
                 setDeployXML(((StandardHost) host).isDeployXML());
                 setUnpackWARs(((StandardHost) host).isUnpackWARs());
@@ -284,9 +295,9 @@ public class HostConfig
         // Process the event that has occurred
         if (event.getType().equals(Lifecycle.PERIODIC_EVENT)) {         // 周期性检测是否需要重新部署
             check();
-        } else if (event.getType().equals(Lifecycle.START_EVENT)) {
+        } else if (event.getType().equals(Lifecycle.START_EVENT)) {    // 开始进行部署
             start();
-        } else if (event.getType().equals(Lifecycle.STOP_EVENT)) {
+        } else if (event.getType().equals(Lifecycle.STOP_EVENT)) {     // 停止
             stop();
         }
     }
@@ -393,20 +404,30 @@ public class HostConfig
      * in our "application root" directory.
      *
      * 参考资料
+     * http://blog.csdn.net/fjslovejhl/article/details/21107331
+     * http://dba10g.blog.51cto.com/764602/1775723
      * https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076396&idx=1&sn=8c7ce376de234b62a2233e2a7d96a1ec&chksm=878f90c2b0f819d42e8ba97b0c482966ae335b5c1b36f86699c83566051347cd7e0ae4ed3722&mpshare=1&scene=23&srcid=06159MdJ2nsbIzs8579w234k#rd
      *
      */
+    // app 的部署 (这里的 app 指的是 StandardContext)
     protected void deployApps() {
 
-        File appBase = host.getAppBaseFile();
-        File configBase = host.getConfigBaseFile();
-        String[] filteredAppPaths = filterAppPaths(appBase.list());         // 找出一个待部署额列表
+        /**
+         * Web.xml 部署的三种方式
+         * 1. XML 文件描述符
+         * 2. WAR 包
+         * 3. 文件目录
+         */
+        File appBase = host.getAppBaseFile();                              // 获取 app 的路径目录的文件夹的引用 ${catalina.base}/webapps
+        File configBase = host.getConfigBaseFile();                        // 获取 host 的配置文件的路径         ${catalina.base}/conf/engineName/hostName
+        String[] filteredAppPaths = filterAppPaths(appBase.list());         // 这里过滤一下 app 的路径, 用 host 里的正则表达式来判断文件夹的名字是否符合
         // Deploy XML descriptors from configBase
-        deployDescriptors(configBase, configBase.list());
+        deployDescriptors(configBase, configBase.list());                   // 这里先处理 host 的配置
+                                                                            // 下面是 StandardContext 部署的两种类型 (war包, 直接文件夹)
         // Deploy WARs
-        deployWARs(appBase, filteredAppPaths);
+        deployWARs(appBase, filteredAppPaths);                             // 部署 StandardContext 所对应的压缩文件夹
         // Deploy expanded folders
-        deployDirectories(appBase, filteredAppPaths);
+        deployDirectories(appBase, filteredAppPaths);                      // 部署 StandardContext 文件夹里面的文件
 
     }
 
@@ -552,7 +573,7 @@ public class HostConfig
                     digester.reset();
                 }
             }
-            // 实例化 StandardContext
+            // 实例化 ContextConfig
             Class<?> clazz = Class.forName(host.getConfigClass());
             LifecycleListener listener =
                 (LifecycleListener) clazz.newInstance();
@@ -1022,28 +1043,29 @@ public class HostConfig
     /**
      * Deploy directories.
      */
+    // 部署应用, 文件夹类型的, 前面是所有 app 所在目录的引用, 后面是要部署的文件夹的名字
     protected void deployDirectories(File appBase, String[] files) {
 
         if (files == null)
             return;
 
-        ExecutorService es = host.getStartStopExecutor();
+        ExecutorService es = host.getStartStopExecutor();                           // 获取 StandardHost 的线程池
         List<Future<?>> results = new ArrayList<>();
 
-        for (int i = 0; i < files.length; i++) {
+        for (int i = 0; i < files.length; i++) {                                  // 遍历每个文件夹 (每个文件夹代表一个 StandardContext)
 
             if (files[i].equalsIgnoreCase("META-INF"))
                 continue;
             if (files[i].equalsIgnoreCase("WEB-INF"))
                 continue;
-            File dir = new File(appBase, files[i]);
+            File dir = new File(appBase, files[i]);                                // 创建文件的 file 引用
             if (dir.isDirectory()) {
-                ContextName cn = new ContextName(files[i], false);
+                ContextName cn = new ContextName(files[i], false);                // 根据文件夹的名字来设置 context 的名字
 
-                if (isServiced(cn.getName()) || deploymentExists(cn.getName()))
+                if (isServiced(cn.getName()) || deploymentExists(cn.getName()))     // 是否有同名的
                     continue;
 
-                results.add(es.submit(new DeployDirectory(this, cn, dir)));
+                results.add(es.submit(new DeployDirectory(this, cn, dir)));     // 添加一个 deploy 文件夹任务, 直接丢到线程池里面
             }
         }
 
@@ -1061,22 +1083,27 @@ public class HostConfig
     /**
      * @param cn
      * @param dir
+     *
+     * 参考资料
+     * http://blog.csdn.net/fjslovejhl/article/details/21107331
      */
+    // 第一个参数是 StandardContext 的名字, 第二个参数是文件夹的引用
     protected void deployDirectory(ContextName cn, File dir) {
 
 
         // Deploy the application in this directory
-        if( log.isInfoEnabled() )
+        if( log.isInfoEnabled() )                                       // 先打印一下日志信息
             log.info(sm.getString("hostConfig.deployDir",
                     dir.getAbsolutePath()));
 
         Context context = null;
+        // 有些 web 应用可能有定义 context.xml (META-INF/context.xml)
         File xml = new File(dir, Constants.ApplicationContextXml);
-        File xmlCopy =
+        File xmlCopy =                                                 // 获取 host 配置文件夹里面的当前 standardContext 的配置, 这个不一定有
                 new File(host.getConfigBaseFile(), cn.getBaseName() + ".xml");
 
 
-        DeployedApplication deployedApp;
+        DeployedApplication deployedApp;                              // 引用已经部署的 StandardContext
         boolean copyThisXml = copyXML;
 
         try {
@@ -1132,31 +1159,31 @@ public class HostConfig
                 log.error(sm.getString("hostConfig.deployDescriptor.blocked",
                         cn.getPath(), xml, xmlCopy));
                 context = new FailedContext();
-            } else {
+            } else {                                                            // 创建 Context(默认 StandardContext)
                 context = (Context) Class.forName(contextClass).newInstance();
             }
 
-            Class<?> clazz = Class.forName(host.getConfigClass());
+            Class<?> clazz = Class.forName(host.getConfigClass());             // 为 StandardContext 创建对应的 ContextConfig (监听器)
             LifecycleListener listener =
                 (LifecycleListener) clazz.newInstance();
-            context.addLifecycleListener(listener);
+            context.addLifecycleListener(listener);                            // 添加监听器
 
-            context.setName(cn.getName());
-            context.setPath(cn.getPath());
-            context.setWebappVersion(cn.getVersion());
+            context.setName(cn.getName());                                     // 设置 StandardContext 的名字
+            context.setPath(cn.getPath());                                    // 设置应用所在的路径
+            context.setWebappVersion(cn.getVersion());                        // 设置当前的版本号
             context.setDocBase(cn.getBaseName());
-            host.addChild(context);
+            host.addChild(context);                                         // 在 host 添加 context, 在 host里面, 会将 context 的name与 context 对应起来, 而且还在 ContainerBase 里面启动对应的 StandardContext
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
             log.error(sm.getString("hostConfig.deployDir.error",
                     dir.getAbsolutePath()), t);
         } finally {
-            deployedApp = new DeployedApplication(cn.getName(),
+            deployedApp = new DeployedApplication(cn.getName(),             // 创建 DeployedApplication, 它代表一个部署了的应用
                     xml.exists() && deployXML && copyThisXml);
 
             // Fake re-deploy resource to detect if a WAR is added at a later
             // point
-            // 解压 xxx.war 压缩文件
+            // 解压 xxx.war 压缩文件 重新部署
             deployedApp.redeployResources.put(dir.getAbsolutePath() + ".war",
                     Long.valueOf(0));
             // 解压后的文件目录
@@ -1190,15 +1217,15 @@ public class HostConfig
                             Long.valueOf(0));
                 }
             }
-            addWatchedResources(deployedApp, dir.getAbsolutePath(), context);
+            addWatchedResources(deployedApp, dir.getAbsolutePath(), context);               // 添加 web 应用程序的资源的监控
             // Add the global redeploy resources (which are never deleted) at
             // the end so they don't interfere with the deletion process
             // 全局的 context.xml.default
             // 全局的 catalinaBase/conf/context.xml
-            addGlobalRedeployResources(deployedApp);
+            addGlobalRedeployResources(deployedApp);                                       // 将资源添加到全局资源里面
         }
 
-        deployed.put(cn.getName(), deployedApp);
+        deployed.put(cn.getName(), deployedApp);                                          // 这个表示 StandardContext 已经部署好了, key 是当前 context 的名字
     }
 
 
@@ -1481,6 +1508,7 @@ public class HostConfig
 
     /**
      * Process a "start" event for this Host.
+     * 当监听的 host 启动的时候会执行这个方法, 其实主要是 Context 的部署
      */
     public void start() {
 
@@ -1488,19 +1516,19 @@ public class HostConfig
             log.debug(sm.getString("hostConfig.start"));
 
         try {
-            ObjectName hostON = host.getObjectName();
+            ObjectName hostON = host.getObjectName();                               // 获取 host 在 JMX 上面注册的名字
             oname = new ObjectName
-                (hostON.getDomain() + ":type=Deployer,host=" + host.getName());
+                (hostON.getDomain() + ":type=Deployer,host=" + host.getName()); // 根据 host 的名字生成 当前对象在 jmx 上注册的名字
             Registry.getRegistry(null, null).registerComponent
-                (this, oname, this.getClass().getName());
+                (this, oname, this.getClass().getName());                         // 在 jmx 上注册
         } catch (Exception e) {
             log.error(sm.getString("hostConfig.jmx.register", oname), e);
         }
 
-        if (host.getCreateDirs()) {                                                     // 是否初始化创建 dir
+        if (host.getCreateDirs()) {                                                     // 是否初始化创建 dir, 这个是用于存放 host 的配置文件 config/enginename/hostName
             File[] dirs = new File[] {host.getAppBaseFile(),host.getConfigBaseFile()};
             for (int i=0; i<dirs.length; i++) {
-                if (!dirs[i].mkdirs() && !dirs[i].isDirectory()) {
+                if (!dirs[i].mkdirs() && !dirs[i].isDirectory()) {                  // 若文件不存在, 则进行创建
                     log.error(sm.getString("hostConfig.createDirs",dirs[i]));
                 }
             }
@@ -1514,7 +1542,7 @@ public class HostConfig
         }
         // 若下面的属性是 true, 则调用 deployApps, 也就是部署 webapps 下面的应用
         if (host.getDeployOnStartup())                                                  // 容器启动时, 初始化进行部署
-            deployApps();
+            deployApps();                                                           // 部署应用
 
     }
 

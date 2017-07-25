@@ -5211,7 +5211,7 @@ public class StandardContext extends ContainerBase
                     ((Lifecycle) realm).start();
                                                         //
                 // Notify our interested LifecycleListeners
-                fireLifecycleEvent(Lifecycle.CONFIGURE_START_EVENT, null);
+                fireLifecycleEvent(Lifecycle.CONFIGURE_START_EVENT, null);                  // 触发 ContextConfig.configureStart()
 
                 // Start our child containers, if not already started
                 for (Container child : findChildren()) {                    // 下面是 启动 StandardWrapper

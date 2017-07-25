@@ -597,7 +597,7 @@ public class TestHostConfigAutomaticDeployment extends TomcatBaseTest {
         host.setUnpackWARs(unpackWARs);
 
         // Trigger automatic deployment
-        host.backgroundProcess();
+        host.backgroundProcess();                   // 这里就触发 host 底层的自动部署机制
 
         // Test the results
         Context ctxt = (Context) tomcat.getHost().findChild(APP_NAME.getPath());

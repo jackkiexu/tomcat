@@ -112,7 +112,7 @@ public class TestWebappServiceLoader {
     }
 
     @Test
-    public void testParseConfigFile() throws IOException {
+    public void testParseConfigFile() throws IOException {                      // 测试 SPI 的发现机制, 发现这个接口有几个提供者
         LinkedHashSet<String> found = new LinkedHashSet<>();
         loader = new WebappServiceLoader<>(context, null);
         loader.parseConfigFile(found, getClass().getResource("service-config.txt"));
@@ -120,7 +120,7 @@ public class TestWebappServiceLoader {
     }
 
     @Test
-    public void testLoadServices() throws Exception {
+    public void testLoadServices() throws Exception {                       // 这里测试的就是 通过 WebappServiceLoader 来加载 ServletContainerInitializer 的实现类
         Class<?> sci = TesterServletContainerInitializer1.class;
         loader = new WebappServiceLoader<>(context, null);
         cl.loadClass(sci.getName());

@@ -18,6 +18,7 @@
 package org.apache.catalina.mbeans;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.management.InstanceNotFoundException;
@@ -38,10 +39,12 @@ import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.core.StandardHost;
 import org.apache.catalina.startup.ContextConfig;
 import org.apache.catalina.startup.HostConfig;
+import org.apache.log4j.Logger;
 import org.apache.tomcat.util.modeler.BaseModelMBean;
 
 public class ContainerMBean extends BaseModelMBean {
 
+    private static Logger logger = Logger.getLogger(ContainerMBean.class);
     /**
      * Construct a <code>ModelMBean</code> with default
      * <code>ModelMBeanInfo</code> information.
@@ -71,6 +74,7 @@ public class ContainerMBean extends BaseModelMBean {
         Container contained = null;
         try {
             contained = (Container)Class.forName(type).newInstance();
+            logger.info("Thread.currentThread().getStackTrace :" + Arrays.toString(Thread.currentThread().getStackTrace()));
             contained.setName(name);
 
             if(contained instanceof StandardHost){
