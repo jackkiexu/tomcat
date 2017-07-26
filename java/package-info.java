@@ -56,6 +56,10 @@
  * Tomcat 各个容器的生命周期监控
  *  ContextConfig, NamingContextListener, MapperListener, ThreadLocalLeakPreventionListener, MemoryLeakTrackingListener, EngineConfig, HostConfig, JreMemoryLeakPreventionListener
  *
+ * 问题
+ *  1. Engine 继承 Container, ContainerBase 实现 Container, 现在 StandardEngine 继承ContainerBase 实现Engine,, 既然ContainerBase 已经实现了 Container 接口, 为什么还需要 Engine 继承 Container 接口
+ *      一切为了扩展, 想象一个, 这时到了 Tomcat119 版本, 需要增加一个 StandardEngine119(这是别名), 而且这时 StandardEngine119 不需要 ContainerBase 里面的功能, 所以  StandardEngine119 不继承 ContainerBase, 但是 StandardEngine119 又需要实现 容器的规范, 这时 Engine 继承 Container 的作用就体现出来了
+ *      回头看看 StandardServer StandardService 中 Server, Service 继承 Lifecycle,  都是一样的道理
  *
  * tomcat 扩张点
  * 1. 增加对应的协议
