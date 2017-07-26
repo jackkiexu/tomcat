@@ -51,6 +51,9 @@ import org.apache.juli.logging.LogFactory;
  * the incoming request (such as the values of the <code>Accept-Language</code>
  * and <code>User-Agent</code> headers, or a value stashed in the current
  * user's session.</p>
+ *
+ * 负责处理请求的编码格式
+ * 在请求处理之前(即 Request 对 请求参数处理之前) 设置一个 Request 的编码格式
  */
 public class SetCharacterEncodingFilter extends FilterBase {
 

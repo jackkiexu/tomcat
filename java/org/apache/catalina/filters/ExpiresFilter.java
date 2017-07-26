@@ -402,6 +402,7 @@ import org.apache.juli.logging.LogFactory;
  * FINE: Request "/docs/config/manager.html" with response status "200" content-type "text/html", no expiration configured
  * </pre></code>
  *
+ * 通过这个 Filter 在请求的最后 在 http header 中控制缓存时间的信息
  */
 public class ExpiresFilter extends FilterBase {
 

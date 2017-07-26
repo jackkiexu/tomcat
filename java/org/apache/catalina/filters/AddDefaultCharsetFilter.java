@@ -44,6 +44,8 @@ import org.apache.juli.logging.LogFactory;
  * the provided character set is explicitly overridden by the user - in which
  * case they deserve everything they get - the browser will adhere to an
  * explicitly set character set, thus preventing the XSS attack.
+ *
+ * 负责统一设置 Response 处理的编码格式 (这个暂且还没有过)
  */
 public class AddDefaultCharsetFilter extends FilterBase {
 
