@@ -39,7 +39,7 @@ import org.apache.tomcat.util.buf.MessageBytes;
  *
  * @author Craig R. McClanahan
  *
- * 更具 Request 里面的信息, 将请求路由到对应的 wrapper 中
+ * 根据 Request 里面的信息, 将请求路由到对应的 wrapper 中
  */
 final class StandardContextValve extends ValveBase {
 

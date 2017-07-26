@@ -27,13 +27,15 @@
  *
  * 学习计划
  *
+ * 0. Tomcat 中的各个组件
+ *
  * 1. Tomcat 启动过程
  *
  * 2. 一次 Tomcat Http 请求
  *
  * 3. Tomcat classLoader 设计及热部署
  *
- * 4. Tomcat线程模型 (bio, nio)
+ * 4. Tomcat connector (bio, nio 线程模型)
  *
  * 5. Tomcat 中使用的设计模式
  *      (1) AccessLogAdapter 组装 AccessLog (适配器)

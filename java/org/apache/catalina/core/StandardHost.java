@@ -728,7 +728,7 @@ public class StandardHost extends ContainerBase implements Host {
      * https://stackoverflow.com/questions/2344964/when-and-how-is-a-java-classloader-marked-for-garbage-collection
      *
      * MemoryLeakTrackingListener 归属于 StandardContext
-     * 用 WeakHashMap 装载 WebAppClassLoader, 等关闭 StandardContext 之后, 在看看 与之对应的 WebappClassLoader 是否存活, 若还存在, 则说明 WebappClassLoader 没有没 GC, 存在 Perm 区域内存泄露
+     * 其用 WeakHashMap 装载 WebAppClassLoader, 等关闭 StandardContext 之后, 在看看 与之对应的 WebappClassLoader 是否存活, 若还存在, 则说明 WebappClassLoader 没有没 GC, 存在 Perm 区域内存泄露
      * 见 StandardHost.findReloadedContextMemoryLeaks()
      */
     private class MemoryLeakTrackingListener implements LifecycleListener {

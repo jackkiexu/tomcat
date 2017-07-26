@@ -43,7 +43,7 @@ import org.apache.catalina.connector.Response;
  * @author Peter Donald
  *
  * Valve 作用:
- * 1. 在 Pipeline 中起到过滤参数的作用
+ * 1. 在 Pipeline 中起到修饰参数, 路由到下一级容器 的作用
  * 2. 起到AOP的作用, 在调用前, 调用后 起到环绕监视的作用
  * 3. 还可以给 Request, Response 传输的对象起到分层次加工的作用
  */

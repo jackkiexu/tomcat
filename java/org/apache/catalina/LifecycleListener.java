@@ -26,6 +26,11 @@ package org.apache.catalina;
  * change has taken place.
  *
  * @author Craig R. McClanahan
+ *
+ * Tomcat 容器的生命周期监听器
+ * 1. 监听实时修改路由的规则
+ * 2. 监控部署目录, 完成自动部署
+ * 3. 监控容器, 在停止时查看是否存在内存泄露等问题
  */
 public interface LifecycleListener {
 

@@ -112,8 +112,8 @@ import org.xml.sax.SAXParseException;
  * Startup event listener for a <b>Context</b> that configures the properties
  * of that Context, and the associated defined servlets.
  *
- * 主要工作: 解析 web.xml中的 servlet, 请求映射, Fil等相关配置ter
- * 最重要的 :
+ * 主要工作: 解析 web.xml中的 servlet, 请求映射, Fil等相关配置
+ * 主要功能的 :
  *  1: 组装 web.xml 的解析器 WebXmlParser
  *  2: 根据 Host的 appBase 以及 Context的 docBase 计算 docBase 的绝对路径
  *  3. 扫描 web.xml 文件, 在遇到全局 web.xml 或 host 层面的 web.xml, 则应用层面的 web.xml 的属性能覆盖上面两个, 这里面的知识点非常多, 通过 SPI 机制加载 ServletContainerInitializer, 并且将它们 set 到对应的 StandardContext

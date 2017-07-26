@@ -53,7 +53,7 @@ import org.apache.tomcat.util.threads.ThreadPoolExecutor;
  *
  * 防止因 ThreadLocal 的存在, 而造成内存泄露
  * 在进行 Tomcat 热部署时, 工作线程是不会停止的, 而需要关闭 StandardContext 对应的 WebappClassLoader, 而 ThreadLocal.threadLocalMap 里面有存储了 由WebappClassLoader 加载出来的类, 所以有可能导致 WebappClassLoader 因被引用而不能被 GC, 最终导致内存泄露
- * (PS:  ThreadLocalMap 的生命长度与 Thread 一样)
+ * (PS:  ThreadLocalMap 的生命长度与 Thread 一样, Tomcat中的工作线程池不因 StandardContext 的stop, 而销毁)
  * 见官网 : https://wiki.apache.org/tomcat/MemoryLeakProtection
  */
 public class ThreadLocalLeakPreventionListener implements LifecycleListener,

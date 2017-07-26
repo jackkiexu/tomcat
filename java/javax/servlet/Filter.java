@@ -42,6 +42,10 @@ import java.io.IOException;
  * 9) Mime-type chain Filter <br>
  *
  * @since Servlet 2.3
+ *
+ * Filter 存在于 ApplicationFilterChain 中主要是对请求的参数 进行一些过滤/修饰措施, 现对于  Valve, 其可以控制请求是否流向下层组件
+ * 并且在实际代码中 Filter 请求下个节点是通过递归的方法进行, 一开始程序中是没有 Filter 对象的, 在第一次请求过后, 通过 StandardContext 的
+ * 实例生成器 InstanceManager 来生成(InstanceManager 会处理 Filter 上注解修饰的一些东西), 后面直接缓存在 StandardContext 里面
  */
 public interface Filter {
 

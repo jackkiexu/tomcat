@@ -440,6 +440,7 @@ import org.apache.juli.logging.LogFactory;
  * verified by <code>proxy1</code>.
  * </p>
  * <hr/>
+ * 对请求的 IP 进行限制的 Filter
  */
 public class RemoteIpFilter implements Filter {
     public static class XForwardedRequest extends HttpServletRequestWrapper {
