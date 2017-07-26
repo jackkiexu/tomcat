@@ -48,6 +48,11 @@ import org.apache.tomcat.util.res.StringManager;
  * <code>StandardWrapper</code> container implementation.
  *
  * @author Craig R. McClanahan
+ *
+ * Wrapper 路由类:
+ * 1. 根据 URI 获取 对应 Servlet, 若还没有生成, 则进行相应的创建 (通过 StandardContext 的 实例创建类 InstanceManager 进行创建, 其会对 Servlet 上的注解进行相应的处理, 最后会调用 servlet.init() 方法)
+ * 2. 根据请求的URI 获取相应的 Filter, servlet 组装成 ApplicationFilterChain 进行相应处理 (每一个 ApplicationFilterConfig 代表一个 Filter 封装类, 在第一次请求后会通过反射生成对应的 Filter 实例, 以后就用这个 Filter)
+ * 3. 释放 ApplicationFilterChain 里面的 Filter, Servlet 资源
  */
 final class StandardWrapperValve
     extends ValveBase {

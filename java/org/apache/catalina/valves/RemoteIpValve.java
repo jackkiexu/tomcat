@@ -348,6 +348,8 @@ import org.apache.juli.logging.LogFactory;
  * <code>untrusted-proxy</code> is the actual remote ip. <code>request.remoteAddr</code> is <code>untrusted-proxy</code> that is an IP
  * verified by <code>proxy1</code>.
  * </p>
+ *
+ * 通常请求到达 Tomcat 会经过多层的反向代理, 这个 Valve 的作用就是 根据 Header 里面的信息, 将真实的 IP 地址信息设置到 request 里面 (其中也涉及到将 IP 等信息加入到只有 Accesslog 才会使用的属性中)
  */
 public class RemoteIpValve extends ValveBase {
 

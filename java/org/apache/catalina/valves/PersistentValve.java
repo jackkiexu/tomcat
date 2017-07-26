@@ -41,6 +41,7 @@ import org.apache.catalina.connector.Response;
  *                              per session at any one time.
  *
  * @author Jean-Frederic Clere
+ * 在配置了 PersistentManager 的情况下, 会对每次请求后 持久化 Session (这个有点扯蛋, 若请求量一大, 则程序直接挂了)
  */
 public class PersistentValve extends ValveBase {
 

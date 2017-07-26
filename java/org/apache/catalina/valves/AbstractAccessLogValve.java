@@ -131,7 +131,7 @@ import org.apache.tomcat.util.collections.SynchronizedStack;
  * @author Takayuki Kaneko
  * @author Peter Rossbach
  *
- * 这个类主要做的就是 Pattern 解析的功能
+ * 这个类主要做的就是 Pattern 解析的功能, 为日志记录做准备
  */
 public abstract class AbstractAccessLogValve extends ValveBase implements AccessLog {
 

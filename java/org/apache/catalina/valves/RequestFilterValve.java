@@ -56,6 +56,8 @@ import org.apache.catalina.connector.Response;
  * of the filtering you wish to perform.
  *
  * @author Craig R. McClanahan
+ *
+ * 请求过滤 Filter, 主要是其子类 RemoteHostValve, RemoteAddrValve 通过 host 与 IP 来对请求进行相应的过滤
  */
 public abstract class RequestFilterValve extends ValveBase {
 

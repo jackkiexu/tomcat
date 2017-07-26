@@ -47,6 +47,8 @@ import org.apache.tomcat.util.res.StringManager;
  *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
+ *
+ * 根据请求的信息将其路由到对应的 StandardContext (PS: 其中比较重要的是, 在每次进行操作前后, 需要更改对应线程的 ContextClassloader 为 StandardContext 中的 WebappClassloader)
  */
 final class StandardHostValve extends ValveBase {
 

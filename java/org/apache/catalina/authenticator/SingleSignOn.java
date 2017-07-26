@@ -52,7 +52,7 @@ import org.apache.catalina.valves.ValveBase;
  *     Authenticators found in the
  *     <code>org.apache.catalina.authenticator</code> package.</li>
  * </ul>
- *
+ * 单点登录 Valve, Tomcat 集群中能使用到, 通过 cookie 机制
  * @author Craig R. McClanahan
  */
 public class SingleSignOn extends ValveBase implements SessionListener {

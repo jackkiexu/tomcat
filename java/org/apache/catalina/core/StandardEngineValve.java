@@ -36,6 +36,8 @@ import org.apache.tomcat.util.res.StringManager;
  * when processing HTTP requests.
  *
  * @author Craig R. McClanahan
+ *
+ * 请求路由 Valve, 通过 Request 里面的信息, 将请求路由到对应的 StandardHost
  */
 final class StandardEngineValve extends ValveBase {
 
