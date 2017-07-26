@@ -75,8 +75,7 @@ import org.apache.tomcat.util.res.StringManager;
  * Helper class used to initialize and populate the JNDI context associated
  * with each context and server.
  *
- * 在 Server Context 两个 容器中都加入这个监听器
- * 主要就是监听 JNDI 树
+ * 在 Server Context 两个 容器中都加入这个监听器 (主要就是监听 JNDI 树)
  *
  * @author Remy Maucherat
  */

@@ -52,8 +52,16 @@
  *
  * Created by xjk on 5/31/17.
  *
+ *
+ * Tomcat 各个容器的生命周期监控
+ *  ContextConfig, NamingContextListener, MapperListener, ThreadLocalLeakPreventionListener, MemoryLeakTrackingListener, EngineConfig, HostConfig, JreMemoryLeakPreventionListener
+ *
+ *
  * tomcat 扩张点
  * 1. 增加对应的协议
  *      现在只支持 http, arp 并且每一种都是(bio, nio, aio), 可以增加 redis, memcached, mysql, tuomatuo 协议
  * 2. 获取 Tomcat 中所有代码行数  find . -type f -name *.java | xargs cat | wc -l
+ *
+ *
+ *
  */

@@ -55,10 +55,10 @@ public abstract class LifecycleMBeanBase extends LifecycleBase
         logger.info(this + " initInternal() ");
         // If oname is not null then registration has already happened via
         // preRegister().
-        if (oname == null) {        // 这一步都是注册到 JMX 里面
+        if (oname == null) {        // 这一步是注册到 JMX 里面
             mserver = Registry.getRegistry(null, null).getMBeanServer();
 
-            oname = register(this, getObjectNameKeyProperties());
+            oname = register(this, getObjectNameKeyProperties());           // 这里的 getObjectNameKeyProperties 返回 "type=Server", 则显示在 JMX 上的名字就是 Server
         }
     }
 

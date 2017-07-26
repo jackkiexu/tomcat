@@ -43,6 +43,8 @@ import org.apache.tomcat.util.res.StringManager;
  * http://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=2650076405&idx=1&sn=01fb0eb30c85744a874aa4894d9a45cf&chksm=878f90dbb0f819cdc8bbb5371f27bb7b835afa8e042bd0df880a05c5649f83ca2031ff34fe4a&mpshare=1&scene=23&srcid=06141Mk3xUVzfDCzh14X2hQx#rd
  * @author Remy Maucherat
  * @author Costin Manolache
+ *
+ * MapperListener 归属于 StandardService, 在各个组件/容器进行init/start 时都会发出消息通知(这里的消息通知在 LifecycleBase 里面进行操作), MapperListener 会根据Tomcat里面各个组件的组成映射到 Mapper 里面(Mappper 主要是完成请求路由作用, 而路由的信息最终会存储在 org.apache.catalina.connector.Request 里面(PS: Tomcat里面有两个 Request))
  */
 public class MapperListener extends LifecycleMBeanBase
         implements ContainerListener, LifecycleListener {

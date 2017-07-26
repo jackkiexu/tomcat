@@ -77,7 +77,9 @@ import org.apache.tomcat.util.res.StringManager;
  * @author Craig R. McClanahan
  * @author Remy Maucherat
  *
- * HostConfig是虚拟主机的管理器, 它能监控当前虚拟机下的所有运用的状态, 和引用中的资源情况
+ * HostConfig 是 StandardHost 的监听器
+ * 1. StandardHost 后台周期性检测是否需要重新部署 (三种方式 xml, war包, 文件夹), 我们平时在 ${catalina.base}/webapps/ 下面部署 war/文件夹, 而对应的解析加载工作就是这里做的 (见 HostConfig.deployDirectory())
+ * 2. 通过 MBeanFactory 或 HostManagerServlet 触发部署操作
  */
 public class HostConfig
     implements LifecycleListener {

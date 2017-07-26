@@ -53,7 +53,10 @@ import org.apache.tomcat.util.res.StringManager;
  * first disabling Jar URL connection caching. The workaround is to disable this
  * caching by default.
  *
- * 何时出发这个 Listener
+ * 何时出发这个 Listener ? BEFORE_INIT_EVENT 就是在 监听的容器组件 init 调用init之前, 将一些公共的数据先加载到 CommonClassLoader 里面 (看代码中 直接将 Thread.ContextClassLoader 设置为 ClassLoader.getSystemClassLoader())
+ *
+ * 这里所做的 保护内存泄露 无非就是 将 本来在 每个 WebappClassLoader 中都进行加载的 class, 事先在 commonClassLoader 里面进行加载一遍, 比如说 数据库连接驱动 等(PS: 代码中其他的一些也不常用)
+ * 本来在每个 WebappClassLoader 都加载一遍的数据, 现在只在 CommonClassLoader 里面事先加载一遍
  */
 public class JreMemoryLeakPreventionListener implements LifecycleListener {
 
@@ -229,7 +232,7 @@ public class JreMemoryLeakPreventionListener implements LifecycleListener {
     @Override
     public void lifecycleEvent(LifecycleEvent event) {      // 这里所做的 保护内存泄露 无非就是 将 本来在 每个 WebappClassLoader 中都进行加载的 class, 事先在 commonClassLoader 里面进行加载一遍
         // Initialise these classes when Tomcat starts
-        if (Lifecycle.BEFORE_INIT_EVENT.equals(event.getType())) {
+        if (Lifecycle.BEFORE_INIT_EVENT.equals(event.getType())) {                   // BEFORE_INIT_EVENT 是在调用 LifecycleBase.init 方法时, 但是 容器的状态不是 NEW
 
             ClassLoader loader = Thread.currentThread().getContextClassLoader();        // 这里获取当先 线程的 contextClassLoader
 

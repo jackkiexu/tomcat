@@ -97,7 +97,7 @@ public abstract class LifecycleBase implements Lifecycle {
     public final synchronized void init() throws LifecycleException {
         logger.info(this  + " init() ");
         if (!state.equals(LifecycleState.NEW)) {                                 // 调用之前判断一下是否是 NEW 状态
-            invalidTransition(Lifecycle.BEFORE_INIT_EVENT);
+            invalidTransition(Lifecycle.BEFORE_INIT_EVENT);                     // 若不是的话, 那就直接抛出异常
         }
         setStateInternal(LifecycleState.INITIALIZING, null, false);             // 容器状态机从 NEW -> INITIALIZING
 
