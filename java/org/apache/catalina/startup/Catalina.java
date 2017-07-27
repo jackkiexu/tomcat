@@ -511,10 +511,9 @@ public class Catalina {
      * 1.初始化 临时目录 (一开始以为这里是生成 JSP 对应 Servlet 的地方, 后来, 发现不对, 放  Servlet d的地方是 在 StandardContext.postWorkDirectory 中创建的)
      * 2. 这里设置是否 Tomcat 开启命名服务, 以及服务用哪一个 ContextFactory
      * 3. 创建 digester 对象, 用于解析 xml
-     * 4. 创建 digester 对象, 用于解析 xml
-     * 5. 获取 server.xml
-     * 6. 构造 日志 handler, SystemLogHandler, 并调用 System.out/err, 这样系统的日志输出 就会 经过 SystemLogHandler 来处理
-     * 7. 调用 getServer().init() 来初始化 StandardServer 及 service
+     * 4. 获取 server.xml
+     * 5. 构造 日志 handler, SystemLogHandler, 并调用 System.out/err, 这样系统的日志输出 就会 经过 SystemLogHandler 来处理
+     * 6. 调用 getServer().init() 来初始化 StandardServer 及 service
      */
     public void load() {
 
@@ -524,7 +523,7 @@ public class Catalina {
 
         // Before digester - it may be needed
 
-        initNaming();                                           // 这里设置是否 Tomcat 开启命名服务, 以及服务用哪一个 ContextFactory
+        initNaming();                                           // 设置 Tomcat JNDI 的配置信息
 
         // Create and execute our Digester
         Digester digester = createStartDigester();              // 创建 digester 对象, 用于解析 xml

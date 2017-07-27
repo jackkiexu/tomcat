@@ -63,6 +63,7 @@ import org.apache.catalina.util.ContextName;
 import org.apache.catalina.util.LifecycleMBeanBase;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
+import org.apache.log4j.Logger;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.res.StringManager;
 
@@ -135,6 +136,7 @@ import org.apache.tomcat.util.res.StringManager;
 public abstract class ContainerBase extends LifecycleMBeanBase
         implements Container {
 
+    public Logger logger4j = Logger.getLogger(getClass());
     private static final org.apache.juli.logging.Log log=
         org.apache.juli.logging.LogFactory.getLog( ContainerBase.class );
 
@@ -710,8 +712,9 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
     private void addChildInternal(Container child) {        // 添加子容器, 其实这里也可以像 server添加 service 一样通过 synchronized 与 System.copy() 进行添加
 
-        if( log.isDebugEnabled() )
-            log.debug("Add child " + child + " " + this);
+        if( log.isInfoEnabled() )
+            log.info("Add child " + child + " " + this);
+        logger4j.info("Add child " + child + " " + this);
         synchronized(children) {
             if (children.get(child.getName()) != null)
                 throw new IllegalArgumentException("addChild:  Child name '" +
@@ -728,7 +731,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                 LifecycleState.STARTING_PREP.equals(getState())) &&
                 startChildren) {
             try {
-                child.start();
+                child.start();                                              // 在添加子容器的时候, 就触发子容器启动(PS: 比如 StandardHost 添加 StandardContext, 这就又触发 ContextConfig)
             } catch (LifecycleException e) {
                 log.error("ContainerBase.addChild: start: ", e);
                 throw new IllegalStateException
@@ -915,7 +918,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         if ((cluster != null) && (cluster instanceof Lifecycle))
             ((Lifecycle) cluster).start();
         Realm realm = getRealmInternal();                                   // Tomcat 类里面默认创建的 Realm, 方法 createDefaultRealm
-        if ((realm != null) && (realm instanceof Lifecycle))             // 默认创建的 Realm start 方法, 初始化 MD5 加密工具 MessageDigest
+        if ((realm != null) && (realm instanceof Lifecycle))             // 调用  Realm 的 start 方法, 初始化 MD5 加密工具 MessageDigest
             ((Lifecycle) realm).start();
 
         // Start our child containers, if any
@@ -942,8 +945,8 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                     sm.getString("containerBase.threadedStartFailed"));
         }*/
 
-        try {                                                                         // 这里的子容器也从 StandardHost -> StandardContext -> StandardWrapper
-            for (int i = 0; i < children.length; i++) {                             // 初始化对应的子容器 从 Engine -> Host -> Context -> Wrapper
+        try {                                                                         // 这里的子容器也从 StandardHost -> StandardContext -> StandardWrapper 开始start
+            for (int i = 0; i < children.length; i++) {
                 logger.info(" children :" + children + " start ()");
                 children[i].start();
             }
@@ -959,7 +962,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
         setState(LifecycleState.STARTING);
 
-        // Start our thread StandardEngine 的后台任务执行线程
+                                                                                    // 开启容器的后台任务执行线程
         threadStart();
 
     }

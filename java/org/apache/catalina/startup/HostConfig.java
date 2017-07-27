@@ -424,7 +424,7 @@ public class HostConfig
         File configBase = host.getConfigBaseFile();                        // 获取 host 的配置文件的路径         ${catalina.base}/conf/engineName/hostName
         String[] filteredAppPaths = filterAppPaths(appBase.list());         // 这里过滤一下 app 的路径, 用 host 里的正则表达式来判断文件夹的名字是否符合
         // Deploy XML descriptors from configBase
-        deployDescriptors(configBase, configBase.list());                   // 这里先处理 host 的配置
+        deployDescriptors(configBase, configBase.list());                   // 这里先处理 host 的配置信息 (默认是空的)        ${catalina.base}/conf/Catalina/localhost
                                                                             // 下面是 StandardContext 部署的两种类型 (war包, 直接文件夹)
         // Deploy WARs
         deployWARs(appBase, filteredAppPaths);                             // 部署 StandardContext 所对应的压缩文件夹
@@ -443,7 +443,7 @@ public class HostConfig
      * @return  The filtered list of application paths
      */
     protected String[] filterAppPaths(String[] unfilteredAppPaths) {
-        Pattern filter = host.getDeployIgnorePattern();
+        Pattern filter = host.getDeployIgnorePattern();                 // 这个 host 忽略的项目目录
         if (filter == null) {
             return unfilteredAppPaths;
         }
@@ -698,12 +698,12 @@ public class HostConfig
 
         for (int i = 0; i < files.length; i++) {
 
-            if (files[i].equalsIgnoreCase("META-INF"))
+            if (files[i].equalsIgnoreCase("META-INF"))          // 若文件名是 META-INF, 则 continue
                 continue;
-            if (files[i].equalsIgnoreCase("WEB-INF"))
+            if (files[i].equalsIgnoreCase("WEB-INF"))           // 若文件名是 WEB-INF, 则 continue
                 continue;
             File war = new File(appBase, files[i]);
-            if (files[i].toLowerCase(Locale.ENGLISH).endsWith(".war") &&
+            if (files[i].toLowerCase(Locale.ENGLISH).endsWith(".war") &&        // 若是 war 包
                     war.isFile() && !invalidWars.contains(files[i]) ) {
 
                 ContextName cn = new ContextName(files[i], true);
@@ -740,7 +740,7 @@ public class HostConfig
                     continue;
                 }
 
-                results.add(es.submit(new DeployWar(this, cn, war)));
+                results.add(es.submit(new DeployWar(this, cn, war)));           // 向线程池提交一个部署 war 的任务
             }
         }
 
@@ -1056,9 +1056,9 @@ public class HostConfig
 
         for (int i = 0; i < files.length; i++) {                                  // 遍历每个文件夹 (每个文件夹代表一个 StandardContext)
 
-            if (files[i].equalsIgnoreCase("META-INF"))
+            if (files[i].equalsIgnoreCase("META-INF"))                          // 若文件名是 META-INF, 则 continue
                 continue;
-            if (files[i].equalsIgnoreCase("WEB-INF"))
+            if (files[i].equalsIgnoreCase("WEB-INF"))                           // 若文件名是 WEB-INF, 则 continue
                 continue;
             File dir = new File(appBase, files[i]);                                // 创建文件的 file 引用
             if (dir.isDirectory()) {
@@ -1089,8 +1089,8 @@ public class HostConfig
      * 参考资料
      * http://blog.csdn.net/fjslovejhl/article/details/21107331
      */
-    // 第一个参数是 StandardContext 的名字, 第二个参数是文件夹的引用
-    protected void deployDirectory(ContextName cn, File dir) {
+    // 第一个参数是 StandardContext 的名字, 第二个参数是文件夹的引用 (PS: 这里才是 Tomcat 的项目目录)
+    protected void deployDirectory(ContextName cn, File dir) {        // 第一个参数 StandardContext 的名字, 第二个参数 StandardContext 的部署路径名(绝对路径)
 
 
         // Deploy the application in this directory
@@ -1100,19 +1100,19 @@ public class HostConfig
 
         Context context = null;
         // 有些 web 应用可能有定义 context.xml (META-INF/context.xml)
-        File xml = new File(dir, Constants.ApplicationContextXml);
+        File xml = new File(dir, Constants.ApplicationContextXml);  // 查看是否存在 对应 StandardContext 的部署描述文件 Context.xml
         File xmlCopy =                                                 // 获取 host 配置文件夹里面的当前 standardContext 的配置, 这个不一定有
-                new File(host.getConfigBaseFile(), cn.getBaseName() + ".xml");
+                new File(host.getConfigBaseFile(), cn.getBaseName() + ".xml");  // StandardContext 配置文件 E:\zbworkspace\tomcat\conf\Catalina\localhost\${Context}.xml
 
 
         DeployedApplication deployedApp;                              // 引用已经部署的 StandardContext
         boolean copyThisXml = copyXML;
 
         try {
-            if (deployXML && xml.exists()) {
+            if (deployXML && xml.exists()) {                         // 查看是否存在 对应 StandardContext 的部署描述文件 Context.xml
                 synchronized (digesterLock) {
                     try {
-                        context = (Context) digester.parse(xml);
+                        context = (Context) digester.parse(xml);     // 通过 Digester 根据 StandardContext 的部署描述文件 Context.xml 来 创建 StandardContext 对象
                     } catch (Exception e) {
                         log.error(sm.getString(
                                 "hostConfig.deployDescriptor.error",
@@ -1128,7 +1128,7 @@ public class HostConfig
 
                 if (copyThisXml == false && context instanceof StandardContext) {
                     // Host is using default value. Context may override it.
-                    copyThisXml = ((StandardContext) context).getCopyXML();
+                    copyThisXml = ((StandardContext) context).getCopyXML();         // 默认获取的 copyThisXml = false
                 }
 
                 if (copyThisXml) {
@@ -1153,7 +1153,7 @@ public class HostConfig
                     }
                     context.setConfigFile(xmlCopy.toURI().toURL());
                 } else {
-                    context.setConfigFile(xml.toURI().toURL());
+                    context.setConfigFile(xml.toURI().toURL());         // 设置 StandardContext 的 configFile 的位置 ${catalina.base}\webapps\${Context}\META-INF\context.xml
                 }
             } else if (!deployXML && xml.exists()) {
                 // Block deployment as META-INF/context.xml may contain security
@@ -1168,31 +1168,31 @@ public class HostConfig
             Class<?> clazz = Class.forName(host.getConfigClass());             // 为 StandardContext 创建对应的 ContextConfig (监听器)
             LifecycleListener listener =
                 (LifecycleListener) clazz.newInstance();
-            context.addLifecycleListener(listener);                            // 添加监听器
+            context.addLifecycleListener(listener);                            // 添加监听器 ContextConfig
 
             context.setName(cn.getName());                                     // 设置 StandardContext 的名字
-            context.setPath(cn.getPath());                                    // 设置应用所在的路径
-            context.setWebappVersion(cn.getVersion());                        // 设置当前的版本号
+            context.setPath(cn.getPath());                                     // 设置应用所在的路径
+            context.setWebappVersion(cn.getVersion());                         // 设置当前的版本号
             context.setDocBase(cn.getBaseName());
-            host.addChild(context);                                         // 在 host 添加 context, 在 host里面, 会将 context 的name与 context 对应起来, 而且还在 ContainerBase 里面启动对应的 StandardContext
+            host.addChild(context);                                           // 在 host 添加 context, 在 host里面, 会将 context 的name与 context 对应起来, 而且还在 ContainerBase 里面启动对应的 StandardContext
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
             log.error(sm.getString("hostConfig.deployDir.error",
                     dir.getAbsolutePath()), t);
         } finally {
-            deployedApp = new DeployedApplication(cn.getName(),             // 创建 DeployedApplication, 它代表一个部署了的应用
+            deployedApp = new DeployedApplication(cn.getName(),               // 创建 DeployedApplication, 它代表一个部署了的应用
                     xml.exists() && deployXML && copyThisXml);
 
             // Fake re-deploy resource to detect if a WAR is added at a later
             // point
-            // 解压 xxx.war 压缩文件 重新部署
+            // 解压 xxx.war 压缩文件 为 重新部署 做准备
             deployedApp.redeployResources.put(dir.getAbsolutePath() + ".war",
                     Long.valueOf(0));
             // 解压后的文件目录
             deployedApp.redeployResources.put(dir.getAbsolutePath(),
                     Long.valueOf(dir.lastModified()));
             // MATA-INF/context.xml (部署之后就拷贝到了 conf/localhost/xxx/context.xml)
-            if (deployXML && xml.exists()) {
+            if (deployXML && xml.exists()) {                                    // 1. 是否部署 xml, Context.xml 是否存在
                 if (copyThisXml) {
                     deployedApp.redeployResources.put(
                             xmlCopy.getAbsolutePath(),
@@ -1528,9 +1528,9 @@ public class HostConfig
         }
 
         if (host.getCreateDirs()) {                                                     // 是否初始化创建 dir, 这个是用于存放 host 的配置文件 config/enginename/hostName
-            File[] dirs = new File[] {host.getAppBaseFile(),host.getConfigBaseFile()};
+            File[] dirs = new File[] {host.getAppBaseFile(),host.getConfigBaseFile()}; // 创建项目部署目录 ${catalina.base}/webapps, 项目部署目录文件夹 ${catalina.base}/conf/Catalina/host
             for (int i=0; i<dirs.length; i++) {
-                if (!dirs[i].mkdirs() && !dirs[i].isDirectory()) {                  // 若文件不存在, 则进行创建
+                if (!dirs[i].mkdirs() && !dirs[i].isDirectory()) {                      // 若文件不存在, 则进行创建
                     log.error(sm.getString("hostConfig.createDirs",dirs[i]));
                 }
             }
@@ -1543,7 +1543,7 @@ public class HostConfig
             host.setAutoDeploy(false);
         }
         // 若下面的属性是 true, 则调用 deployApps, 也就是部署 webapps 下面的应用
-        if (host.getDeployOnStartup())                                                  // 容器启动时, 初始化进行部署
+        if (host.getDeployOnStartup())                                             // 容器启动时, 是否进行部署项目
             deployApps();                                                           // 部署应用
 
     }
@@ -1765,7 +1765,7 @@ public class HostConfig
          * additional descriptors.
          * The value is the last modification time.
          */
-        // 待 reload 的资源
+        // 触发重新加载 Context 的资源
         public final HashMap<String, Long> reloadResources = new HashMap<>();
 
         /**

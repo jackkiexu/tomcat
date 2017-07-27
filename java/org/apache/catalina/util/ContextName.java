@@ -49,7 +49,7 @@ public final class ContextName {
         // Convert Context names and display names to base names
 
         // Strip off any leading "/"
-        if (tmp1.startsWith("/")) {
+        if (tmp1.startsWith("/")) {                                 // 去掉最前面的斜杠
             tmp1 = tmp1.substring(1);
         }
 
@@ -81,7 +81,7 @@ public final class ContextName {
             tmp2 = baseName;
         }
 
-        if (ROOT_NAME.equals(tmp2)) {
+        if (ROOT_NAME.equals(tmp2)) {                               // 若 Context 的名称是 ROOT, 则直接进行代替为 ""
             path = "";
         } else {
             path = "/" + tmp2.replaceAll(FWD_SLASH_REPLACEMENT, "/");

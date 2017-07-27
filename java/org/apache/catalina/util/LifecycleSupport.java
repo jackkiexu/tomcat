@@ -22,6 +22,8 @@ package org.apache.catalina.util;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleEvent;
 import org.apache.catalina.LifecycleListener;
+import org.apache.catalina.startup.HostConfig;
+import org.apache.log4j.Logger;
 
 
 /**
@@ -32,6 +34,7 @@ import org.apache.catalina.LifecycleListener;
  */
 public final class LifecycleSupport {
 
+    private static final Logger logger = Logger.getLogger(LifecycleSupport.class);
 
     // ----------------------------------------------------------- Constructors
 
@@ -86,6 +89,10 @@ public final class LifecycleSupport {
           results[listeners.length] = listener;
           listeners = results;
       }
+        if(listener instanceof HostConfig){
+            logger.info("listener:" + listener);
+            StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        }
 
     }
 

@@ -99,5 +99,11 @@ public final class LifecycleEvent extends EventObject {
 
     }
 
-
+    @Override
+    public String toString() {
+        return "LifecycleEvent{" +
+                "data=" + data +
+                ", type='" + type + '\'' +
+                '}';
+    }
 }

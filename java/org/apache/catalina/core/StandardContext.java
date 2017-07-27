@@ -6443,12 +6443,7 @@ public class StandardContext extends ContainerBase
     /**
      * 操作步骤:
      * 1. 调用 super.initInternal() 初始化 startStopExecutor 线程池(主要来异步的处理一些 子容器的 start, stop 事件), 以及注册 JMX 服务信息
-     * 2. StandardContext 启动, 加载web项目对应的资源
-     *      StandardRoot 主要做了以下几步
-     *      2.1. 基于 War 部署或是目录部署, 初始化 DirResourceSet 或 FileResourceSet
-     *      2.2. 基于 web 应用的 根目录的路径, 会准备 JarResourceSet, 这个集合中都是 jar 包
-     *      2.3. classResource 可以通过自定义加入进来, 作为一个 web 应用 中需要引入的 class 集合
-     *      2.4. CacheResource 准备好, 为通过 StandardRoot 查找资源做准备
+     * 2. 发送 JMX 消息通知
      */
     @Override
     protected void initInternal() throws LifecycleException {
@@ -6459,12 +6454,12 @@ public class StandardContext extends ContainerBase
             namingResources.init();
         }
 
-        if (resources != null) {                                // 这里的 resources 其实就是 StandardRoot
+        if (resources != null) {                                // 这里的 resources 其实就是 StandardRoot(现在 resources == null, 在 start 方法中有对应的赋值 )
             resources.start();
         }
 
         // Send j2ee.object.created notification
-        if (this.getObjectName() != null) {                     // 这里也是与 JMX 相关的操作
+        if (this.getObjectName() != null) {                     // 发送 JMX 消息通知
             Notification notification = new Notification("j2ee.object.created",
                     this.getObjectName(), sequenceNumber.getAndIncrement());
             broadcaster.sendNotification(notification);
