@@ -37,7 +37,7 @@ import org.apache.tomcat.util.res.StringManager;
 /**
  * This valve allows to detect requests that take a long time to process, which
  * might indicate that the thread that is processing it is stuck.
- * 这个 Valve 主要是捕获 程序中处理时间长的 Thread, 并且在满足条件的情况下 进行 Thread.interupted() (进行请求的时候, 加入到监控线程的定时任务里面, 监控处理所花费的时间, 若超时, 则进行相应的 interrupt)
+ * 这个 Valve 主要是捕获 程序中处理时间长的 Thread, 并且在满足条件的情况下 进行 打一下警告日志 (进行请求的时候, 加入到监控线程的定时任务里面, 监控处理所花费的时间, 若超时, 则打印线程的堆栈日志信息)
  */
 public class StuckThreadDetectionValve extends ValveBase {
 

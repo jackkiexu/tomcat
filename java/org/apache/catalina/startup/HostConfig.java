@@ -424,7 +424,7 @@ public class HostConfig
         File configBase = host.getConfigBaseFile();                        // 获取 host 的配置文件的路径         ${catalina.base}/conf/engineName/hostName
         String[] filteredAppPaths = filterAppPaths(appBase.list());         // 这里过滤一下 app 的路径, 用 host 里的正则表达式来判断文件夹的名字是否符合
         // Deploy XML descriptors from configBase
-        deployDescriptors(configBase, configBase.list());                   // 这里先处理 host 的配置信息 (默认是空的)        ${catalina.base}/conf/Catalina/localhost
+        deployDescriptors(configBase, configBase.list());                   // 根据XML文件部署 Host       ${catalina.base}/conf/Catalina/localhost
                                                                             // 下面是 StandardContext 部署的两种类型 (war包, 直接文件夹)
         // Deploy WARs
         deployWARs(appBase, filteredAppPaths);                             // 部署 StandardContext 所对应的压缩文件夹
@@ -1090,6 +1090,14 @@ public class HostConfig
      * http://blog.csdn.net/fjslovejhl/article/details/21107331
      */
     // 第一个参数是 StandardContext 的名字, 第二个参数是文件夹的引用 (PS: 这里才是 Tomcat 的项目目录)
+
+    /**
+     * 部署 $catalina.base/webapps 下面的 Context
+     * 1. 这个要么通过 ${catalina.base}/webapps/${Context}/META-INF/context.xml 与 ${catalina.base}/conf/Catalina/localhost/${Context}.xml 生成 StandardContex, 要么就直接反射获取
+     * 2. 通过反射生成监听器 ContextConfig, 加入到 StandardContext
+     * 3. 将 StandardContext 加入 StandardHost
+     * 4. 做些部署资源的监控操作
+     */
     protected void deployDirectory(ContextName cn, File dir) {        // 第一个参数 StandardContext 的名字, 第二个参数 StandardContext 的部署路径名(绝对路径)
 
 
@@ -1102,7 +1110,7 @@ public class HostConfig
         // 有些 web 应用可能有定义 context.xml (META-INF/context.xml)
         File xml = new File(dir, Constants.ApplicationContextXml);  // 查看是否存在 对应 StandardContext 的部署描述文件 Context.xml
         File xmlCopy =                                                 // 获取 host 配置文件夹里面的当前 standardContext 的配置, 这个不一定有
-                new File(host.getConfigBaseFile(), cn.getBaseName() + ".xml");  // StandardContext 配置文件 E:\zbworkspace\tomcat\conf\Catalina\localhost\${Context}.xml
+                new File(host.getConfigBaseFile(), cn.getBaseName() + ".xml");  // StandardContext 配置文件 ${catalina.base}/conf/Catalina/localhost/${Context}.xml
 
 
         DeployedApplication deployedApp;                              // 引用已经部署的 StandardContext

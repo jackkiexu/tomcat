@@ -461,6 +461,7 @@ public class ContextConfig implements LifecycleListener {
 
     /**
      * Process the default configuration file, if it exists.
+     * 用 digester 将 ${catalina.base}/config/context.xml 与  ${catalina.base}\conf\Catalina\localhost\context.xml.default 的内容解析到 StandardContext 里面
      */
     protected void contextConfig(Digester digester) {
 
