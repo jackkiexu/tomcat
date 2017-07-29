@@ -617,7 +617,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
 
             try {
                 if (processor == null) {
-                    processor = recycledProcessors.pop();
+                    processor = recycledProcessors.pop();                        // 这里的 SynchronizedStack 是 Tomcat 自己实现的一个同步的栈, 主要实现 Http11Processor 的复用
                 }
                 if (processor == null) {
                     processor = createProcessor();                                  // 创建处理器
@@ -793,7 +793,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                         if (getLog().isDebugEnabled()) {
                             getLog().debug("Register " + rpName);
                         }
-                        Registry.getRegistry(null, null).registerComponent(rp,
+                        Registry.getRegistry(null, null).registerComponent(rp,              // 注入 JMX
                                 rpName, null);
                         rp.setRpName(rpName);
                     } catch (Exception e) {

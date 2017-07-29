@@ -311,7 +311,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                     /**
                      * state 标志着当前 socket 的状态, 这也是 为什么 AbstractHttp11Processor 会设置这个 SocketState 的原因了
                      */
-                    SocketState state = SocketState.OPEN;       // 初始化 Socket 的状态位 OPEN
+                    SocketState state = SocketState.OPEN;                                  // 初始化 Socket 的状态位 OPEN (通过这个判断来判断是否 这个Socket的请求处理 OK 了)
                     handler.beforeHandshake(socket);
                     // 若是 SSL 则先握手
                     try {
@@ -345,7 +345,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                         if (log.isTraceEnabled()) {
                             log.trace("Closing socket:"+socket);
                         }
-                        countDownConnection();
+                        countDownConnection();                              // 这里明确进行类 CountDownConnection()
                         try {
                             socket.getSocket().close(); // 在处理好业务后, 进行 socket 的关闭
                         } catch (IOException e) {
@@ -559,8 +559,8 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
         try {
             // 将 Socket 包装成 SocketWrapper
             SocketWrapper<Socket> wrapper = new SocketWrapper<>(socket);
-            wrapper.setKeepAliveLeft(getMaxKeepAliveRequests());
-            wrapper.setSecure(isSSLEnabled());
+            wrapper.setKeepAliveLeft(getMaxKeepAliveRequests());            // KeepAlive 剩余请求数
+            wrapper.setSecure(isSSLEnabled());                              // 连接是否使用 SSL
             // During shutdown, executor may be null - avoid NPE
             if (!running) {
                 return false;
