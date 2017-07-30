@@ -73,21 +73,17 @@ final class StandardContextValve extends ValveBase {
     @Override
     public final void invoke(Request request, Response response)
         throws IOException, ServletException {
-
         // Disallow any direct access to resources under WEB-INF or META-INF
-                                                                                         // 对于 WEB-INF 与 META-INF 目录禁止访问的控制
-        MessageBytes requestPathMB = request.getRequestPathMB();
+        MessageBytes requestPathMB = request.getRequestPathMB();       // 1. 对于 WEB-INF 与 META-INF 目录禁止访问的控制
         if ((requestPathMB.startsWithIgnoreCase("/META-INF/", 0))
                 || (requestPathMB.equalsIgnoreCase("/META-INF"))
                 || (requestPathMB.startsWithIgnoreCase("/WEB-INF/", 0))
                 || (requestPathMB.equalsIgnoreCase("/WEB-INF"))) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);                               // 返回 HTTP 状态码 404
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);      // 2. 返回 HTTP 状态码 404
             return;
         }
-
         // Select the Wrapper to be used for this Request
-                                                                                                 // 得到此请求对应的 StandardWrapper 容器 (这个是在路由模块获取到的)
-        Wrapper wrapper = request.getWrapper();
+        Wrapper wrapper = request.getWrapper();                        // 3. 得到此请求对应的 StandardWrapper 容器 (这个是在路由模块获取到的)
         if (wrapper == null || wrapper.isUnavailable()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -107,8 +103,7 @@ final class StandardContextValve extends ValveBase {
         if (request.isAsyncSupported()) {
             request.setAsyncSupported(wrapper.getPipeline().isAsyncSupported());
         }
-        // 调用 StandardWrapper 容器中管道 Pipeline 中的第一个 Valve 的 invoke() 方法
-        wrapper.getPipeline().getFirst().invoke(request, response);
+        wrapper.getPipeline().getFirst().invoke(request, response);    // 4. 调用 StandardWrapper 容器中管道 Pipeline 中的第一个 Valve 的 invoke() 方法
     }
 
 

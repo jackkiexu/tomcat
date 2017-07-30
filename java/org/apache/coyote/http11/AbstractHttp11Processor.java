@@ -1017,7 +1017,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
                 // Setting up filters, and parse some request headers
                 rp.setStage(org.apache.coyote.Constants.STAGE_PREPARE);
                 try {   // 准备 Request, 根据已解析的信息做一些过滤
-                    prepareRequest();
+                    prepareRequest();                       // 根据请求来设置其对应的 InputFilter
                 } catch (Throwable t) {
                     ExceptionUtils.handleThrowable(t);
                     if (getLog().isDebugEnabled()) {

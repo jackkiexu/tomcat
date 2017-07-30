@@ -471,19 +471,16 @@ public class CoyoteAdapter implements Adapter {
         Response response = (Response) res.getNote(ADAPTER_NOTES);
 
         if (request == null) {
-            // Tomcat 容器中传递的 Request 和 Response 都是这里创建的 Request 及 Response 对象
-            // Create objects
-            // 通过 Connector 创建 org.apache.catalina.connector.Request对象,org.apache.catalina.connectorResponse 对象 这里的 Request, Response 实现了 ServletRequest/ServletResponse, 并且在内部属性中拥有 org.apache.coyote.Request/Response
-            request = connector.createRequest();                                        // 这里的 Request 或实现 ServletRequest接口, 并且会传递到下游容器中           //在创建 Connector 时会构建一个 CoyoteAdapter(Connector)
-            // 设置 org.apache.coyote.Request 对象
+                                                    // 1. 通过 Connector 创建 org.apache.catalina.connector.Request对象,org.apache.catalina.connectorResponse 对象 这里的 Request, Response 实现了 ServletRequest/ServletResponse, 并且在内部属性中拥有 org.apache.coyote.Request/Response
+            request = connector.createRequest();    // 2. 这里的 Request 或实现 ServletRequest接口, 并且会传递到下游容器中 (PS: 在创建 Connector 时会构建一个 CoyoteAdapter(Connector))
+                                                    // 3. 设置 org.apache.coyote.Request 对象
             request.setCoyoteRequest(req);
-            // 通过 Connector 创建 org.apache.catalina.connectorResponse 对象
+                                                    // 4. 通过 Connector 创建 org.apache.catalina.connectorResponse 对象
             response = connector.createResponse();
-            // 设置 org.apache.coyote.Response 对象
+                                                    // 5. 设置 org.apache.coyote.Response 对象
             response.setCoyoteResponse(res);
-
             // Link objects
-            // 把 Resquest 及 Response 对象相互关联起来
+                                                    // 6. 把 Resquest 及 Response 对象相互关联起来
             request.setResponse(response);
             response.setRequest(request);
 
@@ -492,7 +489,7 @@ public class CoyoteAdapter implements Adapter {
             res.setNote(ADAPTER_NOTES, response);
 
             // Set query string encoding
-            req.getParameters().setQueryStringEncoding                              // 获取 URI 的编码格式
+            req.getParameters().setQueryStringEncoding // 7. 获取 URI 的编码格式
                 (connector.getURIEncoding());
 
         }
@@ -505,22 +502,16 @@ public class CoyoteAdapter implements Adapter {
         boolean async = false;
 
         try {
-            // 解析 Http 协议
-            // 解析请求的 Cookie 和 SessionId 等信息
-            // 从 Connector 中映射此请求对应的 StandardHost 及 StandardContext 及 StandardWrapper
-
             // Parse and set Catalina and configuration specific
             // request parameters
-            req.getRequestProcessor().setWorkerThreadName(THREAD_NAME.get());                                  // 在 RequestInfo 里面设置对应的 ThreadName (PS: 可以看到 这里 ThreadLocal 只有对对应 get, 但没有对应的 remove, 为什么呢?  因为这里存储 Tomcat 工作线程池的领地,  工作线程池 never stop, 除非停止 Tomcat, 并且这里缓存的数据的大小也是非常小的, 也不会也 其他的 WebappClassLoader/WebappClassLoader 生产出来的来有任何挂钩)
-
-            // 下面的 postParseRequest 是用来处理请求映射 (获取 host, context, wrapper, URI 后面的参数的解析, sessionId )
+            req.getRequestProcessor().setWorkerThreadName(THREAD_NAME.get());// 8. 在 RequestInfo 里面设置对应的 ThreadName (PS: 可以看到 这里 ThreadLocal 只有对对应 get, 但没有对应的 remove, 为什么呢?  因为这里存储 Tomcat 工作线程池的领地,  工作线程池 never stop, 除非停止 Tomcat, 并且这里缓存的数据的大小也是非常小的, 也不会与其他的 WebappClassLoader/WebappClassLoader 任何挂钩)
+                                                                             // 9. 下面的 postParseRequest 是用来处理请求映射 (获取 host, context, wrapper, URI 后面的参数的解析, sessionId )
             boolean postParseSuccess = postParseRequest(req, request, res, response);
             if (postParseSuccess) {
                 //check valves if we support async
                 request.setAsyncSupported(connector.getService().getContainer().getPipeline().isAsyncSupported());
-
                 // Calling the container
-                // 开始调用 Tomcat 的容器, 首先调用 StandardEngine 容器中的管道PipeLine 中的第一个 Valve, 传入 connector.Request 与 connector.Response
+                                                                            // 10. 开始调用 Tomcat 的容器, 首先调用 StandardEngine 容器中的管道PipeLine 中的第一个 Valve, 传入 connector.Request 与 connector.Response 来处理所有逻辑
                 connector.getService().getContainer().getPipeline().getFirst().invoke(request, response);
 
                 if (request.isComet()) {
@@ -561,11 +552,10 @@ public class CoyoteAdapter implements Adapter {
                     }
                 }
             } else if (!comet) {
-                // 完成此次请求
+                                                                        // 11. 完成此次请求
                 request.finishRequest();
-                // 完成此次请求, 并提交响应信息
-                // 如果 response 已经提交, 则直接返回, 否则提交 response
-                response.finishResponse();              // 跟过源码的兄弟会发现, 这里有点绕, 主要是将 org.apache.catalina.connector.Response对应的 OutputBuffer 中的数据 刷到 org.apache.coyote.Response 对应的 InternalOutputBuffer 中, 并且最终调用 socket对应的 outputStream 将数据刷出去( 这里会组装 Http Response 中的 header 与 body 里面的数据, 并且刷到远端 )
+                                                                        // 12. 完成此次请求, 并提交响应信息
+                response.finishResponse();                              // 13. 跟过源码的兄弟会发现, 这里有点绕, 主要是将 org.apache.catalina.connector.Response对应的 OutputBuffer 中的数据 刷到 org.apache.coyote.Response 对应的 InternalOutputBuffer 中, 并且最终调用 socket对应的 outputStream 将数据刷出去( 这里会组装 Http Response 中的 header 与 body 里面的数据, 并且刷到远端 )
                 if (postParseSuccess &&
                         request.getMappingData().context != null) {
                     // Log only if processing was invoked.
@@ -954,7 +944,7 @@ public class CoyoteAdapter implements Adapter {
      * @param req
      * @param request
      *
-     * 解析 URI 里面的参数
+     * 解析 URI 里面的参数 (将URI里面的请求参数解析到 request.pathParameters 里面)
      */
     protected void parsePathParameters(org.apache.coyote.Request req,
             Request request) {

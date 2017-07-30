@@ -199,25 +199,25 @@ public class Http11Protocol extends AbstractHttp11JsseProtocol<Socket> {
         @Override
         protected Http11Processor createProcessor() {   // 构建 Http11Processor
             Http11Processor processor = new Http11Processor(
-                    proto.getMaxHttpHeaderSize(), (JIoEndpoint)proto.endpoint,        // http header 的最大尺寸
-                    proto.getMaxTrailerSize(),proto.getMaxExtensionSize());            // 最大的 http trailer size
+                    proto.getMaxHttpHeaderSize(), (JIoEndpoint)proto.endpoint,          // 1. http header 的最大尺寸
+                    proto.getMaxTrailerSize(),proto.getMaxExtensionSize());
             processor.setAdapter(proto.getAdapter());
-            processor.setMaxKeepAliveRequests(proto.getMaxKeepAliveRequests());         // 默认的 KeepAlive 情况下, 每个 Socket 处理的最多的 请求次数
-            processor.setKeepAliveTimeout(proto.getKeepAliveTimeout());                 // 开启 KeepAlive 的 Timeout
+            processor.setMaxKeepAliveRequests(proto.getMaxKeepAliveRequests());         // 2. 默认的 KeepAlive 情况下, 每个 Socket 处理的最多的 请求次数
+            processor.setKeepAliveTimeout(proto.getKeepAliveTimeout());                 // 3. 开启 KeepAlive 的 Timeout
             processor.setConnectionUploadTimeout(
-                    proto.getConnectionUploadTimeout());                                // http 当遇到文件上传时的 默认超时时间 (300 * 1000)
+                    proto.getConnectionUploadTimeout());                                // 4. http 当遇到文件上传时的 默认超时时间 (300 * 1000)
             processor.setDisableUploadTimeout(proto.getDisableUploadTimeout());
-            processor.setCompressionMinSize(proto.getCompressionMinSize());             // 当 http 请求的 body size超过这个值时, 通过 gzip 进行压缩
-            processor.setCompression(proto.getCompression());                           // http 请求是否开启 compression 处理
+            processor.setCompressionMinSize(proto.getCompressionMinSize());             // 5. 当 http 请求的 body size超过这个值时, 通过 gzip 进行压缩
+            processor.setCompression(proto.getCompression());                           // 6. http 请求是否开启 compression 处理
             processor.setNoCompressionUserAgents(proto.getNoCompressionUserAgents());
-            processor.setCompressableMimeTypes(proto.getCompressableMimeTypes());       // http body里面的内容是 "text/html,text/xml,text/plain" 才会进行 压缩处理
+            processor.setCompressableMimeTypes(proto.getCompressableMimeTypes());       // 7. http body里面的内容是 "text/html,text/xml,text/plain" 才会进行 压缩处理
             processor.setRestrictedUserAgents(proto.getRestrictedUserAgents());
-            processor.setSocketBuffer(proto.getSocketBuffer());                         // socket 的 buffer, 默认 9000
-            processor.setMaxSavePostSize(proto.getMaxSavePostSize());                   // 最大的 Post 处理尺寸的大小 4 * 1000
+            processor.setSocketBuffer(proto.getSocketBuffer());                         // 8. socket 的 buffer, 默认 9000
+            processor.setMaxSavePostSize(proto.getMaxSavePostSize());                   // 9. 最大的 Post 处理尺寸的大小 4 * 1000
             processor.setServer(proto.getServer());
             processor.setDisableKeepAlivePercentage(
-                    proto.getDisableKeepAlivePercentage());                             // 这是一个阀值, 当工作线程池超过 disableKeepAlivePercentage() 默认时, 就会 disable 的功能, 在 AbstractHttp11Processor中的 process
-            register(processor);                                                         // 将 Http11Processor 注册到 JMX 里面
+                    proto.getDisableKeepAlivePercentage());                             // 10. 这是一个阀值, 当工作线程池超过 disableKeepAlivePercentage() 默认时, 就会 disable 的功能, 在 AbstractHttp11Processor中的 process
+            register(processor);                                                        // 11. 将 Http11Processor 注册到 JMX 里面
             return processor;
         }
 

@@ -210,15 +210,12 @@ final class ApplicationFilterChain implements FilterChain, CometFilterChain {
     private void internalDoFilter(ServletRequest request,
                                   ServletResponse response)
         throws IOException, ServletException {
-
         // Call the next filter if there is one
-        // 如果还有 过滤器Filter, 则执行Filter
-        if (pos < n) {
-            // 得到 过滤器 Filter
-            ApplicationFilterConfig filterConfig = filters[pos++];
+        if (pos < n) {                                              // 1. 如果还有 过滤器Filter, 则执行Filter
+            ApplicationFilterConfig filterConfig = filters[pos++];  // 2. 得到 过滤器 Filter
             Filter filter = null;
             try {
-                filter = filterConfig.getFilter();
+                filter = filterConfig.getFilter();                  // 3. 这里的 getFilter在没有初始化Filter时, 会通过instanceManager来实现加载Filter(并且初始化Filter)
                 support.fireInstanceEvent(InstanceEvent.BEFORE_FILTER_EVENT,
                                           filter, request, response);
 
@@ -305,8 +302,7 @@ final class ApplicationFilterChain implements FilterChain, CometFilterChain {
                     servlet.service(request, response);
                 }
             } else {
-                // 过滤器 Filter 全部执行完, 最终调用 servlet 的 service(request, response) 方法完成Web 应用的业务逻辑
-                servlet.service(request, response);
+                servlet.service(request, response);    // 过滤器 Filter 全部执行完, 最终调用 servlet 的 service(request, response) 方法完成Web 应用的业务逻辑
             }
             support.fireInstanceEvent(InstanceEvent.AFTER_SERVICE_EVENT,
                                       servlet, request, response);

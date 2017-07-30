@@ -2747,11 +2747,11 @@ public class Request
 
         // There cannot be a session if no context has been assigned yet
         if (context == null) {
-            return (null);                                  // 查找 StandardContext
+            return (null);                                  // 1. 检验 StandardContext
         }
 
         // Return the current session if it exists and is valid
-        if ((session != null) && !session.isValid()) {  // 校验 Session 的有效性
+        if ((session != null) && !session.isValid()) {      // 2. 校验 Session 的有效性
             session = null;
         }
         if (session != null) {
@@ -2772,23 +2772,23 @@ public class Request
              * 通过 StandardContext 拿到对应的StandardManager， 查找缓存中是否有对应的客户端传递过来的 sessionId
              * 如果有的话, 那么直接 session.access (计数器 + 1), 然后返回
              */
-            try {                           // 通过 managerBase.sessions 获取 Session
-                session = manager.findSession(requestedSessionId);  // 通过客户端的 sessionId 来获取 服务端的 Session 对象
+            try {                                            // 3. 通过 managerBase.sessions 获取 Session
+                session = manager.findSession(requestedSessionId);  // 4. 通过客户端的 sessionId 从 managerBase.sessions 来获取 Session 对象
             } catch (IOException e) {
                 session = null;
             }
-            if ((session != null) && !session.isValid()) {  // 判断 session 是否有效
+            if ((session != null) && !session.isValid()) {   // 5. 判断 session 是否有效
                 session = null;
             }
             if (session != null) {
-                session.access();           // session access +1
+                session.access();                            // 6. session access +1
                 return (session);
             }
         }
 
         // Create a new session if requested and the response is not committed
         if (!create) {
-            return (null);      // 根据标识是否创建 StandardSession ( false 直接返回)
+            return (null);                                   // 7. 根据标识是否创建 StandardSession ( false 直接返回)
         }
         if ((context != null) && (response != null) &&
             context.getServletContext().getEffectiveSessionTrackingModes().
@@ -2802,10 +2802,9 @@ public class Request
         // Do not reuse the session id if it is from a URL, to prevent possible
         // phishing attacks
         // Use the SSL session ID if one is present.
-        // 到这里其实是没有找到 session, 直接创建 Session 出来
-        if (("/".equals(context.getSessionCookiePath())
+        if (("/".equals(context.getSessionCookiePath())      // 8. 到这里其实是没有找到 session, 直接创建 Session 出来
                 && isRequestedSessionIdFromCookie()) || requestedSessionSSL ) {
-            session = manager.createSession(getRequestedSessionId());       // 从客户端读取 sessionID
+            session = manager.createSession(getRequestedSessionId()); // 9. 从客户端读取 sessionID
         } else {
             session = manager.createSession(null);
         }
@@ -2816,17 +2815,17 @@ public class Request
                        getEffectiveSessionTrackingModes().contains(
                                SessionTrackingMode.COOKIE)) {
             Cookie cookie =
-                ApplicationSessionCookieConfig.createSessionCookie(         // 根据 sessionId 来创建一个 Cookie
+                ApplicationSessionCookieConfig.createSessionCookie( // 10. 根据 sessionId 来创建一个 Cookie
                         context, session.getIdInternal(), isSecure());
 
-            response.addSessionCookieInternal(cookie);                    // 最后在响应体中写入 cookie
+            response.addSessionCookieInternal(cookie);              // 11. 最后在响应体中写入 cookie
         }
 
         if (session == null) {
             return null;
         }
 
-        session.access();                                                 // session access 计数器 + 1s
+        session.access();                                           // 12. session access 计数器 + 1
         return session;
     }
 
@@ -2912,20 +2911,20 @@ public class Request
         boolean success = false;
         try {
             // Set this every time in case limit has been changed via JMX
-            parameters.setLimit(getConnector().getMaxParameterCount());         // http 请求的最大参数个数 (KV 对)
+            parameters.setLimit(getConnector().getMaxParameterCount());         // 1. 设置http 请求的最大参数个数 (KV 对)
 
             // getCharacterEncoding() may have been overridden to search for
             // hidden form field containing request encoding
-            String enc = getCharacterEncoding();                                // 这里是从 org.apache.coyote.Request 里面拿取对应的编码模式
+            String enc = getCharacterEncoding();                                // 2. 这里是从 org.apache.coyote.Request 里面拿取对应的编码模式
 
-            boolean useBodyEncodingForURI = connector.getUseBodyEncodingForURI();
+            boolean useBodyEncodingForURI = connector.getUseBodyEncodingForURI(); // 3. 获取解析 URI 的编码
             if (enc != null) {
                 parameters.setEncoding(enc);
                 if (useBodyEncodingForURI) {
                     parameters.setQueryStringEncoding(enc);
                 }
             } else {
-                parameters.setEncoding                                          // 若未获取编码格式, 则直接使用 "ISO-8859-1" 这种编码格式
+                parameters.setEncoding                                          // 4. 若未获取编码格式, 则直接使用 "ISO-8859-1" 这种编码格式
                     (org.apache.coyote.Constants.DEFAULT_CHARACTER_ENCODING);
                 if (useBodyEncodingForURI) {
                     parameters.setQueryStringEncoding
@@ -2940,7 +2939,7 @@ public class Request
                 return;
             }
 
-            if( !getConnector().isParseBodyMethod(getMethod()) ) {          // 判断这种请求方法类型是否需要解析 http 的 body
+            if( !getConnector().isParseBodyMethod(getMethod()) ) {             // 5. 判断这种请求方法类型是否需要解析 http 的 body
                 success = true;
                 return;
             }
@@ -2956,8 +2955,7 @@ public class Request
                 contentType = contentType.trim();
             }
 
-            // 解析上传的文件, 直接对 http 请求的数据进行 part 解析, 这便是 上传, 下载 的一个入口
-            if ("multipart/form-data".equals(contentType)) {
+            if ("multipart/form-data".equals(contentType)) {                    // 6. 若http是文件上传, 则解析上传的文件, 直接对 http 请求的数据进行 part 解析
                 parseParts(false);
                 success = true;
                 return;
@@ -2968,10 +2966,10 @@ public class Request
                 return;
             }
 
-            int len = getContentLength();
+            int len = getContentLength();                                       // 7. 获取请求数据长度大小
 
             if (len > 0) {
-                int maxPostSize = connector.getMaxPostSize();
+                int maxPostSize = connector.getMaxPostSize();                   // 8. 若 http 发来的数据大于 connector 能接收的极限, 则 不进行处理请求
                 if ((maxPostSize > 0) && (len > maxPostSize)) {
                     if (context.getLogger().isDebugEnabled()) {
                         context.getLogger().debug(
@@ -2981,7 +2979,7 @@ public class Request
                     return;
                 }
                 byte[] formData = null;
-                if (len < CACHED_POST_LEN) {
+                if (len < CACHED_POST_LEN) { // 这里默认是 8M
                     if (postData == null) {
                         postData = new byte[CACHED_POST_LEN];
                     }
@@ -2990,7 +2988,7 @@ public class Request
                     formData = new byte[len];
                 }
                 try {
-                    if (readPostBody(formData, len) != len) {
+                    if (readPostBody(formData, len) != len) {                   // 9. 读取 body 里面的数据
                         return;
                     }
                 } catch (IOException e) {
@@ -3001,12 +2999,12 @@ public class Request
                     }
                     return;
                 }
-                parameters.processParameters(formData, 0, len);
-            } else if ("chunked".equalsIgnoreCase(
+                parameters.processParameters(formData, 0, len);                 // 10. 解析处理 body 里面的数据
+            } else if ("chunked".equalsIgnoreCase(                              // 11. 若 header 里面的 transfer-encoding 是 chunked
                     coyoteRequest.getHeader("transfer-encoding"))) {
                 byte[] formData = null;
                 try {
-                    formData = readChunkedPostBody();                           // 这里就是进行 form 表单提交时, 默认的解析 body 里面数据的入口
+                    formData = readChunkedPostBody();                           // 12. 这里就是进行 form 表单提交时, 默认的解析 body 里面数据的入口
                 } catch (IOException e) {
                     // Client disconnect or chunkedPostTooLarge error
                     if (context.getLogger().isDebugEnabled()) {

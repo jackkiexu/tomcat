@@ -629,7 +629,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
     public Session createSession(String sessionId) {
 
         if ((maxActiveSessions >= 0) &&
-                (getActiveSessions() >= maxActiveSessions)) {       // 判断 单节点的 Session 个数是否超过限制
+                (getActiveSessions() >= maxActiveSessions)) {       // 1. 判断 单节点的 Session 个数是否超过限制
             rejectedSessions++;
             throw new TooManyActiveSessionsException(
                     sm.getString("managerBase.createSession.ise"),
@@ -638,28 +638,27 @@ public abstract class ManagerBase extends LifecycleMBeanBase
 
         // Recycle or create a Session instance
         // 创建一个 空的 session
-        Session session = createEmptySession();
+        Session session = createEmptySession();                     // 2. 创建 Session
 
         // Initialize the properties of the new session and return it
         // 初始化空 session 的属性
         session.setNew(true);
         session.setValid(true);
         session.setCreationTime(System.currentTimeMillis());
-        session.setMaxInactiveInterval(this.maxInactiveInterval);       // StandardSession 最大的默认 Session 激活时间
+        session.setMaxInactiveInterval(this.maxInactiveInterval);   // 3. StandardSession 最大的默认 Session 激活时间
         String id = sessionId;
         if (id == null) {
-            id = generateSessionId();                                       // 生成 sessionId (这里通过随机数来生成)
+            id = generateSessionId();                               // 4. 生成 sessionId (这里通过随机数来生成)
         }
         session.setId(id);
         sessionCounter++;
 
         SessionTiming timing = new SessionTiming(session.getCreationTime(), 0);
         synchronized (sessionCreationTiming) {
-            sessionCreationTiming.add(timing);                          // 每次创建 Session 都会创建一个 SessionTiming, 并且 push 到 链表 sessionCreationTiming 的最后
-            sessionCreationTiming.poll();                               // 并且将 链表 最前面的节点删除
+            sessionCreationTiming.add(timing);                      // 5. 每次创建 Session 都会创建一个 SessionTiming, 并且 push 到 链表 sessionCreationTiming 的最后
+            sessionCreationTiming.poll();                           // 6. 并且将 链表 最前面的节点删除
         }
         return (session);
-
     }
 
 

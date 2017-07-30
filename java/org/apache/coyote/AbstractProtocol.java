@@ -627,7 +627,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
 
                 SocketState state = SocketState.CLOSED;
                 Iterator<DispatchType> dispatches = null;
-                // 为什么下面是一个 loop 呢, 因为 http 特性里面 keepAlive 的存在, 及一个 socket 的存在能处理多次 http 请求(PS: 那多少次呢, 是否有超时时间限制, 这些参数具体看配置了,看 XXXProtocol.createProcessor 方法里面 )
+                // 为什么下面是一个 loop 呢, 因为 http 特性里面 keepAlive 的存在, 即一个 socket 的存在能处理多次 http 请求(PS: 那多少次呢, 是否有超时时间限制, 这些参数具体看配置了,看 XXXProtocol.createProcessor 方法里面 )
                 do {
                     if (dispatches != null) {
                         // Associate the processor with the connection as

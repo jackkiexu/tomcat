@@ -74,10 +74,9 @@ final class StandardEngineValve extends ValveBase {
     @Override
     public final void invoke(Request request, Response response)
         throws IOException, ServletException {
-
         // Select the Host to be used for this Request
-        // 得到此次请求对应的 StandardHost 容器
-        Host host = request.getHost();                                  // 通过 Mapper 模块是就已经获取 对应的 StandardHost
+                                                    // 1. 得到此次请求对应的 StandardHost 容器
+        Host host = request.getHost();              // 2. 通过 Mapper 模块是就已经获取 对应的 StandardHost
         if (host == null) {
             response.sendError
                 (HttpServletResponse.SC_BAD_REQUEST,
@@ -88,10 +87,9 @@ final class StandardEngineValve extends ValveBase {
         if (request.isAsyncSupported()) {
             request.setAsyncSupported(host.getPipeline().isAsyncSupported());
         }
-
         // Ask this Host to process this request
-        // 调用 StandardHost 容器中管道 Pipeline 中的第一个 Valve
-        host.getPipeline().getFirst().invoke(request, response);                    // 获取 StandardHost 的 PipeLine 里面的第一个 Valve 进行处理
+                                                    // 3. 调用 StandardHost 容器中管道 Pipeline 中的第一个 Valve
+        host.getPipeline().getFirst().invoke(request, response);
 
     }
 

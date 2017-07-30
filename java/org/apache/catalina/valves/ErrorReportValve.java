@@ -71,48 +71,36 @@ public class ErrorReportValve extends ValveBase {
     @Override
     public void invoke(Request request, Response response)
         throws IOException, ServletException {
-
         // Perform the request
-        getNext().invoke(request, response);                                                   // 先将 请求转发给下一个 Valve
-
-        if (response.isCommitted()) {                                                         // 这里的 isCommitted 表明, 请求是正常处理结束
+        getNext().invoke(request, response);        // 1. 先将 请求转发给下一个 Valve
+        if (response.isCommitted()) {               // 2. 这里的 isCommitted 表明, 请求是正常处理结束
             return;
         }
-
-        Throwable throwable =
-                (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);        // 判断请求过程中是否有异常发生
-
+        Throwable throwable =                       // 3. 判断请求过程中是否有异常发生
+                (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
         if (request.isAsyncStarted() && ((response.getStatus() < 400 &&
                 throwable == null) || request.isAsyncDispatching())) {
             return;
         }
-
         if (throwable != null) {
-
             // The response is an error
             response.setError();
-
             // Reset the response (if possible)
             try {
-                response.reset();                                                           // 重置 response 里面的数据(此时 Response 里面可能有些数据)
+                response.reset();                  // 4. 重置 response 里面的数据(此时 Response 里面可能有些数据)
             } catch (IllegalStateException e) {
                 // Ignore
             }
-
-            response.sendError
-                (HttpServletResponse.SC_INTERNAL_SERVER_ERROR);                            // 这就是我们常看到的 500 错误码
-
+            response.sendError                     // 5. 这就是我们常看到的 500 错误码
+                (HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
-
         response.setSuspended(false);
-
         try {
-            report(request, response, throwable);                                             // 这里就是将 异常的堆栈信息组合成 html 页面, 输出到前台
+            report(request, response, throwable); // 6. 这里就是将 异常的堆栈信息组合成 html 页面, 输出到前台
         } catch (Throwable tt) {
             ExceptionUtils.handleThrowable(tt);
         }
-
-        if (request.isAsyncStarted()) {                                                      // 若是异步请求的话, 设置对应的 complete (对应的是 异步 Servlet)
+        if (request.isAsyncStarted()) {          // 7. 若是异步请求的话, 设置对应的 complete (对应的是 异步 Servlet)
             request.getAsyncContext().complete();
         }
     }

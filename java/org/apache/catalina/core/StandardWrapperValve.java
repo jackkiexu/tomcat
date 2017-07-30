@@ -99,23 +99,17 @@ final class StandardWrapperValve
     @Override
     public final void invoke(Request request, Response response)
         throws IOException, ServletException {
-
         // Initialize local variables we may need
         boolean unavailable = false;
         Throwable throwable = null;
         // This should be a Request attribute...
-        long t1=System.currentTimeMillis();                                       // 开始记录请求处理时间
-        requestCount.incrementAndGet();                                          // 增加请求次数
-
+        long t1=System.currentTimeMillis();                        // 1. 开始记录请求处理时间
+        requestCount.incrementAndGet();                            // 2. 增加请求次数
         // 得到 StandardWrapper 容器
-                                                                                     // 每个请求都会对应相应的 StandardWrapper 及 StandardWrapperValve 对象
-        StandardWrapper wrapper = (StandardWrapper) getContainer();
-
+        StandardWrapper wrapper = (StandardWrapper) getContainer();// 3. 每个请求都会对应相应的 StandardWrapper 及 StandardWrapperValve 对象
         // 此次请求对应的 servlet
         Servlet servlet = null;
-
-                                                                                     // 得到此次请求的 StandardContext 对象
-        Context context = (Context) wrapper.getParent();
+        Context context = (Context) wrapper.getParent();           // 4. 得到此次请求的 StandardContext 对象
 
         // Check for the application being marked unavailable
         if (!context.getState().isAvailable()) {
@@ -125,7 +119,7 @@ final class StandardWrapperValve
         }
 
         // Check for the servlet being marked unavailable
-        if (!unavailable && wrapper.isUnavailable()) {                                      // 若 Context 的状态现在是 disavailable，则请求如何处理
+        if (!unavailable && wrapper.isUnavailable()) {             // 5. 若 Context 的状态现在是 disavailable，则请求如何处理(热部署/关闭等情况)
             container.getLogger().info(sm.getString("standardWrapper.isUnavailable",
                     wrapper.getName()));
             long available = wrapper.getAvailable();
@@ -151,7 +145,7 @@ final class StandardWrapperValve
                  * 在 !SingleThreadModel 模式下, 多线程共享一个 Servlet
                  * 在  SingleThreadModel 模式下, Servlet 放到一个共享的对象池里面(池里面最多放 20 个 Servlet)
                  */
-                servlet = wrapper.allocate();                                       // 进行 servlet 的分配
+                servlet = wrapper.allocate();                     // 6. 进行 servlet 的分配
             }
         } catch (UnavailableException e) {
             container.getLogger().error(
@@ -190,7 +184,7 @@ final class StandardWrapperValve
             request.setComet(true);
         }
 
-        MessageBytes requestPathMB = request.getRequestPathMB();                              // 获取 请求的 Path
+        MessageBytes requestPathMB = request.getRequestPathMB();       // 7. 获取 请求的 Path
         DispatcherType dispatcherType = DispatcherType.REQUEST;
         if (request.getDispatcherType()==DispatcherType.ASYNC) dispatcherType = DispatcherType.ASYNC;
         request.setAttribute(Globals.DISPATCHER_TYPE_ATTR,dispatcherType);
@@ -198,13 +192,11 @@ final class StandardWrapperValve
                 requestPathMB);
 
         // Create the filter chain for this request
-        // 创建 ApplicationFilterFactory 对象
-        ApplicationFilterFactory factory =
+        ApplicationFilterFactory factory =                            // 8. 创建 ApplicationFilterFactory 对象
             ApplicationFilterFactory.getInstance();
 
         // 创建 ApplicationFilterChain
-        // 创建此次请求的 ApplicationFilterChain 对象, 包装了所有请求的 Servlet 对象及一些拦截的过滤器 Filter 对象
-        ApplicationFilterChain filterChain =                        // 创建 FilterChain
+        ApplicationFilterChain filterChain =                        // 9. 创建此次请求的 ApplicationFilterChain 对象, 包装了所有请求的 Servlet 对象及一些拦截的过滤器 Filter 对象
             factory.createFilterChain(request, wrapper, servlet);
 
         // Reset comet flag value after creating the filter chain
@@ -227,7 +219,7 @@ final class StandardWrapperValve
                             // 调用 ApplicationFilterChain的 doFilter 方法
                             // 传入 org.apache.catalina.connector.RequestFacade 及
                             // org.apache.catalina.connector.ResponseFacade 对象, 开始进行请求处理
-                            filterChain.doFilter(request.getRequest(),      // 执行 filterChain 链, 在链的末尾就是 servlet
+                            filterChain.doFilter(request.getRequest(),      // 10.  执行 filterChain 链, 在链的末尾就是 servlet
                                     response.getResponse());
                         }
                     } finally {
@@ -304,15 +296,14 @@ final class StandardWrapperValve
                 // processing of all subsequent events.
                 filterChain.reuse();
             } else {
-                filterChain.release();                      // 释放 对应的 ApplicationFilterChain 的构造
+                filterChain.release();                      // 11. 释放 对应的 ApplicationFilterChain里面的资源
             }
         }
 
         // Deallocate the allocated servlet instance
         try {
             if (servlet != null) {
-                // 执行 完后把 Servlet 实例回收到 Servlet 实例池
-                wrapper.deallocate(servlet);
+                wrapper.deallocate(servlet);                // 12. 执行 完后把 Servlet 实例回收到 Servlet 实例池
             }
         } catch (Throwable e) {
             ExceptionUtils.handleThrowable(e);
@@ -343,7 +334,7 @@ final class StandardWrapperValve
         long t2=System.currentTimeMillis();
 
         long time=t2-t1;
-        processingTime += time;                     // 这里的 processingTime 就是请求的处理时间
+        processingTime += time;                     // 13. 这里的 processingTime 就是请求的处理时间
         if( time > maxTime) maxTime=time;
         if( time < minTime) minTime=time;
 
