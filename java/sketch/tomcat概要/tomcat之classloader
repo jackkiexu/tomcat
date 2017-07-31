@@ -1,0 +1,14 @@
+1. NoClassDefFoundError
+    IDEA 编译成功, 但是没有打包进去(maven中的 provided)
+    (1). 打印ClassLoader 应该加载的路径 ((URLClassLoader)(Test.class.getClassLoader())).getURLs()
+    (2). 看看这个路径下是否有对应class(PS: 若是jar, 则unzip这个jar进行查看)
+
+2. NoSuchMethodError
+    1. 获取class的路径
+        Test2.class.getClassLoader().getResource(Utils2.class.getName().replace('.', '/') + ".class")
+    2. 反编译class, 来查看方法
+        javap -private className 来反编译class 获取对应的方法
+    3. 通常是maven中引入两个相同的类, 导致这样的错误(相同的类指包名 + 类名相同)
+
+3. ClassCastException: Util cannot be cast to Utils
+    通常是两个classLoader加载了相同类名的类
