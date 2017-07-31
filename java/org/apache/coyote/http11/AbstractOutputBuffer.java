@@ -254,7 +254,7 @@ public abstract class AbstractOutputBuffer<S> implements OutputBuffer {
         if (lastActiveFilter == -1)
             return outputStreamOutputBuffer.doWrite(chunk, res);        // 将 body 里面的数据, 刷到 InternalOutputBuffer 的 socketBuffer 里面
         else
-            return activeFilters[lastActiveFilter].doWrite(chunk, res); // 通过 outputBufferFilter 过滤器将数据刷到 InternalOutputBuffer 的 socketBuffer 里面
+            return activeFilters[lastActiveFilter].doWrite(chunk, res); // 通过 outputBufferFilter 过滤器将数据刷到 InternalOutputBuffer 的 socketBuffer 里面 (最常见的是通过 IdentityOutputFilter 来进行写数据)
 
     }
 

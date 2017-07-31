@@ -382,7 +382,7 @@ public final class CharChunk implements Cloneable, Serializable, CharSequence {
     }
 
 
-    public void flushBuffer()
+    public void flushBuffer()           // 调用 CoyoteWriter 的write/print 其实就是 刷对应的数据到 CharChunk 里面
         throws IOException
     {
         //assert out!=null
@@ -390,7 +390,7 @@ public final class CharChunk implements Cloneable, Serializable, CharSequence {
             throw new IOException( "Buffer overflow, no sink " + limit + " " +
                                    buff.length  );
         }
-        out.realWriteChars( buff, start, end - start );             // 这里的 out 是 OutputBuffer, 将 CharChunk 里面的数据刷到 byteChunk
+        out.realWriteChars( buff, start, end - start );             // 这里的 out 是 org.apache.catalina.connector.OutputBuffer, 其实就是回调 CharChunk所归属的 OutPutBuffer 进行刷数据 (将 CharChunk 里面的数据刷到 byteChunk)
         end=start;
     }
 

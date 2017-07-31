@@ -415,7 +415,7 @@ public final class ByteChunk implements Cloneable, Serializable {
      *
      * @throws IOException
      */
-    public void flushBuffer()
+    public void flushBuffer()                                           // 这里才是真正的刷数据到 远端程序里面
         throws IOException
     {
         //assert out!=null

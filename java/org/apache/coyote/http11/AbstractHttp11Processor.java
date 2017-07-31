@@ -727,7 +727,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             // End the processing of the current request
 
             try {
-                getOutputBuffer().endRequest();     // 将数据刷到远端 这里是 InternalOutputBuffer
+                getOutputBuffer().endRequest();     // 将数据刷到远端 这里是 Http11Processor.InternalOutputBuffer
             } catch (IOException e) {
                 // Set error flag
                 error = true;
@@ -747,7 +747,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
              * 2. 调用 OutputBuffer  进行 commit
              */
             try {
-                prepareResponse();              // 将 Http header 里面的信息刷到 headerbuffer 里面
+                prepareResponse();              // 将 Http header 里面的 请求结果状态, header头部的信息刷到 InternalOutput.headerbuffer 里面, 并且根据头部的信息选择合适的 OutputFilter
                 getOutputBuffer().commit();     // 将 headerbuffer 里面的数据刷到 socketBuffer (socketBuffer 是一个 ByteChunk)
             } catch (IOException e) {
                 // Set error flag
@@ -906,7 +906,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         // Setting up the I/O 设置 SocketWrapper
         setSocketWrapper(socketWrapper);
         getInputBuffer().init(socketWrapper, endpoint);         // 获取 Socket 中的 InputStream 设置到 InputBuffer, 也就是设置到 Request 中
-        getOutputBuffer().init(socketWrapper, endpoint);        // 获取 Socket 中的 OutputStream 设置到 OutputBuffer, 也就是设置到 Response 中
+        getOutputBuffer().init(socketWrapper, endpoint);        // 获取 Socket 中的 OutputStream 设置到 OutputBuffer, 也就是设置到 Response 中 (PS: 最后完成业务逻辑后, 数据是通过这里的 OutputStream 进行刷数据到远端)
 
         // Flags
         error = false;
@@ -1378,6 +1378,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
     /**
      * When committing the response, we have to validate the set of headers, as
      * well as setup the response filters.
+     * 通过 Http Header 里面的信息来确定 Response 的 Filter
      *
      * Response 压缩:
      * 1. 标识 isCompressable, 这个标识对应的方法是 isCompressable 方法, 该方法主要是解析 Tomcat 上的几个配置, 判断当前的响应是否满足压缩的条件
@@ -1391,14 +1392,14 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
         OutputFilter[] outputFilters = getOutputBuffer().getFilters();
 
-        if (http09 == true) {                                       //  若是 http 0.9 则加入 IdentifyOutputFilter
+        if (http09 == true) {                                       //  若是协议是 http 0.9 则加入 IdentifyOutputFilter
             // HTTP/0.9
             getOutputBuffer().addActiveFilter
                 (outputFilters[Constants.IDENTITY_FILTER]);
             return;
         }
 
-        int statusCode = response.getStatus();                      // 若 htto status 处于 if 中的判断, 则加入 VoidOutputFilter
+        int statusCode = response.getStatus();                      // 若 htto status < 200 || 204 || 205 || 304, 则加入 VoidOutputFilter
         if (statusCode < 200 || statusCode == 204 || statusCode == 205 ||
                 statusCode == 304) {
             // No entity body
@@ -1455,7 +1456,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
         long contentLength = response.getContentLengthLong();
         boolean connectionClosePresent = false;
-        if (contentLength != -1) {
+        if (contentLength != -1) {                                        // 若 CoyoteWriter 写入的写数据, 则在请求链中加入 IdentityOutputFilter
             headers.setValue("Content-Length").setLong(contentLength);
             getOutputBuffer().addActiveFilter
                 (outputFilters[Constants.IDENTITY_FILTER]);
@@ -1498,7 +1499,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         // Add date header unless application has already set one (e.g. in a
         // Caching Filter)
         if (headers.getValue("Date") == null) {
-            headers.setValue("Date").setString(                                 // http 的 header 里面设置 日期
+            headers.setValue("Date").setString(                            // 在 http 的 header 里面设置 日期
                     FastHttpDateFormat.getCurrentDate());
         }
 
@@ -1524,7 +1525,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         }
 
         // Build the response header
-        getOutputBuffer().sendStatus();
+        getOutputBuffer().sendStatus();                                 // 将请求结果 (http的status) 写到 headerBuffer 里面(过会这个headerBuffer也会追加到最终的SocketBuffer里面)
 
         // Add server header
         if (server != null) {
@@ -1535,7 +1536,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             getOutputBuffer().write(Constants.SERVER_BYTES);            // 写入服务端的信息 InternalOutputBuffer
         }
                                                                         // 将 Http header 里面的数据组装到 headerbuffer 里面
-        int size = headers.size();
+        int size = headers.size();                                      // 将 header 里面的数据写入 headerBuffer 里面
         for (int i = 0; i < size; i++) {
             getOutputBuffer().sendHeader(headers.getName(i), headers.getValue(i));      // 这里是 InternalOutputBuffer
         }

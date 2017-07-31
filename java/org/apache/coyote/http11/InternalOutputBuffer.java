@@ -48,7 +48,7 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
         outputStreamOutputBuffer = new OutputStreamOutputBuffer();
 
         socketBuffer = new ByteChunk();
-        socketBuffer.setByteOutputChannel(this);
+        socketBuffer.setByteOutputChannel(this);            // 设置这一步主要是在 flushBuffer 时进行回调的
     }
 
     /**
@@ -64,7 +64,7 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
 
 
     /**
-     * Socket buffer (extra buffering to reduce number of packets sent).
+     * Socket buffer (extra buffering to reduce number of packets sent).    useSocketBuffer 来决定要写到 Client 端的数据是否缓存到 Buffer  里面, 交由buffer进行 commit 出去
      */
     private boolean useSocketBuffer = false;
 
@@ -151,7 +151,7 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
 
         if (pos > 0) {                  // pos > 0 说明要写入数据
             // Sending the response header buffer
-            if (useSocketBuffer) {
+            if (useSocketBuffer) {  logger.info(new String(headerBuffer, "utf-8"));
                 socketBuffer.append(headerBuffer, 0, pos);          // 这里的 socketBuffer 是  ByteChunk, 追加的是 Http Header 里面的信息
             } else {
                 outputStream.write(headerBuffer, 0, pos);
@@ -168,7 +168,7 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
     public void realWriteBytes(byte cbuf[], int off, int len)
         throws IOException {
         if (len > 0) { logger.info(new String(cbuf, "utf-8"));
-            outputStream.write(cbuf, off, len);
+            outputStream.write(cbuf, off, len);                   //   这里的 outputStream 其实就是 通过 socket 获取得到的
         }
     }
 
@@ -209,7 +209,7 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
      * This class is an output buffer which will write data to an output
      * stream.
      */
-    protected class OutputStreamOutputBuffer
+    protected class OutputStreamOutputBuffer                      // 这个类主要是在Filter 中进行调用
         implements OutputBuffer {
 
 
@@ -217,15 +217,15 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
          * Write chunk.
          */
         @Override
-        public int doWrite(ByteChunk chunk, Response res)           // 调用这里就是将 body 里面的数据追加, 刷到 socketBuffer 里面
+        public int doWrite(ByteChunk chunk, Response res)                  // 调用这里就是将 body 里面的数据追加, 刷到 socketBuffer 里面
             throws IOException {
 
             int length = chunk.getLength();
-            if (useSocketBuffer) {
-                socketBuffer.append(chunk.getBuffer(), chunk.getStart(),                    // ByteChunk
+            if (useSocketBuffer) {                                       // 这个值何时改变 ?
+                socketBuffer.append(chunk.getBuffer(), chunk.getStart(),  //  这里的 socketBuffer 是先写 Header 里面的数据, 然后写 body 里面的数据 ByteChunk
                                     length);
             } else {
-                outputStream.write(chunk.getBuffer(), chunk.getStart(),
+                outputStream.write(chunk.getBuffer(), chunk.getStart(),   // 这里是通过 Stream 直接将数据写回客户端
                                    length);
             }
             byteCount += chunk.getLength();

@@ -258,6 +258,22 @@ public class OutputBuffer extends Writer
      * the response has not been committed yet.
      *
      * @throws IOException An underlying IOException occurred
+     *
+     * 参与角色
+     * org.apache.catalina.connector.Response                           : 这个 Servlet 容器中封装的 Response 对象
+     * org.apache.catalina.connector.Response.OutputBuffer              : Response 对象中的输出缓冲
+     * org.apache.catalina.connector.Response.OutputBuffer.CharChunk    : Response 对象中输出缓冲下的字符缓冲区域
+     * org.apache.catalina.connector.Response.OutputBuffer.ByteChunk    : Response 对象中输出缓冲下的字节缓冲区域
+     * org.apache.coyote.Response                                       : Tomcat 网络框架封装的 Response
+     * org.apache.coyote.http11;Http11Processor                         : Tomcat 工作线程池执行的任务
+     * org.apache.coyote.http11;InternalOutputBuffer                    : InternalOutputBuffer 通常存在于 Http11Processor 里面, 主要是做最终数据的缓存与刷数据到远端
+     * org.apache.coyote.http11;InternalOutputBuffer.socketBuffer       : 用于存储刷新到远端数据的缓存(这里buffer里面存储的是 header + body 的所有数据)
+     * org.apache.coyote.http11;InternalOutputBuffer.outputStream       : outputStream 是从代表 客户端的 socket 中拿出来的, 最后也是通过这个 Stream 刷数据到远端
+     *
+     * 步骤:
+     * 1. 将 org.apache.catalina.connector.Response.CharChunk 里面的数据刷到 org.apache.catalina.connector.Response.ByteChunk 里面
+     * 2. 将 org.apache.catalina.connector.Response.OutputBuffer 中的 CharChunk, ByteChunk 的数据(body中的数据, 也就是一开始在 MyHttpServlet中 PrintWriter.write("OK")的数据刷到 Http11Processor.InternalOutputBuffer里面, 当然里面还涉及到 header 中的数据
+     * 3. 将 InternalOutputBuffer 中的 socketBuffer 刷到浏览器中
      */
     @Override
     public void close()
@@ -272,19 +288,19 @@ public class OutputBuffer extends Writer
 
         // If there are chars, flush all of them to the byte buffer now as bytes are used to
         // calculate the content-length (if everything fits into the byte buffer, of course).
-        if (cb.getLength() > 0) {           // 这里 cb 里面的数据就是 Response.getPrintWriter.write("OK") 写到 CharChunk 里面
-            cb.flushBuffer();               // 将 CharChunk 里面的数据刷到 OutputBuffer (这里就是将 CharChunk 里面的数据刷到 ByteChunk 里面), 期间转化会经过字符转化器
+        if (cb.getLength() > 0) {                   // 1. 这里 cb 里面的数据就是 Response.getPrintWriter.write("OK") 写到 CharChunk 里面
+            cb.flushBuffer();                       // 2. 将 CharChunk 里面的数据刷到 OutputBuffer中 (PS: 这里就是将 CharChunk 里面的数据刷到 ByteChunk 里面), 期间转化会经过字符转化器
         }
 
-        if ((!coyoteResponse.isCommitted())                         // 这里的 coyoteResponse 是 coyote 的 response
+        if ((!coyoteResponse.isCommitted())       // 3. 这里的 coyoteResponse 是 coyote 的 response
             && (coyoteResponse.getContentLengthLong() == -1)) {
             // If this didn't cause a commit of the response, the final content
             // length can be calculated
-            if (!coyoteResponse.isCommitted()) {
-                coyoteResponse.setContentLength(bb.getLength());    // 设置 Http header 里面 content-length 的长度
+            if (!coyoteResponse.isCommitted()) { // 4. 设置 Http header 里面 content-length 的长度 (也就是你在 HttpServlet 里面调用CoyoteWriter.print/write 写入的数据的大小)
+                coyoteResponse.setContentLength(bb.getLength());
             }
         }
-
+                                                    // 5. 下面的 doFlush 其实就是将 org.apache.catalina.connector.Response.OutputBuffer 中的 CharChunk, ByteChunk 的数据(body中的数据, 也就是一开始在 MyHttpServlet中 PrintWriter.write("OK")的数据刷到 Http11Processor.InternalOutputBuffer里面, 当然里面还涉及到 header 中的数据
         if (coyoteResponse.getStatus() ==
                 HttpServletResponse.SC_SWITCHING_PROTOCOLS) {
             doFlush(true);
@@ -300,8 +316,7 @@ public class OutputBuffer extends Writer
                 CoyoteAdapter.ADAPTER_NOTES);
         req.inputBuffer.close();
 
-        coyoteResponse.finish();                    // 这边才是正真写出数据的地方 注意这里是 org.apache.coyote.Response, 将 InternalOutputBuffer 中的 socketBuffer 刷到浏览器中
-
+        coyoteResponse.finish();                 // 6. 这边才是正真写出数据的地方 注意这里是 org.apache.coyote.Response, 将 InternalOutputBuffer 中的 socketBuffer 刷到浏览器中
     }
 
 
@@ -329,17 +344,17 @@ public class OutputBuffer extends Writer
             return;
         }
 
-        try {
+        try {                                             // 前置, 这里做的就两部 1. 调用 Http11Processor.prepareResponse将 header里面的数据刷到 Http11Processor.InternalOutputBuffer里面(先到 headerbuffer, 后到 socketBuffer), 2. 通过 org.apache.catalina.connector.Response.OutputBuffer.ByteBuffer.flushBuffer() 将数据刷到 Http11Processor.InternalOutputBuffer.socketBuffer 里面
             doFlush = true;
-            if (initial) {
-                coyoteResponse.sendHeaders();           // coyoteResponse 就是 org.apache.coyote.Response (将 Http header 里面的信息 刷到 headBuffer 中, 然后刷到 socketBuffer 中, 这里的 headBuffer 与 sendBuffer 都是在 InternalOutputBuffer 中)
+            if (initial) {                               // 1. 回调 Http11Processor  (将 header 中要写的数据 commit 到 Http11Processor.InternalOutputBuffer 里面)
+                coyoteResponse.sendHeaders();           // 2. coyoteResponse 就是 org.apache.coyote.Response (将 Http header 里面的信息 刷到 headBuffer 中, 然后刷到 socketBuffer 中, 这里的 headBuffer 与 sendBuffer 都是在 InternalOutputBuffer 中)
                 initial = false;
             }
             if (cb.getLength() > 0) {
                 cb.flushBuffer();
             }
-            if (bb.getLength() > 0) {                   // 这里的 bb(ByteChunk) 存储的是 http 请求的 body 里面的数据
-                bb.flushBuffer();                       // bb(ByteChunk) 将自己的数据刷到 org.apache.catalina.connector.OutputBuffer 的 outputChunk, 然后再调用 coyoteResponse.doWrite 刷到
+            if (bb.getLength() > 0) {                   // 3. 这里的 bb(ByteChunk) 存储的是 http 请求的 body 里面的数据
+                bb.flushBuffer();                       // 4. bb(ByteChunk) 将自己的数据刷到 org.apache.catalina.connector.OutputBuffer 的 outputChunk, 然后再调用 coyoteResponse.doWrite 刷到 InternalOutputBuffer.socketBuffer 里面(这一步经过很多步)
             }
         } finally {
             doFlush = false;
@@ -355,7 +370,6 @@ public class OutputBuffer extends Writer
                     (coyoteResponse.getErrorException());
             }
         }
-
     }
 
 
@@ -456,7 +470,7 @@ public class OutputBuffer extends Writer
      * @throws IOException An underlying IOException occurred
      */
     @Override
-    public void realWriteChars(char buf[], int off, int len)
+    public void realWriteChars(char buf[], int off, int len)        // 将 CharChunk 数据刷到 ByteChunk 里面
         throws IOException {
 
         outputCharChunk.setChars(buf, off, len);

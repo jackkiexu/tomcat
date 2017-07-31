@@ -50,7 +50,7 @@ public class IdentityOutputFilter implements OutputFilter {
     /**
      * Next buffer in the pipeline.
      */
-    protected OutputBuffer buffer;
+    protected OutputBuffer buffer;      // 这里的 OutputBuffer 是 InternalOutputBuffer.OutputStreamOutputBuffer
 
 
     // --------------------------------------------------- OutputBuffer Methods
@@ -81,7 +81,7 @@ public class IdentityOutputFilter implements OutputFilter {
                 } else {
                     remaining = remaining - result;
                 }
-                buffer.doWrite(chunk, res);                                     // InternalOutputBuffer.OutputStreamOutputBuffer
+                buffer.doWrite(chunk, res);                                     // 这里的 buffer 就是 InternalOutputBuffer.OutputStreamOutputBuffer
             } else {
                 // No more bytes left to be written : return -1 and clear the
                 // buffer

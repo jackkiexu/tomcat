@@ -520,7 +520,7 @@ public final class Response {
     public void doWrite(ByteChunk chunk/*byte buffer[], int pos, int count*/)
         throws IOException
     {
-        outputBuffer.doWrite(chunk, this);
+        outputBuffer.doWrite(chunk, this);          // 这里的写数据是通过 Http11Processor.InternalOutputBuffer 进行写数据(写的时候会经过 OutputBufferFilter)
         contentWritten+=chunk.getLength();
     }
 
