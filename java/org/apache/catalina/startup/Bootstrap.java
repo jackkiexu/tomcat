@@ -146,15 +146,19 @@ public final class Bootstrap {
     // -------------------------------------------------------- Private Methods
 
     /**
-     * 下面是 这几个 Classloader 是 Tomcat 对老版本的兼容
-     * commonLoader     : 可被 Tomcat 和 所有的 Web 应用程序共同获取
-     * catalinaLoader   : 只能被 Tomcat 获取(但 所有 WebappClassLoader 不能获取到 catalinaLoader 加载的类)
-     * sharedLoader     : 这个类是所有 WebappClassLoader 的父类, sharedLoader 所加载的类将被所有的 WebappClassLoader 共享获取
+     * 1. BootstrapClassLoader	: 系统类加载器
+     * 2. ExtClassLoader 		: 扩展类加载器
+     * 3. AppClassLoader 		: 普通类加载器
+     #下面是 这几个 Classloader 是 Tomcat 对老版本的兼容
+     * 4. commonLoader     	: Tomcat 通用类加载器, 加载的资源可被 Tomcat 和 所有的 Web 应用程序共同获取
+     * 5. catalinaLoader   	: Tomcat 类加载器, 加载的资源只能被 Tomcat 获取(但 所有 WebappClassLoader 不能获取到 catalinaLoader 加载的类)
+     * 6. sharedLoader     	: Tomcat 各个Context的父加载器, 这个类是所有 WebappClassLoader 的父类, sharedLoader 所加载的类将被所有的 WebappClassLoader 共享获取
      *
      * 这个版本 (Tomcat 8.x.x) 中, 默认情况下 commonLoader = catalinaLoader = sharedLoader
      * (PS: 为什么这样设计, 主要这样这样设计 ClassLoader 的层级后, WebAppClassLoader 就能直接访问 tomcat 的公共资源, 若需要tomcat 有些资源不让 WebappClassLoader 加载, 则直接在 ${catalina.base}/conf/catalina.properties 中的 server.loader 配置一下 加载路径就可以了)
      */
     private void initClassLoaders() {
+        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
         try {                                                                   // 1. 补充: createClassLoader 中代码最后调用 new URLClassLoader(array) 来生成 commonLoader, 此时 commonLoader.parent = null,  则采用的是默认的策略 Launcher.AppClassLoader
             commonLoader = createClassLoader("common", null);               // 2. 根据 catalina.properties 指定的 加载jar包的目录, 生成对应的 URLClassLoader( 加载 Tomcat 中公共jar包的 classLoader, 这里的 parent 参数是 null, 最终 commonLoader.parent 是 URLClassLoader)
             if( commonLoader == null ) {                                     // 3. 若 commonLoader = null, 则说明在 catalina.properties 里面 common.loader 是空的

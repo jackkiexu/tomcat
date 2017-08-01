@@ -16,8 +16,11 @@
  */
 package org.apache.catalina.startup;
 
+import org.apache.catalina.core.ApplicationContextFacade;
+
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URLClassLoader;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -37,5 +40,30 @@ public class TesterServlet extends HttpServlet {
         HttpSession httpSession = req.getSession();   // 4. 在第一次获取 Session 时会初始化构建Session(PS: 也就是说, 只有在程序里面getSession时才会创建Session)
         httpSession.setAttribute("name", "xjk");      // 5. 在Session里面设置对应 KV 数据
         out.print("OK");                              // 6. 将数据写回 Response 的OutputBuffer里面(PS: 只有在Response commit 时才正真的写数据到浏览器里)
+
+
+        URLClassLoader urlClassLoader = new URLClassLoader(((URLClassLoader)Thread.currentThread().getContextClassLoader()).getURLs());
+        Thread.currentThread().setContextClassLoader(urlClassLoader);
+        Thread thread = new Thread(){
+            @Override
+            public void run() {
+                super.run();
+                while (true){
+                    try {
+                        Thread.sleep(2 * 1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+
+
+        ApplicationContextFacade applicationContextFacade = (ApplicationContextFacade)req.getServletContext();
+        System.out.println(applicationContextFacade.getClassLoader());
+        System.out.println(thread.getContextClassLoader());
+        System.out.println(Thread.currentThread().getContextClassLoader());
+        System.out.println(req.getClass().getClassLoader());
+
     }
 }

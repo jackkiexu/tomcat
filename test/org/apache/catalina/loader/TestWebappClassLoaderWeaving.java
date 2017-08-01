@@ -323,6 +323,8 @@ public class TestWebappClassLoaderWeaving extends TomcatBaseTest {
             URLClassLoader appClassLoader = (URLClassLoader)TestWebappClassLoaderWeaving.class.getClassLoader();
             URL[] urls1 = appClassLoader.getURLs();
             logger.info(appClassLoader);
+            ClassLoader.getSystemClassLoader();
+            System.out.println(appClassLoader == ClassLoader.getSystemClassLoader());
 
             // extClassLoader 加载类的路径
             URLClassLoader extClassLoader = (URLClassLoader)TestWebappClassLoaderWeaving.class.getClassLoader().getParent();
