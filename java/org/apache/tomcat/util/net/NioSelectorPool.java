@@ -205,7 +205,7 @@ public class NioSelectorPool {
         int keycount = 1; //assume we can write
         long time = System.currentTimeMillis(); //start the timeout timer
         try {
-            while ( (!timedout) && buf.hasRemaining() ) {
+            while ( (!timedout) && buf.hasRemaining() ) {                                          // 通过这里判断是否还需要继续写数据
                 int cnt = 0;
                 if ( keycount > 0 ) { //only write if we were registered for a write                // 写入成功
                     cnt = socket.write(buf); //write the data                                       // 写入数据
@@ -216,7 +216,7 @@ public class NioSelectorPool {
                         time = System.currentTimeMillis(); //reset our timeout timer
                         continue; //we successfully wrote, try again without a selector
                     }
-                    if (cnt==0 && (!block)) break; //don't block                                   // 没有写入成功数据
+                    if (cnt==0 && (!block)) break; //don't block                                   // 没有写入成功数据, 若这时一直 在 loop 内进行写数据, 则就将一直占据这一个工作线程, 在这里 Tomcat 将 SocketChannel 注册到另外一个 Seelctor 上, 等有能进行 write 数据时, 就进行写数据
                 }
                 /**
                  * 基于低并发来讲, 一次 SocketChannel 写入就会成功 ， guoru 是高并发, 非组赛模式的写入, 需要开启一个 NIO 通道

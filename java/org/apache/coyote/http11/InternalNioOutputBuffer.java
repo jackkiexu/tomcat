@@ -130,7 +130,7 @@ public class InternalNioOutputBuffer extends AbstractOutputBuffer<NioChannel> {
         NioEndpoint.KeyAttachment att = (NioEndpoint.KeyAttachment)socket.getAttachment(false);
         if ( att == null ) throw new IOException("Key must be cancelled");
         long writeTimeout = att.getWriteTimeout();
-        Selector selector = null;
+        Selector selector = null;                                   // 这里有个注意点 一个所有注册在这个 selector 上的 selectorKey 集合, 一个是已经发生了感兴趣事件的 selectorKey 的集合
         try {
             selector = pool.get();
         } catch ( IOException x ) {
