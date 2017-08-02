@@ -56,6 +56,7 @@ public class TestConnector extends TomcatBaseTest {
 
         assertEquals(200, rc);
         assertEquals("OK", bc.toString());
+        logger.info(" bc.toString():" +  bc.toString());
 
         rc = -1;
         bc.recycle();
