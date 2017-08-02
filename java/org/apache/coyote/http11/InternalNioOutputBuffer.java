@@ -26,6 +26,7 @@ import java.util.Iterator;
 import org.apache.coyote.ByteBufferHolder;
 import org.apache.coyote.OutputBuffer;
 import org.apache.coyote.Response;
+import org.apache.log4j.Logger;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.AbstractEndpoint;
 import org.apache.tomcat.util.net.NioChannel;
@@ -39,7 +40,7 @@ import org.apache.tomcat.util.net.SocketWrapper;
  * @author <a href="mailto:remm@apache.org">Remy Maucherat</a>
  */
 public class InternalNioOutputBuffer extends AbstractOutputBuffer<NioChannel> {
-
+    private static final Logger logger = Logger.getLogger(InternalNioOutputBuffer.class);
     // ----------------------------------------------------------- Constructors
 
     /**
@@ -268,6 +269,10 @@ public class InternalNioOutputBuffer extends AbstractOutputBuffer<NioChannel> {
 
     @Override
     protected boolean hasMoreDataToFlush() {
+        logger.info("flipped:" + flipped);
+        logger.info("socket.getBufHandler().getWriteBuffer():" + socket.getBufHandler().getWriteBuffer());
+        logger.info("socket.getBufHandler().getWriteBuffer().remaining():" + socket.getBufHandler().getWriteBuffer().remaining());
+        logger.info("socket.getBufHandler().getWriteBuffer().position():" + socket.getBufHandler().getWriteBuffer().position());
         return (flipped && socket.getBufHandler().getWriteBuffer().remaining()>0) ||
         (!flipped && socket.getBufHandler().getWriteBuffer().position() > 0);
     }

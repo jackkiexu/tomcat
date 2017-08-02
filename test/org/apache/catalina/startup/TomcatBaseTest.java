@@ -150,7 +150,7 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
         // Use NIO by default starting with Tomcat 8
         if (protocol == null) {
             protocol = Http11NioProtocol.class.getName();                 // 2. Tomcat 8 默认是 NIO 模式
-            protocol = Http11Protocol.class.getName();                    // 3. 这里我们先用 BIO 做分析
+//            protocol = Http11Protocol.class.getName();                    // 3. 这里我们先用 BIO 做分析
         }
 
         return protocol;

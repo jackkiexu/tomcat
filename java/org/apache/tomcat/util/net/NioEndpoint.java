@@ -1019,7 +1019,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
             final KeyAttachment ka = key!=null?key:new KeyAttachment(socket);
             // 重置 KeyAttachment对象中的 Poller, NioChannel等成员变量的引用
             ka.reset(this,socket,getSocketProperties().getSoTimeout());
-            ka.setKeepAliveLeft(NioEndpoint.this.getMaxKeepAliveRequests());
+            ka.setKeepAliveLeft(NioEndpoint.this.getMaxKeepAliveRequests());    // 一个 Socket 在KeepAlive的周期内, 默认还能处理的请求数
             ka.setSecure(isSSLEnabled());
 
             // 从 Poller的事件对象缓存中取出一个 PollerEvent, 并用 socket 初始化事件
