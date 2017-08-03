@@ -1,0 +1,78 @@
+创建工作线程池(用于所有的 Context)
+
+通过RR的方式分配 socket
+
+
+1. Acceptor				: 监听指定的端口, 将接收到的 socket 封装成 NioChannel 丢给 Poller 线程来进行处理
+2. NioChannel			: SocketChannel 的一个包装类, 给 SocketChannel 增加了一个属性, 并且代理其做了一个方法
+3. PollerEvent			: 其的作用就是在 Poller.Selector 上异步注册 OP_READ 事件
+4. SynchronizedQueue	: Poller 每次运行都会执行里面的 PollerEvent 事件, 进行SocketChannel注册 selector
+5. Poller 				: 从 SynchronizedQueue 里面 poll 出PollerEvent(在 Selector 上注册读数据的时间)事件, 并进行通过 selector.select 来轮训注册的读写事件
+6. SocketProcessor		: Tomcat 执行 Socket 请求处理的执行单元
+
+
+try {
+    while ( (!timedout) && buf.hasRemaining()) {                                    // 1. 检查数据是否写完, 写操作是否超时
+        if (keycount > 0) { //only write if we were registered for a write
+            int cnt = socket.write(buf); //write the data                           // 2. 进行写操作
+            if (cnt == -1)                                                          // 3. 写操作失败, 直接报异常 (有可能对方已经关闭 socket)
+                throw new EOFException();
+            written += cnt;                                                         // 4. 累加 已经写的数据总和
+            if (cnt > 0) {                                                          // 5. 写数据成功, continue 再次写数据
+                time = System.currentTimeMillis(); //reset our timeout timer
+                continue; //we successfully wrote, try again without a selector
+            }
+        }
+        try {                                                                       // 6. 写入不成功 (cnt == 0)
+            if ( att.getWriteLatch()==null || att.getWriteLatch().getCount()==0) att.startWriteLatch(1);
+            poller.add(att,SelectionKey.OP_WRITE,reference);                        // 7. 通过 BlockPoller 线程将 SocketChannel 的 OP_WRITE 事件 注册到 NioSelectorPool 中的 selector 上
+            if (writeTimeout < 0) {                                                 // 8. CountDownLatch 进行不限时的等到 OP_WRITE 事件
+                att.awaitWriteLatch(Long.MAX_VALUE,TimeUnit.MILLISECONDS);
+            } else {
+                att.awaitWriteLatch(writeTimeout,TimeUnit.MILLISECONDS);            // 9. CountDownLatch 进行限时的等到 OP_WRITE 事件
+            }
+        } catch (InterruptedException ignore) {
+            // Ignore
+        }
+        if ( att.getWriteLatch()!=null && att.getWriteLatch().getCount()> 0) {      // 10. 若  CountDownLatch 是被线程 interrupt 唤醒的, 将 keycount 置为 0 (CountDownLatch被  Interrupt 的标识就是程序能继续向下执行, 但里面的 statue > 0)
+            //we got interrupted, but we haven't received notification from the poller.
+            keycount = 0;                                                          // 11. keycount 变成 0, 则在第一次进入 loop 时不会接着写数据, 因为这时还没有真正的 OP_WRITE 事件过来
+        }else {
+            //latch countdown has happened
+            keycount = 1;
+            att.resetWriteLatch();                                                 // 11. OP_WRITE 事件过来了, 重置 CountDownLatch 里面的技术支持
+        }
+
+        if (writeTimeout > 0 && (keycount == 0))
+            timedout = (System.currentTimeMillis() - time) >= writeTimeout;        // 12. 判断是否写超时
+    } //while
+    if (timedout)
+        throw new SocketTimeoutException();                                        // 13. 若是写超时的话, 则直接抛异常
+} finally {
+    poller.remove(att,SelectionKey.OP_WRITE);                                      // 14. Tomcat 写数据到客户端成功, 移除 SocketChannel 对应的 OP_WRITE 事件
+    if (timedout && reference.key!=null) {
+        poller.cancelKey(reference.key);
+    }
+    reference.key = null;
+    keyReferenceStack.push(reference);
+}
+
+selector 内部有3 个SelectionKeys 集合
+1. publicKeys 				: 所有注册的 SelectionKeys (PS: 包括部分取消的SelectionKeys)		
+	(通过 selector.keys() 来获取)
+2. publicSelectedKeys 		：通过底层select获取到的有触发的 SelectionKeys 的集合 
+	(通过 selector.selectedKeys() 来获取)
+3. cancelledKeys			: SelectionKey.cancel 来触发加入这个集合中, 或调用 SocketChannel.close() 也行
+
+调用 selector.select 或 selector.register 都会阻塞 publicKeys
+
+
+开启 KeepAlive 功能下
+
+NIOEndPoint.SocketProcessor.doRun(SelectionKey key, KeyAttachment ka) 方法下的 finally 中
+	getExecutor().execute(new SocketProcessor(socket, SocketStatus.OPEN_READ));
+	在处理好请求后, 只要再将 SocketChannel 再次注册到Selector上就可以
+
+JioEndPoint.SocketProcessor.doRun 方法下的 finally 中
+	getExecutor().execute(new SocketProcessor(socket, SocketStatus.OPEN_READ));
+	在处理好请求后, 将 socket 封装出 SocketProcessor 来接着处理请求
