@@ -44,7 +44,7 @@ public final class Constants {
     /**
      * CRLF.
      */
-    public static final String CRLF = "\r\n";               // 换行 + 回车
+    public static final String CRLF = "\r\n";               // 回车 换行
 
 
     /**
@@ -57,13 +57,13 @@ public final class Constants {
     /**
      * CR.
      */
-    public static final byte CR = (byte) '\r';              // 换行
+    public static final byte CR = (byte) '\r';              // 回车
 
 
     /**
      * LF.
      */
-    public static final byte LF = (byte) '\n';              // 回车
+    public static final byte LF = (byte) '\n';              // 换行
 
 
     /**

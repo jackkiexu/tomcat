@@ -87,6 +87,12 @@ public class NioBlockingSelector {
      * @throws SocketTimeoutException if the write times out
      * @throws IOException if an IO Exception occurs in the underlying socket logic
      */
+    /**
+     * 从这里可以看出 NioBlockingSelector 的 write 与 NioSelectorPool 的 write
+     * 方法差不多, 一次写入 SocketChannel 成功最好, 不成功 则做下面两件事
+     * 1. 通过 一个Latch 在主线程进行 wait, 可以看到 这个同步机制通过 Java 的 CountDownLatch
+     * 2. 使用一个 BlockPoller 的子线程, 将这个 socketChannel 关注的 可以加入到 BlockPoller 的子线程, 由主线程轮询 ("poller.add(att,SelectionKey.OP_WRITE,reference);")
+     */
     public int write(ByteBuffer buf, NioChannel socket, long writeTimeout)
             throws IOException {
         SelectionKey key = socket.getIOChannel().keyFor(socket.getPoller().getSelector());
@@ -101,50 +107,44 @@ public class NioBlockingSelector {
         int keycount = 1; //assume we can write
         long time = System.currentTimeMillis(); //start the timeout timer
         try {
-            while ( (!timedout) && buf.hasRemaining()) {
+            while ( (!timedout) && buf.hasRemaining()) {                                    // 1. 检查数据是否写完, 写操作是否超时
                 if (keycount > 0) { //only write if we were registered for a write
-                    int cnt = socket.write(buf); //write the data
-                    if (cnt == -1)
+                    int cnt = socket.write(buf); //write the data                           // 2. 进行写操作
+                    if (cnt == -1)                                                          // 3. 写操作失败, 直接报异常 (有可能对方已经关闭 socket)
                         throw new EOFException();
-                    written += cnt;
-                    if (cnt > 0) {
+                    written += cnt;                                                         // 4. 累加 已经写的数据总和
+                    if (cnt > 0) {                                                          // 5. 写数据成功, continue 再次写数据
                         time = System.currentTimeMillis(); //reset our timeout timer
-                        continue; //we successfully wrote, try again without a selector             // 写入成功
+                        continue; //we successfully wrote, try again without a selector
                     }
                 }
-                /**
-                 * 从这里可以看出 NioBlockingSelector 的 write 与 NioSelectorPool 的 write
-                 * 方法差不多, 一次写入 SocketChannel 成功最好, 不成功 则做下面两件事
-                 * 1. 通过 一个Latch 在主线程进行 wait, 可以看到 这个同步机制通过 Java 的 CountDownLatch
-                 * 2. 使用一个 BlockPoller 的子线程, 将这个 socketChannel 关注的 可以加入到 BlockPoller 的子线程, 由主线程轮询 ("poller.add(att,SelectionKey.OP_WRITE,reference);")
-                 */
-                try {               // 写入不成功
+                try {                                                                       // 6. 写入不成功 (cnt == 0)
                     if ( att.getWriteLatch()==null || att.getWriteLatch().getCount()==0) att.startWriteLatch(1);
-                    poller.add(att,SelectionKey.OP_WRITE,reference);                // 这一步就是就是将事件交由子线程进行处理
-                    if (writeTimeout < 0) {                                           // 在写入不成功的情况下, 进行一段时间的 wait (这里也就是阻塞模式的体验)
+                    poller.add(att,SelectionKey.OP_WRITE,reference);                      // 7. 通过 BlockPoller 线程将 SocketChannel 的 OP_WRITE 事件 注册到 NioSelectorPool 中的 selector 上
+                    if (writeTimeout < 0) {                                                 // 8. CountDownLatch 进行不限时的等到 OP_WRITE 事件
                         att.awaitWriteLatch(Long.MAX_VALUE,TimeUnit.MILLISECONDS);
                     } else {
-                        att.awaitWriteLatch(writeTimeout,TimeUnit.MILLISECONDS);
+                        att.awaitWriteLatch(writeTimeout,TimeUnit.MILLISECONDS);          // 9. CountDownLatch 进行限时的等到 OP_WRITE 事件
                     }
                 } catch (InterruptedException ignore) {
                     // Ignore
                 }
-                if ( att.getWriteLatch()!=null && att.getWriteLatch().getCount()> 0) {
+                if ( att.getWriteLatch()!=null && att.getWriteLatch().getCount()> 0) {    // 10. 若  CountDownLatch 是被线程 interrupt 唤醒的, 将 keycount 置为 0 (CountDownLatch被  Interrupt 的标识就是程序能继续向下执行, 但里面的 statue > 0)
                     //we got interrupted, but we haven't received notification from the poller.
-                    keycount = 0;
+                    keycount = 0;                                                          // 11. keycount 变成 0, 则在第一次进入 loop 时不会接着写数据, 因为这时还没有真正的 OP_WRITE 事件过来
                 }else {
                     //latch countdown has happened
                     keycount = 1;
-                    att.resetWriteLatch();
+                    att.resetWriteLatch();                                                 // 11. OP_WRITE 事件过来了, 重置 CountDownLatch 里面的技术支持
                 }
 
                 if (writeTimeout > 0 && (keycount == 0))
-                    timedout = (System.currentTimeMillis() - time) >= writeTimeout;
+                    timedout = (System.currentTimeMillis() - time) >= writeTimeout;       // 12. 判断是否写超时
             } //while
             if (timedout)
-                throw new SocketTimeoutException();
+                throw new SocketTimeoutException();                                     // 13. 若是写超时的话, 则直接抛异常
         } finally {
-            poller.remove(att,SelectionKey.OP_WRITE);
+            poller.remove(att,SelectionKey.OP_WRITE);                                  // 14. Tomcat 写数据到客户端成功, 移除 SocketChannel 对应的 OP_WRITE 事件
             if (timedout && reference.key!=null) {
                 poller.cancelKey(reference.key);
             }
@@ -272,7 +272,7 @@ public class NioBlockingSelector {
                     SelectionKey sk = ch.keyFor(selector);
                     try {
                         if (sk == null) {
-                            sk = ch.register(selector, ops, key);
+                            sk = ch.register(selector, ops, key); 
                             ref.key = sk;
                         } else if (!sk.isValid()) {
                             cancel(sk,key,ops);

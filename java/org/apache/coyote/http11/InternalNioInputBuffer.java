@@ -264,13 +264,13 @@ public class InternalNioInputBuffer extends AbstractInputBuffer<NioChannel> {
                 }
                 if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {
                     space = true;
-                    request.method().setBytes(buf, parsingRequestLineStart, pos - parsingRequestLineStart);
+                    request.method().setBytes(buf, parsingRequestLineStart, pos - parsingRequestLineStart);         // 读取 http 请求的方法
                 }
                 pos++;
             }
             parsingRequestLinePhase = 3;
         }
-        if ( parsingRequestLinePhase == 3 ) {
+        if ( parsingRequestLinePhase == 3 ) {                                   // 过滤掉 Http 请求方法后面的 空格
             // Spec says single SP but also be tolerant of multiple and/or HT
             boolean space = true;
             while (space) {
@@ -317,7 +317,7 @@ public class InternalNioInputBuffer extends AbstractInputBuffer<NioChannel> {
                 }
                 pos++;
             }
-            request.unparsedURI().setBytes(buf, parsingRequestLineStart, end - parsingRequestLineStart);
+            request.unparsedURI().setBytes(buf, parsingRequestLineStart, end - parsingRequestLineStart);                    // 设置请求的 URI(这里面包含请求的参数)
             if (parsingRequestLineQPos >= 0) {
                 request.queryString().setBytes(buf, parsingRequestLineQPos + 1,
                                                end - parsingRequestLineQPos - 1);
@@ -371,7 +371,7 @@ public class InternalNioInputBuffer extends AbstractInputBuffer<NioChannel> {
             }
 
             if ( (end - parsingRequestLineStart) > 0) {
-                request.protocol().setBytes(buf, parsingRequestLineStart, end - parsingRequestLineStart);
+                request.protocol().setBytes(buf, parsingRequestLineStart, end - parsingRequestLineStart);               // 设置请求的协议
             } else {
                 request.protocol().setString("");
             }
@@ -478,7 +478,7 @@ public class InternalNioInputBuffer extends AbstractInputBuffer<NioChannel> {
                 throw new IllegalArgumentException(
                         sm.getString("iib.requestheadertoolarge.error"));
             }
-        } while ( status == HeaderParseStatus.HAVE_MORE_HEADERS );
+        } while ( status == HeaderParseStatus.HAVE_MORE_HEADERS );      // 再解析到 一个新行的开头是 /r/n, 则http 请求头已经解析结束, 这里会返回 HeaderParseStatus.DONE
         if (status == HeaderParseStatus.DONE) {
             parsingHeader = false;
             end = pos;
@@ -506,7 +506,7 @@ public class InternalNioInputBuffer extends AbstractInputBuffer<NioChannel> {
         while (headerParsePos == HeaderParsePosition.HEADER_START) {
 
             // Read new bytes if needed
-            if (pos >= lastValid) {
+            if (pos >= lastValid) {                                     // (pos >= lastValid) 说明出现断包的情况, 则再进行读取数据
                 if (!fill(true,false)) {//parse header
                     headerParsePos = HeaderParsePosition.HEADER_START;
                     return HeaderParseStatus.NEED_MORE_DATA;
@@ -519,8 +519,8 @@ public class InternalNioInputBuffer extends AbstractInputBuffer<NioChannel> {
                 // Skip
             } else if (chr == Constants.LF) {
                 pos++;
-                return HeaderParseStatus.DONE;
-            } else {
+                return HeaderParseStatus.DONE;              // 若遇到新行的开始, 先是 /r, 然后又是 /n, 则说明, http请求头已经解析结束
+            } else {                // 直接 break
                 break;
             }
 

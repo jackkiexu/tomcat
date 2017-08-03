@@ -898,7 +898,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
      * @throws IOException error during an I/O operation
      */
     @Override
-    public SocketState process(SocketWrapper<S> socketWrapper)
+    public SocketState process(SocketWrapper<S> socketWrapper)  // 这里的 request, response 每次创建 HttpNioProcessor 都会在构造函数里面创建
         throws IOException {                                    // 这里的 RequestInfo 有点向 ApplicationContextFacade 对应 ApplicationContext
         RequestInfo rp = request.getRequestProcessor();         // 这里的 Request, Response 对应着就是 Http11Processor 新建的时候创建的
         rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);   // Request 进入 Constants.STAGE_PARSE ( HTTP 解析阶段)
@@ -969,9 +969,9 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
                     }
                     keptAlive = true;                                                                // KeepAlive 默认值 true
                     // Set this every time in case limit has been changed via JMX
-                    request.getMimeHeaders().setLimit(endpoint.getMaxHeaderCount());        // 设置最大的 Header 大小
+                    request.getMimeHeaders().setLimit(endpoint.getMaxHeaderCount());                // 设置最大的 Header 大小
                     // Currently only NIO will ever return false here
-                    if (!getInputBuffer().parseHeaders()) {                                   // 解析 HTTP 请求的包问头 headers
+                    if (!getInputBuffer().parseHeaders()) {                                           // 解析 HTTP 请求的包问头 headers (若是nio的方式, 可能需要处理断包的请求)
                         // We've read part of the request, don't recycle it
                         // instead associate it with the socket
                         openSocket = true;

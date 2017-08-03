@@ -702,8 +702,7 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
      * The background thread that listens for incoming TCP/IP connections and
      * hands them off to an appropriate processor.
      */
-    // EndPoint 中的Acceptor 线程, 对来访的请求进行最初的处理之用
-    // 后台线程, 用于监听 TCP/IP 连接以及将它们分发给相应的调度器处理
+    // Acceptor 监听指定的端口, 将接收到的 socket 封装成 NioChannel 丢给 Poller 线程来进行处理
     protected class Acceptor extends AbstractEndpoint.Acceptor {
 
         @Override
@@ -823,6 +822,9 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
      * PollerEvent 不单单还有前面包装的 NioChannel, 还持有 NioEndPoint.KeyAttachment 类的一个引用
      * KeyAttachment 类的作用主要是 对 Connector 中的一些 socket 属性进行解析, 然后设置到对应的 socketChannel 通道中
      * 因为 Tomcat 作为前端的服务器, 网络请求很多, 所以对于一个 Poller 线程池, 上述的 从Acceptor 过来的 PollerEvent 时间会很多, 因此这里采用一个 队列 SynchronizeQueue events
+     *
+     * 将所有请求链接的 socket 封装成 PollerEvent, 丢给 队列 events (类型是 SynchronizedQueue) (PS: Poller 线程在循环 运行是会将 SynchronizedQueue 里面的事件进行执行)
+     * PollerEvent 其的作用就是在 Poller.Selector 上异步注册 OP_READ 事件
      */
     public static class PollerEvent implements Runnable {
 
@@ -898,7 +900,8 @@ public class NioEndpoint extends AbstractEndpoint<NioChannel> {
      * Poller class.
      */
     // 参考资料 https://mp.weixin.qq.com/s?__biz=MzA4MTc3Nzk4NQ==&mid=402459056&idx=1&sn=909921555a7a4120a08b874ba1b40d61&mpshare=1&scene=23&srcid=0612CX2rqLOzsF4m7r1o8y41#rd
-    // Poller 主要是从 SynchronizedQueue 里面 poll 出PollerEvent事件, 并进行相应的处理
+    // Poller 主要是从 SynchronizedQueue 里面 poll 出PollerEvent(在 Selector 上注册读数据的时间)事件, 并进行相应的处理
+    //
     public class Poller implements Runnable {
 
         // 这就是 NIO 中用到的选择器, 可以看出每一个 Poller 都会关联一个 Selector
