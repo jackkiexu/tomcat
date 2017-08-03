@@ -1,4 +1,26 @@
 /**
+ *
+ *
+ * ━━━━━━南无阿弥陀佛━━━━━━
+ * 　　　┏┓　　　┏┓
+ * 　　┏┛┻━━━┛┻┓
+ * 　　┃　　　　　　　┃
+ * 　　┃　　　━　　　┃
+ * 　　┃　┳┛　┗┳　┃
+ * 　　┃　　　　　　　┃
+ * 　　┃　　　┻　　　┃
+ * 　　┃　　　　　　　┃
+ * 　　┗━┓　　　┏━┛
+ * 　　　　┃　　　┃  stay hungry stay foolish
+ * 　　　　┃　　　┃  Code is far away from bug with the animal protecting
+ * 　　　　┃　　　┗━━━┓
+ * 　　　　┃　　　　　　　┣┓
+ * 　　　　┃　　　　　　　┏┛
+ * 　　　　┗┓┓┏━┳┓┏┛
+ * 　　　　　┃┫┫　┃┫┫
+ * 　　　　　┗┻┛　┗┻┛
+ * ━━━━━━萌萌哒━━━━━━
+ *
  * http://blog.csdn.net/beliefer/article/details/51894747
  *
  * http://blog.csdn.net/c929833623lvcha/article/details/44677569
