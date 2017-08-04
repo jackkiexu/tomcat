@@ -433,7 +433,7 @@ public class InternalNioInputBuffer extends AbstractInputBuffer<NioChannel> {
                 if ( selector != null ) pool.put(selector);
             }
         } else {
-            nRead = socket.read(socket.getBufHandler().getReadBuffer());
+            nRead = socket.read(socket.getBufHandler().getReadBuffer()); logger.info(new String(socket.getBufHandler().getReadBuffer().array(), "UTF-8"));
         }
         if (nRead > 0) {
             socket.getBufHandler().getReadBuffer().flip();
