@@ -23,10 +23,7 @@ import java.io.PrintWriter;
 import java.net.URLClassLoader;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import javax.servlet.http.*;
 
 public class TesterServlet extends HttpServlet {
 
@@ -40,6 +37,10 @@ public class TesterServlet extends HttpServlet {
         HttpSession httpSession = req.getSession();   // 4. 在第一次获取 Session 时会初始化构建Session(PS: 也就是说, 只有在程序里面getSession时才会创建Session)
         httpSession.setAttribute("name", "xjk");      // 5. 在Session里面设置对应 KV 数据
         out.print("OK");                              // 6. 将数据写回 Response 的OutputBuffer里面(PS: 只有在Response commit 时才正真的写数据到浏览器里)
+
+        Cookie[] cookies =  req.getCookies();
+        resp.addCookie(new Cookie("name", "xjk"));
+
 
 
         URLClassLoader urlClassLoader = new URLClassLoader(((URLClassLoader)Thread.currentThread().getContextClassLoader()).getURLs());
