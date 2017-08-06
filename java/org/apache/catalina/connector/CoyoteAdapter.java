@@ -1077,7 +1077,7 @@ public class CoyoteAdapter implements Adapter {
 
         // Parse session id from cookies
         Cookies serverCookies = req.getCookies();
-        int count = serverCookies.getCookieCount();
+        int count = serverCookies.getCookieCount();                            // 就在这里出发了 Cookie 解析Header里面的数据
         if (count <= 0) {
             return;
         }

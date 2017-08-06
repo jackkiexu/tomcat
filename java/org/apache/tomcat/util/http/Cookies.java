@@ -18,9 +18,11 @@ package org.apache.tomcat.util.http;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
+import org.apache.log4j.Logger;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.buf.MessageBytes;
 import org.apache.tomcat.util.log.UserDataHelper;
@@ -36,7 +38,7 @@ import org.apache.tomcat.util.res.StringManager;
  * @author kevin seguin
  */
 public final class Cookies {
-
+    private static final Logger logger = Logger.getLogger(Cookies.class);
     private static final Log log = LogFactory.getLog(Cookies.class);
 
     private static final UserDataHelper userDataLog = new UserDataHelper(log);
@@ -101,6 +103,8 @@ public final class Cookies {
     }
 
     public int getCookieCount() {
+        logger.info(Arrays.toString(Thread.currentThread().getStackTrace()));
+                logger.info("getCookieCount:" + unprocessed);
         if( unprocessed ) {
             unprocessed=false;
             processCookies(headers);
@@ -114,7 +118,7 @@ public final class Cookies {
      *  most of the time an existing ServerCookie object is returned.
      *  The caller can set the name/value and attributes for the cookie
      */
-    private ServerCookie addCookie() {
+    private ServerCookie addCookie() {                      // 若解析出来的 Cookie 数大于预存储的的数组scookies的大小
         if( cookieCount >= scookies.length  ) {
             ServerCookie scookiesTmp[]=new ServerCookie[2*cookieCount];
             System.arraycopy( scookies, 0, scookiesTmp, 0, cookieCount);

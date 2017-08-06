@@ -955,7 +955,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
                         break;
                     }
                 }
-
+//                logger.info("request.getCookies():" + request.getCookies());
                 if (endpoint.isPaused()) {                                                              // 默认值 false(Tomcat协议处理是否暂停)
                     // 503 - Service unavailable
                     response.setStatus(503);
@@ -971,6 +971,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
                     // Set this every time in case limit has been changed via JMX
                     request.getMimeHeaders().setLimit(endpoint.getMaxHeaderCount());                // 设置最大的 Header 大小
                     // Currently only NIO will ever return false here
+//                    logger.info("request.getCookies():" + request.getCookies());
                     if (!getInputBuffer().parseHeaders()) {                                           // 解析 HTTP 请求的包问头 headers (若是nio的方式, 可能需要处理断包的请求)
                         // We've read part of the request, don't recycle it
                         // instead associate it with the socket
@@ -978,6 +979,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
                         readComplete = false;
                         break;
                     }
+//                    logger.info("request.getCookies():" + request.getCookies());
                     if (!disableUploadTimeout) {
                         setSocketTimeout(connectionUploadTimeout);
                     }
