@@ -426,6 +426,7 @@ import org.apache.juli.logging.LogFactory;
  * FINE: Request "/docs/config/manager.html" with response status "200" content-type "text/html", no expiration configured
  * </code>
  */
+// 其实就是根据请求的 ContentType 设置对应的 Cache-Control, expire 等header信息
 public class ExpiresFilter extends FilterBase {
 
     /**
