@@ -159,7 +159,7 @@ public class ApplicationSessionCookieConfig implements SessionCookieConfig {
      *                    created
      * @param secure      Should session cookie be configured as secure
      */
-    public static Cookie createSessionCookie(Context context,
+    public static Cookie createSessionCookie(Context context,               // 创建一个用于跟踪 Session 的 Cookie
             String sessionId, boolean secure) {
 
         SessionCookieConfig scc =
@@ -170,7 +170,7 @@ public class ApplicationSessionCookieConfig implements SessionCookieConfig {
         //       2. Values from SessionCookieConfig
         //       3. Defaults
 
-        Cookie cookie = new Cookie(
+        Cookie cookie = new Cookie(                                         // 创建一个用于跟踪 Session 的 Cookie
                 SessionConfig.getSessionCookieName(context), sessionId);
 
         // Just apply the defaults.

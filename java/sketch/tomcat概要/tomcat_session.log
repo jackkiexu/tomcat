@@ -1,0 +1,176 @@
+1. 是不是 通过 HttpClient 的 Header 部分加上 Cookie 发送给服务端, 则服务端会写回这些信息?
+2. 若上面1是的话, 在Tomcat的哪一部分代码中操作的 ? 
+
+
+
+// 尝试从 URL, Cookie, SSL 回话中获取请求的 ID, 并将 mapRequired 设置为 false
+String sessionID = null;
+if (request.getServletContext().getEffectiveSessionTrackingModes()  // 1. 是否支持通过 URI 尾缀 JSessionId 的方式来追踪 Session 的变化 (默认是支持的)
+        .contains(SessionTrackingMode.URL)) {
+    sessionID = request.getPathParameter(                           // 2. 从 URI 尾缀的参数中拿取 jsessionId 的数据 (SessionConfig.getSessionUriParamName 是获取对应cookie的名字, 默认 jsessionId, 可以在 web.xml 里面进行定义)
+            SessionConfig.getSessionUriParamName(request.getContext()));
+    if (sessionID != null) {                                        // 3. 若从 URI 里面拿取了 jsessionId, 则直接进行赋值给 request
+        request.setRequestedSessionId(sessionID);
+        request.setRequestedSessionURL(true);
+    }
+}
+
+// Look for session ID in cookies and SSL session
+parseSessionCookiesId(req, request);                                // 4. 通过 cookie 里面获取 JSessionId 的值
+parseSessionSslId(request);                                         // 5. 在 SSL 模式下获取 JSessionId 的值
+
+
+
+
+/**
+ * Parse session id in URL.
+ */
+protected void parseSessionCookiesId(org.apache.coyote.Request req, Request request) {
+
+    // If session tracking via cookies has been disabled for the current
+    // context, don't go looking for a session ID in a cookie as a cookie
+    // from a parent context with a session ID may be present which would
+    // overwrite the valid session ID encoded in the URL
+    Context context = request.getMappingData().context;
+    if (context != null && !context.getServletContext()
+            .getEffectiveSessionTrackingModes().contains(
+                    SessionTrackingMode.COOKIE)) {                      // 1. Tomcat 是否支持 通过 cookie 机制 跟踪 session
+        return;
+    }
+
+    // Parse session id from cookies
+    Cookies serverCookies = req.getCookies();                           // 2. 获取 Cookie的实际引用对象 (PS: 这里还没有触发 Cookie 解析, 也就是 serverCookies 里面是空数据, 数据还只是存储在 http header 里面)
+    int count = serverCookies.getCookieCount();                         // 3. 就在这里出发了 Cookie 解析Header里面的数据 (PS: 其实就是 轮训查找 Header 里面那个 name 是 Cookie 的数据, 拿出来进行解析)
+    if (count <= 0) {
+        return;
+    }
+
+    String sessionCookieName = SessionConfig.getSessionCookieName(context); // 4. 获取 sessionId 的名称 JSessionId
+
+    for (int i = 0; i < count; i++) {
+        ServerCookie scookie = serverCookies.getCookie(i);              // 5. 轮询所有解析出来的 Cookie
+        if (scookie.getName().equals(sessionCookieName)) {              // 6. 比较 Cookie 的名称是否是 jsessionId
+            logger.info("scookie.getName().equals(sessionCookieName)");
+            logger.info("Arrays.asList(Thread.currentThread().getStackTrace()):" + Arrays.asList(Thread.currentThread().getStackTrace()));
+            // Override anything requested in the URL
+            if (!request.isRequestedSessionIdFromCookie()) {            // 7. 是否 jsessionId 还没有解析 (并且只将第一个解析成功的值 set 进去)
+                // Accept only the first session id cookie
+                convertMB(scookie.getValue());                          // 8. 将MessageBytes转成 char
+                request.setRequestedSessionId                           // 9. 设置 jsessionId 的值
+                    (scookie.getValue().toString());
+                request.setRequestedSessionCookie(true);
+                request.setRequestedSessionURL(false);
+                if (log.isDebugEnabled()) {
+                    log.debug(" Requested cookie session id is " +
+                        request.getRequestedSessionId());
+                }
+            } else {
+                if (!request.isRequestedSessionIdValid()) {             // 10. 若 Cookie 里面存在好几个 jsessionid, 则进行覆盖 set 值
+                    // Replace the session id until one is valid
+                    convertMB(scookie.getValue());
+                    request.setRequestedSessionId
+                        (scookie.getValue().toString());
+                }
+            }
+        }
+    }
+
+}
+
+
+
+// 获取 request 对应的 session
+public HttpSession getSession() {
+    Session session = doGetSession(true); // 这里就是 通过 managerBase.sessions 获取 Session
+    if (session == null) {
+        return null;
+    }
+    return session.getSession();
+}
+
+// create 代表是否创建 StandardSession
+protected Session doGetSession(boolean create) {                 // create: 是否创建 StandardSession
+
+    // There cannot be a session if no context has been assigned yet
+    if (context == null) {
+        return (null);                                           // 1. 检验 StandardContext
+    }
+
+    // Return the current session if it exists and is valid
+    if ((session != null) && !session.isValid()) {               // 2. 校验 Session 的有效性
+        session = null;
+    }
+    if (session != null) {
+        return (session);
+    }
+
+    // Return the requested session if it exists and is valid
+    Manager manager = null;
+    if (context != null) {
+        manager = context.getManager();
+    }
+    if (manager == null)
+     {
+        return (null);      // Sessions are not supported
+    }
+    if (requestedSessionId != null) {
+        /**
+         * 通过 StandardContext 拿到对应的StandardManager， 查找缓存中是否有对应的客户端传递过来的 sessionId
+         * 如果有的话, 那么直接 session.access (计数器 + 1), 然后返回
+         */
+        try {                                                    // 3. 通过 managerBase.sessions 获取 Session
+            session = manager.findSession(requestedSessionId);   // 4. 通过客户端的 sessionId 从 managerBase.sessions 来获取 Session 对象
+        } catch (IOException e) {
+            session = null;
+        }
+        if ((session != null) && !session.isValid()) {           // 5. 判断 session 是否有效
+            session = null;
+        }
+        if (session != null) {
+            session.access();                                    // 6. session access +1
+            return (session);
+        }
+    }
+
+    // Create a new session if requested and the response is not committed
+    if (!create) {
+        return (null);                                           // 7. 根据标识是否创建 StandardSession ( false 直接返回)
+    }
+    if ((context != null) && (response != null) &&               // 当前的 Context 是否支持通过 cookie 的方式来追踪 Session
+        context.getServletContext().getEffectiveSessionTrackingModes().
+                contains(SessionTrackingMode.COOKIE) &&
+        response.getResponse().isCommitted()) {
+        throw new IllegalStateException
+          (sm.getString("coyoteRequest.sessionCreateCommitted"));
+    }
+
+    // Attempt to reuse session id if one was submitted in a cookie
+    // Do not reuse the session id if it is from a URL, to prevent possible
+    // phishing attacks
+    // Use the SSL session ID if one is present.
+    if (("/".equals(context.getSessionCookiePath())               // 8. 到这里其实是没有找到 session, 直接创建 Session 出来
+            && isRequestedSessionIdFromCookie()) || requestedSessionSSL ) {
+        session = manager.createSession(getRequestedSessionId()); // 9. 从客户端读取 sessionID, 并且根据这个 sessionId 创建 Session
+    } else {
+        session = manager.createSession(null);
+    }
+
+    // Creating a new session cookie based on that session
+    if ((session != null) && (getContext() != null)
+           && getContext().getServletContext().
+                   getEffectiveSessionTrackingModes().contains(
+                           SessionTrackingMode.COOKIE)) {
+        Cookie cookie =
+            ApplicationSessionCookieConfig.createSessionCookie(  // 10. 根据 sessionId 来创建一个 Cookie
+                    context, session.getIdInternal(), isSecure());
+
+        response.addSessionCookieInternal(cookie);               // 11. 最后在响应体中写入 cookie
+    }
+
+    if (session == null) {
+        return null;
+    }
+
+    session.access();                                           // 12. session access 计数器 + 1
+    return session;
+}

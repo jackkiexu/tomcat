@@ -81,17 +81,26 @@ public final class Cookies {
     /**
      * EXPENSIVE!!!  only for debugging.
      */
+//    public String toString() {
+//        StringWriter sw = new StringWriter();
+//        PrintWriter pw = new PrintWriter(sw);
+//        pw.println("=== Cookies ===");
+//        int count = getCookieCount();
+//        for (int i = 0; i < count; ++i) {
+//            pw.println(getCookie(i).toString());
+//        }
+//        return sw.toString();
+//    }
     @Override
     public String toString() {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        pw.println("=== Cookies ===");
-        int count = getCookieCount();
-        for (int i = 0; i < count; ++i) {
-            pw.println(getCookie(i).toString());
-        }
-        return sw.toString();
+        return "Cookies{" +
+                "scookies=" + Arrays.toString(scookies) +
+                ", cookieCount=" + cookieCount +
+                ", unprocessed=" + unprocessed +
+                ", headers=" + headers +
+                '}';
     }
+
 
     // -------------------- Indexed access --------------------
 
@@ -102,12 +111,12 @@ public final class Cookies {
         return scookies[idx];
     }
 
-    public int getCookieCount() {
+    public int getCookieCount() {                                       // Cookie 的解析动作就是在这里触发的
         logger.info(Arrays.toString(Thread.currentThread().getStackTrace()));
                 logger.info("getCookieCount:" + unprocessed);
         if( unprocessed ) {
             unprocessed=false;
-            processCookies(headers);
+            processCookies(headers);                                    // 根据 headers 里面的数据触发解析工作
         }
         return cookieCount;
     }
@@ -147,19 +156,19 @@ public final class Cookies {
         int pos=0;
         while( pos>=0 ) {
             // Cookie2: version ? not needed
-            pos=headers.findHeader( "Cookie", pos );
+            pos=headers.findHeader( "Cookie", pos );                // 获取 K 是 Cookie 的 position
             // no more cookie headers headers
             if( pos<0 ) {
                 break;
             }
 
             MessageBytes cookieValue=headers.getValue( pos );
-            if( cookieValue==null || cookieValue.isNull() ) {
+            if( cookieValue==null || cookieValue.isNull() ) {       // 获取 K 是 Cookie 的 MessageBytes
                 pos++;
                 continue;
             }
 
-            if( cookieValue.getType() != MessageBytes.T_BYTES ) {
+            if( cookieValue.getType() != MessageBytes.T_BYTES ) {  // 校验存储的数据是否是 byte
                 Exception e = new Exception();
                 log.warn("Cookies: Parsing cookie as String. Expected bytes.",
                         e);
@@ -177,7 +186,7 @@ public final class Cookies {
                     processCookieHeader(buf, 0, len);
                 }
             } else {
-                processCookieHeader( bc.getBytes(),
+                processCookieHeader( bc.getBytes(),                 // 解析 Cookie 里面的Valve
                         bc.getOffset(),
                         bc.getLength());
             }
@@ -485,7 +494,7 @@ public final class Cookies {
 
                 sc = addCookie();
                 sc.setVersion( version );
-                sc.getName().setBytes( bytes, nameStart,
+                sc.getName().setBytes( bytes, nameStart,                        // 设置 Cookie 的 Name
                                        nameEnd-nameStart);
 
                 if (valueStart != -1) { // Normal AVPair

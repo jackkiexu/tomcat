@@ -672,11 +672,11 @@ public class StandardSession implements HttpSession, Session, Serializable {
     @Override
     public boolean isValid() {
 
-        if (!this.isValid) {    // 对应 HttpSession 的 invalidate, 无论 session 有无过期, 若这个值是 false, 则直接 return
+        if (!this.isValid) {                                    // 1. 对应 HttpSession 的 invalidate, 无论 session 有无过期, 若这个值是 false, 则直接 return
             return false;
         }
 
-        if (this.expiring) {  // 这个属性由后台线程来改变 session 是否过期
+        if (this.expiring) {                                    // 2. 通过这个过期标识判断 Session 是否有效(可能其他地方触发了 Session 的过期)
             return true;
         }
         /**
@@ -690,10 +690,7 @@ public class StandardSession implements HttpSession, Session, Serializable {
             return true;
         }
 
-        /**
-         * maxInactiveInterval 标志的是最多再过多久, 客户端再次发送请求过来, Session 还会存活着
-         */
-        if (maxInactiveInterval > 0) {
+        if (maxInactiveInterval > 0) {                        // 3. maxInactiveInterval 标志的是最多再过多久, 客户端再次发送请求过来, Session 还会存活着
             long timeNow = System.currentTimeMillis();
             int timeIdle;
             if (LAST_ACCESS_AT_START) {
@@ -701,8 +698,8 @@ public class StandardSession implements HttpSession, Session, Serializable {
             } else {
                 timeIdle = (int) ((timeNow - thisAccessedTime) / 1000L);
             }
-            if (timeIdle >= maxInactiveInterval) {              // 说明 这个 Session 已经超过 maxInactiveInterval 这么长的时间没有没访问了
-                expire(true);
+            if (timeIdle >= maxInactiveInterval) {            // 4. 说明 这个 Session 已经超过 maxInactiveInterval 这么长的时间没有没访问了
+                expire(true);                                    // 5. 执行 过期处理函数(1. 主要是将 StandardSession 中的各种属性置为 false, 并且从 manager 里面删除, 触发相应的监听事件)
             }
         }
 

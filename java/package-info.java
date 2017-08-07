@@ -63,6 +63,7 @@
  *      (1) AccessLogAdapter 组装 AccessLog (适配器)
  *
  * 6. Tomcat Session 生成,追踪及管理(持久化)策略(涉及 cookie, request.getAttribute 触发什么动作)
+ *      分布式Session设计 https://github.com/jcoleman/tomcat-redis-session-manager
  *
  * 7. Tomcat Servlet 生命周期 (new, init, service, destory)
  *

@@ -508,7 +508,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      */
     @Override
     public void backgroundProcess() {
-        count = (count + 1) % processExpiresFrequency;
+        count = (count + 1) % processExpiresFrequency;        // 这里有两部操作, 1 增加background的执行次数, 2. 将 count 对processExpiresFrequency去模, 若结果是0, 则就执行过期检查操作(从这里也可以看出 processExpiresFrequency 越小, 则执行得越频繁)
         if (count == 0)
             processExpires();
     }
@@ -519,13 +519,13 @@ public abstract class ManagerBase extends LifecycleMBeanBase
     public void processExpires() {
 
         long timeNow = System.currentTimeMillis();
-        Session sessions[] = findSessions();                    // 校验是否进行过期, 过期就进行处理
+        Session sessions[] = findSessions();                         // 1. 获取所有待检查的 Session
         int expireHere = 0 ;
 
         if(log.isDebugEnabled())
             log.debug("Start expire sessions " + getName() + " at " + timeNow + " sessioncount " + sessions.length);
         for (int i = 0; i < sessions.length; i++) {
-            if (sessions[i]!=null && !sessions[i].isValid()) {
+            if (sessions[i]!=null && !sessions[i].isValid()) {      // 2. 触发检查Session的过期检查
                 expireHere++;
             }
         }
@@ -533,7 +533,6 @@ public abstract class ManagerBase extends LifecycleMBeanBase
         if(log.isDebugEnabled())
              log.debug("End expire sessions " + getName() + " processingTime " + (timeEnd - timeNow) + " expired sessions: " + expireHere);
         processingTime += ( timeEnd - timeNow );
-
     }
 
     @Override
@@ -629,7 +628,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
     public Session createSession(String sessionId) {
 
         if ((maxActiveSessions >= 0) &&
-                (getActiveSessions() >= maxActiveSessions)) {       // 1. 判断 单节点的 Session 个数是否超过限制
+                (getActiveSessions() >= maxActiveSessions)) {      // 1. 判断 单节点的 Session 个数是否超过限制
             rejectedSessions++;
             throw new TooManyActiveSessionsException(
                     sm.getString("managerBase.createSession.ise"),
@@ -638,26 +637,26 @@ public abstract class ManagerBase extends LifecycleMBeanBase
 
         // Recycle or create a Session instance
         // 创建一个 空的 session
-        Session session = createEmptySession();                     // 2. 创建 Session
+        Session session = createEmptySession();                      // 2. 创建 Session
 
         // Initialize the properties of the new session and return it
         // 初始化空 session 的属性
         session.setNew(true);
         session.setValid(true);
         session.setCreationTime(System.currentTimeMillis());
-        session.setMaxInactiveInterval(this.maxInactiveInterval);   // 3. StandardSession 最大的默认 Session 激活时间
+        session.setMaxInactiveInterval(this.maxInactiveInterval);// 3. StandardSession 最大的默认 Session 激活时间
         String id = sessionId;
-        if (id == null) {
-            id = generateSessionId();                               // 4. 生成 sessionId (这里通过随机数来生成)
+        if (id == null) {                                           // 若没有从 client 端读取到 jsessionId
+            id = generateSessionId();                                // 4. 生成 sessionId (这里通过随机数来生成)
         }
         session.setId(id);
         sessionCounter++;
 
         SessionTiming timing = new SessionTiming(session.getCreationTime(), 0);
         synchronized (sessionCreationTiming) {
-            sessionCreationTiming.add(timing);                      // 5. 每次创建 Session 都会创建一个 SessionTiming, 并且 push 到 链表 sessionCreationTiming 的最后
-            sessionCreationTiming.poll();                           // 6. 并且将 链表 最前面的节点删除
-        }
+            sessionCreationTiming.add(timing);                    // 5. 每次创建 Session 都会创建一个 SessionTiming, 并且 push 到 链表 sessionCreationTiming 的最后
+            sessionCreationTiming.poll();                         // 6. 并且将 链表 最前面的节点删除
+        }                                                            // 那这个 sessionCreationTiming 是什么作用呢, 其实 sessionCreationTiming 是用来统计 Session的新建及失效的频率 (好像Zookeeper 里面也有这个的统计方式)
         return (session);
     }
 
